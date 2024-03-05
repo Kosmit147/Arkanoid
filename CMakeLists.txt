@@ -12,7 +12,7 @@ add_executable(
     dependencies/GLAD/src/glad.c
     src/main.c
 )
-target_compile_options(arkanoid PRIVATE -Wall -Wextra -Werror)
+target_compile_options(arkanoid PRIVATE -Wall -Wextra -Werror -Wconversion)
 
 target_include_directories(arkanoid PUBLIC dependencies/GLFW/include)
 target_include_directories(arkanoid PUBLIC dependencies/GLAD/include)
