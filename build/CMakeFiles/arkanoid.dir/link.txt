@@ -1,0 +1,3 @@
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\arkanoid.dir/objects.a
+C:\msys64\ucrt64\bin\ar.exe qc CMakeFiles\arkanoid.dir/objects.a @CMakeFiles\arkanoid.dir\objects1.rsp
+C:\msys64\ucrt64\bin\gcc.exe  -std=c11 -g -Wl,--whole-archive CMakeFiles\arkanoid.dir/objects.a -Wl,--no-whole-archive -o arkanoid.exe -Wl,--out-implib,libarkanoid.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\arkanoid.dir\linkLibs.rsp
