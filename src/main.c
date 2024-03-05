@@ -32,6 +32,7 @@ int main()
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         fprintf(stderr, "Failed to initialize GLAD.\n");
+        glfwTerminate();
         return -1;
     }
 
