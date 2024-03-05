@@ -9,7 +9,10 @@ int main()
     GLFWwindow* window;
 
     if (!glfwInit())
+    {
+        fprintf(stderr, "Failed to initialize GLFW.\n");
         return -1;
+    }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -19,6 +22,7 @@ int main()
 
     if (!window)
     {
+        fprintf(stderr, "Failed to create a window.\n");
         glfwTerminate();
         return -1;
     }
@@ -27,9 +31,9 @@ int main()
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        puts("Failed to initialize GLAD.\n");
+        fprintf(stderr, "Failed to initialize GLAD.\n");
         return -1;
-    } 
+    }
 
     while (!glfwWindowShouldClose(window))
     {
