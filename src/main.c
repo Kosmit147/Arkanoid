@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #define COORDINATE_SPACE 1024
 
@@ -14,7 +13,7 @@ typedef struct Vec2
 
 typedef struct Vec2ui
 {
-    unsigned int x, y;
+    float x, y;
 } Vec2ui;
 
 typedef struct Ball
@@ -85,11 +84,13 @@ void updateBlockVB(Block* block)
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * 4 * 2, newPositions);
 }
 
-void paddleMove(Block* paddle, GLFWwindow* window){
-    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        paddle->position.x += 3;
-    else if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        paddle->position.x -= 3;
+void paddleMove(Block* paddle, GLFWwindow* window, float deltaTime){
+    
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        paddle->position.x += 500.0f * deltaTime;
+    
+    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        paddle->position.x -= 500.0f * deltaTime;
 }
 
 const char* vertexShaderSrc = 
@@ -186,20 +187,23 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
     glEnableVertexAttribArray(0);
 
-
+    float previousTime = (float) glfwGetTime();
     while (!glfwWindowShouldClose(window))
     {
 
         glClear(GL_COLOR_BUFFER_BIT);
+        float time = (float)glfwGetTime();
+        float deltaTime = time - previousTime;
 
-        
+        paddleMove(paddle, window, deltaTime);
 
         updateBlockVB(paddle);
         drawBlock(paddle);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-        paddleMove(paddle, window);
+        previousTime = time;
+        
     }
 
     free(paddle);
