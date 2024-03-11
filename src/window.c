@@ -47,3 +47,22 @@ bool loadGlad()
 
     return true;
 }
+
+void onWindowResize(GLFWwindow* /*window*/, int width, int height)
+{
+    int xOffset = 0;
+    int yOffset = 0;
+
+    if (height > width)
+    {
+        yOffset += (height - width) / 2;
+        height = width;
+    }
+    else if (width > height)
+    {
+        xOffset += (width - height) / 2;
+        width = height;
+    }
+
+	glViewport(xOffset, yOffset, width, height);
+}

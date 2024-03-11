@@ -36,6 +36,8 @@ int main()
     if (!loadGlad())
         return -1;
 
+    glfwSetFramebufferSizeCallback(window, onWindowResize);
+
     puts((const char*)glGetString(GL_VERSION));
 
     unsigned int VA = genVA();
@@ -50,9 +52,9 @@ int main()
     Vec2 position = { (float)COORDINATE_SPACE / 2 - (float)paddleWidth / 2, (float)COORDINATE_SPACE / 6 };
     Block* paddle = createBlock(position, paddleWidth, paddleHeight, GL_DYNAMIC_DRAW);
 
-    float prevTime = (float)glfwGetTime();
-
     int timeUnifLocation = glGetUniformLocation(blockShader, "time");
+
+    float prevTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
