@@ -10,6 +10,7 @@
 #include "entities.h"
 #include "board.h"
 #include "rendering.h"
+#include "shader.h"
 
 #include "defines.h"
 
@@ -77,27 +78,8 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, blockIB);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned char) * 2 * 3, indices, GL_STATIC_DRAW);
 
-    unsigned int vertexShader;
-    unsigned int fragmentShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    const char* vertexDataPtr = vertexShaderSrcData;
-    const char* fragmentDataPtr = fragmentShaderSrcData;
-    glShaderSource(vertexShader, 1, &vertexDataPtr, NULL);
-    glShaderSource(fragmentShader, 1, &fragmentDataPtr, NULL);
-    glCompileShader(vertexShader);
-    glCompileShader(fragmentShader);
-
-    unsigned int shader = glCreateProgram();
-    glAttachShader(shader, vertexShader);
-    glAttachShader(shader, fragmentShader);
-    glLinkProgram(shader);
-    glUseProgram(shader);
-
-#ifndef _DEBUG
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-#endif
+    unsigned int blockShader = createShader(vertexShaderSrcData, fragmentShaderSrcData);
+    glUseProgram(blockShader);
 
     Vec2 position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 6 };
     Block* paddle = createBlock(position, 600, 200, GL_DYNAMIC_DRAW);
@@ -128,7 +110,7 @@ int main()
     glDeleteVertexArrays(1, &blockVA);
     glDeleteBuffers(1, &paddle->glVB);
     glDeleteBuffers(1, &blockIB);
-    glDeleteShader(shader);
+    glDeleteProgram(blockShader);
 
     free(paddle);
 
