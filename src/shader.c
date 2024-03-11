@@ -55,6 +55,7 @@ unsigned int createShader(const char* vertexShaderSrc, const char* fragmentShade
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
     verifyProgramLinkage(shaderProgram);
+    glUseProgram(shaderProgram);
 
 #ifndef _DEBUG
     glDeleteShader(vertexShader);
