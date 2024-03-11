@@ -11,11 +11,6 @@ typedef struct Vec2
     float x, y;
 } Vec2;
 
-typedef struct Vec2ui
-{
-    float x, y;
-} Vec2ui;
-
 typedef struct Ball
 {
     Vec2 position; // ball center
@@ -26,14 +21,14 @@ typedef struct Ball
 
 typedef struct Block
 {
-    Vec2ui position; // top-left corner
+    Vec2 position; // top-left corner
     unsigned int width;
     unsigned int height;
 
     unsigned int glVB; // vertex buffer
 } Block;
 
-Block* createBlock(Vec2ui position, unsigned int width, unsigned int height, GLenum usage)
+Block* createBlock(Vec2 position, unsigned int width, unsigned int height, GLenum usage)
 {
     Block* block = malloc(sizeof(Block));
 
@@ -181,7 +176,7 @@ int main()
     glLinkProgram(shader);
     glUseProgram(shader);
 
-    Vec2ui position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 6 };
+    Vec2 position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 6 };
     Block* paddle = createBlock(position, 150, 50, GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
