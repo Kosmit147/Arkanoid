@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define INCBIN_PREFIX 
+#include <incbin.h>
+
 #define COORDINATE_SPACE 1024
 
 typedef struct Vec2
@@ -88,24 +91,8 @@ void paddleMove(Block* paddle, GLFWwindow* window, float deltaTime){
         paddle->position.x -= 500.0f * deltaTime;
 }
 
-const char* vertexShaderSrc = 
-"#version 430 core\n"
-"\n"
-"layout (location = 0) in vec4 inPosition;\n"
-"\n"
-"void main()\n"
-"{\n"
-"   gl_Position = inPosition;\n"
-"}\n";
-const char* fragmentShaderSrc = 
-"#version 430 core\n"
-"\n"
-"out vec4 outColor;\n"
-"\n"
-"void main()\n"
-"{\n"
-"   outColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
-"}\n";
+INCTXT(vertexShaderSrc, "../shaders/block.vert");
+INCTXT(fragmentShaderSrc, "../shaders/block.frag");
 
 int main()
 {
@@ -165,8 +152,10 @@ int main()
     unsigned int fragmentShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSrc, NULL);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSrc, NULL);
+    const char* vertexDataPtr = vertexShaderSrcData;
+    const char* fragmentDataPtr = fragmentShaderSrcData;
+    glShaderSource(vertexShader, 1, &vertexDataPtr, NULL);
+    glShaderSource(fragmentShader, 1, &fragmentDataPtr, NULL);
     glCompileShader(vertexShader);
     glCompileShader(fragmentShader);
 
