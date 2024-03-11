@@ -7,10 +7,12 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
 set(CMAKE_COMPILE_WARNING_AS_ERROR On)
 
+file(GLOB_RECURSE ArkanoidSources src/*.c)
+
 add_executable(
     arkanoid
     dependencies/GLAD/src/glad.c
-    src/main.c
+    ${ArkanoidSources}
 )
 target_compile_options(arkanoid PRIVATE -Wall -Wextra -Werror -Wconversion)
 
