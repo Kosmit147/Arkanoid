@@ -7,88 +7,18 @@
 #define INCBIN_PREFIX 
 #include <incbin.h>
 
-#define COORDINATE_SPACE 1024
+#include "entities.h"
+#include "board.h"
+#include "rendering.h"
 
-typedef struct Vec2
-{
-    float x, y;
-} Vec2;
+#include "defines.h"
 
-typedef struct Ball
-{
-    Vec2 position; // ball center
-    Vec2 translation;
-
-    unsigned int glVB; // vertex buffer
-} Ball;
-
-typedef struct Block
-{
-    Vec2 position; // top-left corner
-    unsigned int width;
-    unsigned int height;
-
-    unsigned int glVB; // vertex buffer
-} Block;
-
-Block* createBlock(Vec2 position, unsigned int width, unsigned int height, GLenum usage)
-{
-    Block* block = malloc(sizeof(Block));
-
-    block->position = position;
-    block->width = width;
-    block->height = height;
-
-    float normalizedX = position.x / COORDINATE_SPACE * 2.0f - 1.0f;
-    float normalizedY = position.y / COORDINATE_SPACE * 2.0f - 1.0f;
-    float normalizedWidth = (float)width / COORDINATE_SPACE * 2.0f;
-    float normalizedHeight = (float)height / COORDINATE_SPACE * 2.0f;
-
-    float positions[] = {
-        normalizedX, normalizedY,
-        normalizedX + normalizedWidth, normalizedY,
-        normalizedX + normalizedWidth, normalizedY - normalizedHeight,
-        normalizedX, normalizedY - normalizedHeight,
-    };
-
-    glGenBuffers(1, &block->glVB);
-    glBindBuffer(GL_ARRAY_BUFFER, block->glVB);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 4 * 2, positions, usage);
-
-    return block;
-}
-
-void drawBlock(Block* block)
-{
-    glBindBuffer(GL_ARRAY_BUFFER, block->glVB);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, NULL);
-}
-
-void updateBlockVB(Block* block)
-{
-    float normalizedX = (float)block->position.x / COORDINATE_SPACE * 2.0f - 1.0f;
-    float normalizedY = (float)block->position.y / COORDINATE_SPACE * 2.0f - 1.0f;
-    float normalizedWidth = (float)block->width / COORDINATE_SPACE * 2.0f;
-    float normalizedHeight = (float)block->height / COORDINATE_SPACE * 2.0f;
-
-    float newPositions[] = {
-        normalizedX, normalizedY,
-        normalizedX + normalizedWidth, normalizedY,
-        normalizedX + normalizedWidth, normalizedY - normalizedHeight,
-        normalizedX, normalizedY - normalizedHeight,
-    };
-
-    glBindBuffer(GL_ARRAY_BUFFER, block->glVB);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * 4 * 2, newPositions);
-}
-
-void paddleMove(Block* paddle, GLFWwindow* window, float deltaTime){
-    
+void movePaddle(Block* paddle, GLFWwindow* window, float deltaTime)
+{    
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        paddle->position.x += 500.0f * deltaTime;
-    
+        paddle->position.x += 2000.0f * deltaTime;
     else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        paddle->position.x -= 500.0f * deltaTime;
+        paddle->position.x -= 2000.0f * deltaTime;
 }
 
 INCTXT(vertexShaderSrc, "../shaders/block.vert");
@@ -131,8 +61,7 @@ int main()
         return -1;
     }
 
-    const unsigned char* glVersion = glGetString(GL_VERSION);
-    puts((const char*)glVersion);
+    puts((const char*)glGetString(GL_VERSION));
 
     unsigned int blockVA;
     glGenVertexArrays(1, &blockVA);
@@ -165,30 +94,41 @@ int main()
     glLinkProgram(shader);
     glUseProgram(shader);
 
+#ifndef _DEBUG
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+#endif
+
     Vec2 position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 6 };
-    Block* paddle = createBlock(position, 150, 50, GL_DYNAMIC_DRAW);
+    Block* paddle = createBlock(position, 600, 200, GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
     glEnableVertexAttribArray(0);
 
-    float previousTime = (float) glfwGetTime();
+    float prevTime = (float)glfwGetTime();
+
     while (!glfwWindowShouldClose(window))
     {
+        float time = (float)glfwGetTime();
+        float deltaTime = time - prevTime;
 
         glClear(GL_COLOR_BUFFER_BIT);
-        float time = (float)glfwGetTime();
-        float deltaTime = time - previousTime;
 
-        paddleMove(paddle, window, deltaTime);
+        movePaddle(paddle, window, deltaTime);
 
         updateBlockVB(paddle);
         drawBlock(paddle);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-        previousTime = time;
-        
+
+        prevTime = time;
     }
+
+    glDeleteVertexArrays(1, &blockVA);
+    glDeleteBuffers(1, &paddle->glVB);
+    glDeleteBuffers(1, &blockIB);
+    glDeleteShader(shader);
 
     free(paddle);
 
