@@ -85,6 +85,13 @@ void updateBlockVB(Block* block)
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * 4 * 2, newPositions);
 }
 
+void paddleMove(Block* paddle, GLFWwindow* window){
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        paddle->position.x += 3;
+    else if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        paddle->position.x -= 3;
+}
+
 const char* vertexShaderSrc = 
 "#version 430 core\n"
 "\n"
@@ -173,32 +180,29 @@ int main()
     glLinkProgram(shader);
     glUseProgram(shader);
 
-    Vec2ui position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 2 };
-    Block* block = createBlock(position, 100, 100, GL_DYNAMIC_DRAW);
+    Vec2ui position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 6 };
+    Block* paddle = createBlock(position, 150, 50, GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
     glEnableVertexAttribArray(0);
 
-    unsigned int centerX = COORDINATE_SPACE / 2;
-    unsigned int centerY = COORDINATE_SPACE / 2;
 
     while (!glfwWindowShouldClose(window))
     {
-        float time = (float)glfwGetTime();
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        block->position.x = centerX + (unsigned int)(sin(time) * 500.0f);
-        block->position.y = centerY + (unsigned int)(cos(time) * 500.0f);
+        
 
-        updateBlockVB(block);
-        drawBlock(block);
+        updateBlockVB(paddle);
+        drawBlock(paddle);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        paddleMove(paddle, window);
     }
 
-    free(block);
+    free(paddle);
 
     glfwTerminate();
     return 0;
