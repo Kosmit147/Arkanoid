@@ -3,7 +3,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+
+#define INCBIN_PREFIX 
+#include <incbin.h>
 
 #include "entities.h"
 #include "board.h"
@@ -11,24 +13,16 @@
 
 #include "defines.h"
 
-const char* vertexShaderSrc = 
-"#version 430 core\n"
-"\n"
-"layout (location = 0) in vec4 inPosition;\n"
-"\n"
-"void main()\n"
-"{\n"
-"   gl_Position = inPosition;\n"
-"}\n";
-const char* fragmentShaderSrc = 
-"#version 430 core\n"
-"\n"
-"out vec4 outColor;\n"
-"\n"
-"void main()\n"
-"{\n"
-"   outColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
-"}\n";
+void movePaddle(Block* paddle, GLFWwindow* window, float deltaTime)
+{    
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        paddle->position.x += 2000.0f * deltaTime;
+    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        paddle->position.x -= 2000.0f * deltaTime;
+}
+
+INCTXT(vertexShaderSrc, "../shaders/block.vert");
+INCTXT(fragmentShaderSrc, "../shaders/block.frag");
 
 int main()
 {
@@ -87,8 +81,10 @@ int main()
     unsigned int fragmentShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSrc, NULL);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSrc, NULL);
+    const char* vertexDataPtr = vertexShaderSrcData;
+    const char* fragmentDataPtr = fragmentShaderSrcData;
+    glShaderSource(vertexShader, 1, &vertexDataPtr, NULL);
+    glShaderSource(fragmentShader, 1, &fragmentDataPtr, NULL);
     glCompileShader(vertexShader);
     glCompileShader(fragmentShader);
 
@@ -103,37 +99,38 @@ int main()
     glDeleteShader(fragmentShader);
 #endif
 
-    Vec2ui position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 2 };
-    Block* block = createBlock(position, 100, 100, GL_DYNAMIC_DRAW);
+    Vec2 position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 6 };
+    Block* paddle = createBlock(position, 600, 200, GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
     glEnableVertexAttribArray(0);
 
-    unsigned int centerX = COORDINATE_SPACE / 2;
-    unsigned int centerY = COORDINATE_SPACE / 2;
+    float prevTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
         float time = (float)glfwGetTime();
+        float deltaTime = time - prevTime;
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        block->position.x = centerX + (unsigned int)(sin(time) * 500.0f);
-        block->position.y = centerY + (unsigned int)(cos(time) * 500.0f);
+        movePaddle(paddle, window, deltaTime);
 
-        updateBlockVB(block);
-        drawBlock(block);
+        updateBlockVB(paddle);
+        drawBlock(paddle);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        prevTime = time;
     }
 
     glDeleteVertexArrays(1, &blockVA);
-    glDeleteBuffers(1, &block->glVB);
+    glDeleteBuffers(1, &paddle->glVB);
     glDeleteBuffers(1, &blockIB);
     glDeleteShader(shader);
 
-    free(block);
+    free(paddle);
 
     glfwTerminate();
     return 0;

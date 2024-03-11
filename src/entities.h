@@ -12,7 +12,7 @@ typedef struct Ball
 
 typedef struct Block
 {
-    Vec2ui position; // top-left corner
+    Vec2 position; // top-left corner
     unsigned int width;
     unsigned int height;
 
