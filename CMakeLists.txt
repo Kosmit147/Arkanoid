@@ -18,6 +18,7 @@ target_compile_options(arkanoid PRIVATE -Wall -Wextra -Werror -Wconversion)
 
 target_include_directories(arkanoid PUBLIC dependencies/GLFW/include)
 target_include_directories(arkanoid PUBLIC dependencies/GLAD/include)
+target_include_directories(arkanoid PUBLIC dependencies/INCBIN/include)
 
 set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
 set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )

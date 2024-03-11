@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define INCBIN_PREFIX 
+#include <incbin.h>
+
 #define COORDINATE_SPACE 1024
 
 typedef struct Vec2
@@ -85,24 +88,8 @@ void updateBlockVB(Block* block)
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * 4 * 2, newPositions);
 }
 
-const char* vertexShaderSrc = 
-"#version 430 core\n"
-"\n"
-"layout (location = 0) in vec4 inPosition;\n"
-"\n"
-"void main()\n"
-"{\n"
-"   gl_Position = inPosition;\n"
-"}\n";
-const char* fragmentShaderSrc = 
-"#version 430 core\n"
-"\n"
-"out vec4 outColor;\n"
-"\n"
-"void main()\n"
-"{\n"
-"   outColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
-"}\n";
+INCTXT(vertexShaderSrc, "../shaders/block.vert");
+INCTXT(fragmentShaderSrc, "../shaders/block.frag");
 
 int main()
 {
@@ -162,8 +149,10 @@ int main()
     unsigned int fragmentShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSrc, NULL);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSrc, NULL);
+    const char* vertexDataPtr = vertexShaderSrcData;
+    const char* fragmentDataPtr = fragmentShaderSrcData;
+    glShaderSource(vertexShader, 1, &vertexDataPtr, NULL);
+    glShaderSource(fragmentShader, 1, &fragmentDataPtr, NULL);
     glCompileShader(vertexShader);
     glCompileShader(fragmentShader);
 
