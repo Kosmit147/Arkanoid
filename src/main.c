@@ -15,6 +15,9 @@
 
 #include "defines.h"
 
+INCTXT(vertexShaderSrc, "../shaders/block.vert");
+INCTXT(fragmentShaderSrc, "../shaders/block.frag");
+
 void movePaddle(Block* paddle, GLFWwindow* window, float deltaTime)
 {    
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
@@ -22,9 +25,6 @@ void movePaddle(Block* paddle, GLFWwindow* window, float deltaTime)
     else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         paddle->position.x -= 2000.0f * deltaTime;
 }
-
-INCTXT(vertexShaderSrc, "../shaders/block.vert");
-INCTXT(fragmentShaderSrc, "../shaders/block.frag");
 
 int main()
 {
