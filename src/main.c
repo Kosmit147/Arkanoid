@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #define COORDINATE_SPACE 1024
 
@@ -11,11 +10,6 @@ typedef struct Vec2
 {
     float x, y;
 } Vec2;
-
-typedef struct Vec2ui
-{
-    unsigned int x, y;
-} Vec2ui;
 
 typedef struct Ball
 {
@@ -27,14 +21,14 @@ typedef struct Ball
 
 typedef struct Block
 {
-    Vec2ui position; // top-left corner
+    Vec2 position; // top-left corner
     unsigned int width;
     unsigned int height;
 
     unsigned int glVB; // vertex buffer
 } Block;
 
-Block* createBlock(Vec2ui position, unsigned int width, unsigned int height, GLenum usage)
+Block* createBlock(Vec2 position, unsigned int width, unsigned int height, GLenum usage)
 {
     Block* block = malloc(sizeof(Block));
 
@@ -42,8 +36,8 @@ Block* createBlock(Vec2ui position, unsigned int width, unsigned int height, GLe
     block->width = width;
     block->height = height;
 
-    float normalizedX = (float)position.x / COORDINATE_SPACE * 2.0f - 1.0f;
-    float normalizedY = (float)position.y / COORDINATE_SPACE * 2.0f - 1.0f;
+    float normalizedX = position.x / COORDINATE_SPACE * 2.0f - 1.0f;
+    float normalizedY = position.y / COORDINATE_SPACE * 2.0f - 1.0f;
     float normalizedWidth = (float)width / COORDINATE_SPACE * 2.0f;
     float normalizedHeight = (float)height / COORDINATE_SPACE * 2.0f;
 
@@ -83,6 +77,15 @@ void updateBlockVB(Block* block)
 
     glBindBuffer(GL_ARRAY_BUFFER, block->glVB);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * 4 * 2, newPositions);
+}
+
+void paddleMove(Block* paddle, GLFWwindow* window, float deltaTime){
+    
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        paddle->position.x += 500.0f * deltaTime;
+    
+    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        paddle->position.x -= 500.0f * deltaTime;
 }
 
 const char* vertexShaderSrc = 
@@ -173,32 +176,32 @@ int main()
     glLinkProgram(shader);
     glUseProgram(shader);
 
-    Vec2ui position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 2 };
-    Block* block = createBlock(position, 100, 100, GL_DYNAMIC_DRAW);
+    Vec2 position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 6 };
+    Block* paddle = createBlock(position, 150, 50, GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
     glEnableVertexAttribArray(0);
 
-    unsigned int centerX = COORDINATE_SPACE / 2;
-    unsigned int centerY = COORDINATE_SPACE / 2;
-
+    float previousTime = (float) glfwGetTime();
     while (!glfwWindowShouldClose(window))
     {
-        float time = (float)glfwGetTime();
 
         glClear(GL_COLOR_BUFFER_BIT);
+        float time = (float)glfwGetTime();
+        float deltaTime = time - previousTime;
 
-        block->position.x = centerX + (unsigned int)(sin(time) * 500.0f);
-        block->position.y = centerY + (unsigned int)(cos(time) * 500.0f);
+        paddleMove(paddle, window, deltaTime);
 
-        updateBlockVB(block);
-        drawBlock(block);
+        updateBlockVB(paddle);
+        drawBlock(paddle);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        previousTime = time;
+        
     }
 
-    free(block);
+    free(paddle);
 
     glfwTerminate();
     return 0;
