@@ -36,8 +36,8 @@ Block* createBlock(Vec2 position, unsigned int width, unsigned int height, GLenu
     block->width = width;
     block->height = height;
 
-    float normalizedX = (float)position.x / COORDINATE_SPACE * 2.0f - 1.0f;
-    float normalizedY = (float)position.y / COORDINATE_SPACE * 2.0f - 1.0f;
+    float normalizedX = position.x / COORDINATE_SPACE * 2.0f - 1.0f;
+    float normalizedY = position.y / COORDINATE_SPACE * 2.0f - 1.0f;
     float normalizedWidth = (float)width / COORDINATE_SPACE * 2.0f;
     float normalizedHeight = (float)height / COORDINATE_SPACE * 2.0f;
 
