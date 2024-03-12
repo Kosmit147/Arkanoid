@@ -7,12 +7,16 @@
 #define INCBIN_PREFIX 
 #include <incbin.h>
 
+#include "window.h"
 #include "entities.h"
 #include "board.h"
 #include "rendering.h"
 #include "shader.h"
 
 #include "defines.h"
+
+INCTXT(vertexShaderSrc, "../shaders/block.vert");
+INCTXT(fragmentShaderSrc, "../shaders/block.frag");
 
 void movePaddle(Block* paddle, GLFWwindow* window, float deltaTime)
 {    
@@ -22,70 +26,33 @@ void movePaddle(Block* paddle, GLFWwindow* window, float deltaTime)
         paddle->position.x -= 2000.0f * deltaTime;
 }
 
-INCTXT(vertexShaderSrc, "../shaders/block.vert");
-INCTXT(fragmentShaderSrc, "../shaders/block.frag");
-
 int main()
 {
-    GLFWwindow* window;
-
-    if (!glfwInit())
-    {
-        fprintf(stderr, "Failed to initialize GLFW.\n");
-        return -1;
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-    window = glfwCreateWindow(1200, 1200, "Arkanoid", NULL, NULL);
+    GLFWwindow* window = setUpWindow("Arkanoid", 1200, 1200);
 
     if (!window)
-    {
-        fprintf(stderr, "Failed to create a window.\n");
-        glfwTerminate();
         return -1;
-    }
 
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        fprintf(stderr, "Failed to initialize GLAD.\n");
-        glfwTerminate();
+    if (!loadGlad())
         return -1;
-    }
+
+    glfwSetFramebufferSizeCallback(window, onWindowResize);
 
     puts((const char*)glGetString(GL_VERSION));
 
-    unsigned int blockVA;
-    glGenVertexArrays(1, &blockVA);
-    glBindVertexArray(blockVA);
-
-    unsigned char indices[] = {
-        0, 1, 2,
-        0, 2, 3,
-    };
-
-    unsigned int blockIB;
-    glGenBuffers(1, &blockIB);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, blockIB);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned char) * 2 * 3, indices, GL_STATIC_DRAW);
+    unsigned int VA = genVA();
+    unsigned int rectangleIB = genRectangleIB(GL_STATIC_DRAW);
 
     unsigned int blockShader = createShader(vertexShaderSrcData, fragmentShaderSrcData);
     glUseProgram(blockShader);
 
-    Vec2 position = { COORDINATE_SPACE / 2, COORDINATE_SPACE / 6 };
-    Block* paddle = createBlock(position, 600, 200, GL_DYNAMIC_DRAW);
+    const unsigned int paddleWidth = 600;
+    const unsigned int paddleHeight = 200;
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
-    glEnableVertexAttribArray(0);
+    Vec2 position = { (float)COORDINATE_SPACE / 2 - (float)paddleWidth / 2, (float)COORDINATE_SPACE / 6 };
+    Block* paddle = createBlock(position, paddleWidth, paddleHeight, GL_DYNAMIC_DRAW);
+
+    int timeUnifLocation = glGetUniformLocation(blockShader, "time");
 
     float prevTime = (float)glfwGetTime();
 
@@ -93,6 +60,8 @@ int main()
     {
         float time = (float)glfwGetTime();
         float deltaTime = time - prevTime;
+
+        glUniform1f(timeUnifLocation, time);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -107,9 +76,9 @@ int main()
         prevTime = time;
     }
 
-    glDeleteVertexArrays(1, &blockVA);
+    glDeleteVertexArrays(1, &VA);
     glDeleteBuffers(1, &paddle->glVB);
-    glDeleteBuffers(1, &blockIB);
+    glDeleteBuffers(1, &rectangleIB);
     glDeleteProgram(blockShader);
 
     free(paddle);
