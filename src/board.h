@@ -5,7 +5,5 @@
 #include "vec.h"
 #include "entities.h"
 
-float normalizeCoordinatef(float coord);
-float normalizeCoordinateui(unsigned int coord);
 void normalizeBlockCoordinates(float* normalizedPositions, Vec2 position, unsigned int width, unsigned int height);
 Block* createBlock(Vec2 position, unsigned int width, unsigned int height, GLenum usage);
