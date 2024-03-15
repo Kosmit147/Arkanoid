@@ -11,7 +11,7 @@ float normalizeCoordinate(float coord)
 
 vec4 normalizeVertexCoordinates(vec4 position)
 {
-    return vec4(normalizeCoordinate(position.x), normalizeCoordinate(position.y), 1.0, 1.0);
+    return vec4(normalizeCoordinate(position.x), normalizeCoordinate(position.y), 0.0, 1.0);
 }
 
 void main()
