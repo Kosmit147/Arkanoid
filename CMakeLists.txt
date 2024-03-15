@@ -14,7 +14,10 @@ add_executable(
     dependencies/GLAD/src/glad.c
     ${ArkanoidSources}
 )
-target_compile_options(arkanoid PRIVATE -Wall -Wextra -Werror -Wconversion)
+
+if (CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID MATCHES "GNU")
+    target_compile_options(arkanoid PRIVATE -Wall -Wextra -Werror -Wconversion)
+endif()
 
 target_include_directories(arkanoid PUBLIC dependencies/GLFW/include)
 target_include_directories(arkanoid PUBLIC dependencies/GLAD/include)
