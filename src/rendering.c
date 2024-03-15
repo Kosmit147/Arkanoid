@@ -3,36 +3,7 @@
 #include <glad/glad.h>
 
 #include "board.h"
-
-void bufferBlockGLData(Block* block, float* positions, GLenum usage)
-{
-    glGenBuffers(1, &block->glVB);
-    glBindBuffer(GL_ARRAY_BUFFER, block->glVB);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 4 * 2, positions, usage);
-}
-
-void setBlockVertexAttributes()
-{
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
-    glEnableVertexAttribArray(0);
-}
-
-void drawBlock(Block* block)
-{
-    glBindBuffer(GL_ARRAY_BUFFER, block->glVB);
-    setBlockVertexAttributes();
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, NULL);
-}
-
-void updateBlockVB(Block* block)
-{
-    float newNormalizedPositions[4 * 2];
-
-    normalizeBlockCoordinates(newNormalizedPositions, block->position, block->width, block->height);
-
-    glBindBuffer(GL_ARRAY_BUFFER, block->glVB);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * 4 * 2, newNormalizedPositions);
-}
+#include "defines.h"
 
 unsigned int genVA()
 {
@@ -61,17 +32,68 @@ unsigned int genIB()
     return IB;
 }
 
-unsigned int genRectangleIB(GLenum usage)
+unsigned int createBlockVB(Block* paddle, GLenum usage)
 {
-    static const unsigned char indices[] = {
+    unsigned int VB = genVB();
+
+    float positions[BLOCK_VERTEX_FLOATS * 4] = {
+        paddle->position.x, paddle->position.y,
+        paddle->position.x + paddle->width, paddle->position.y,
+        paddle->position.x + paddle->width, paddle->position.y - paddle->height,
+        paddle->position.x, paddle->position.y - paddle->height,
+    };
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * BLOCK_VERTEX_FLOATS * 4, positions, usage);
+
+    return VB;
+}
+
+void updateBlockVB(Block* paddle, unsigned int paddleVB)
+{
+    float positions[BLOCK_VERTEX_FLOATS * 4] = {
+        paddle->position.x, paddle->position.y,
+        paddle->position.x + paddle->width, paddle->position.y,
+        paddle->position.x + paddle->width, paddle->position.y - paddle->height,
+        paddle->position.x, paddle->position.y - paddle->height,
+    };
+
+    glBindBuffer(GL_ARRAY_BUFFER, paddleVB);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * BLOCK_VERTEX_FLOATS * 4, positions);
+}
+
+unsigned int createNormalizedBlockVB(Block* block, GLenum usage)
+{
+    unsigned int VB = genVB();
+
+    float normalizedPositions[BLOCK_VERTEX_FLOATS * 4];
+    normalizeBlockCoordinates(normalizedPositions, block);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * BLOCK_VERTEX_FLOATS * 4, normalizedPositions, usage);
+
+    return VB;
+}
+
+unsigned int createBlockIB(GLenum usage)
+{
+    unsigned int IB = genIB();
+
+    unsigned short indices[] = {
         0, 1, 2,
         0, 2, 3,
     };
 
-    unsigned int rectIB;
-    glGenBuffers(1, &rectIB);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rectIB);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned char) * 2 * 3, indices, usage);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * 3 * 2, indices, usage);
 
-    return rectIB;
+    return IB;
+}
+
+void setBlockVertexAttributes()
+{
+    glVertexAttribPointer(0, BLOCK_VERTEX_FLOATS, GL_FLOAT, GL_FALSE, sizeof(float) * BLOCK_VERTEX_FLOATS, NULL);
+    glEnableVertexAttribArray(0);
+}
+
+void drawVertices(unsigned int VA, unsigned int count, GLenum IBType)
+{
+    glBindVertexArray(VA);
+    glDrawElements(GL_TRIANGLES, count, IBType, NULL);
 }

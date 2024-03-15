@@ -15,15 +15,20 @@
 
 #include "defines.h"
 
-INCTXT(vertexShaderSrc, "../shaders/block.vert");
-INCTXT(fragmentShaderSrc, "../shaders/block.frag");
+// INCTXT(blockVertexShaderSrc, "../shaders/block.vert");
+// INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
 
-void movePaddle(Block* paddle, GLFWwindow* window, float deltaTime)
+INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
+INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
+
+void movePaddle(Block* paddle, unsigned int paddleVB, GLFWwindow* window, float deltaTime)
 {    
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        paddle->position.x += 2000.0f * deltaTime;
+        paddle->position.x += PADDLE_SPEED * deltaTime;
     else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        paddle->position.x -= 2000.0f * deltaTime;
+        paddle->position.x -= PADDLE_SPEED * deltaTime;
+
+    updateBlockVB(paddle, paddleVB);
 }
 
 int main()
@@ -37,22 +42,26 @@ int main()
         return -1;
 
     glfwSetFramebufferSizeCallback(window, onWindowResize);
-
     puts((const char*)glGetString(GL_VERSION));
 
-    unsigned int VA = genVA();
-    unsigned int rectangleIB = genRectangleIB(GL_STATIC_DRAW);
+    unsigned int paddleVA = genVA();
 
-    unsigned int blockShader = createShader(vertexShaderSrcData, fragmentShaderSrcData);
-    glUseProgram(blockShader);
+    Vec2 paddlePosition = { (float)COORDINATE_SPACE / 2 - PADDLE_WIDTH / 2, (float)COORDINATE_SPACE / 6 };
+    Block paddle = {
+        paddlePosition,
+        PADDLE_WIDTH,
+        PADDLE_HEIGHT,
+    };
 
-    const unsigned int paddleWidth = 600;
-    const unsigned int paddleHeight = 200;
+    unsigned int paddleVB = createBlockVB(&paddle, GL_DYNAMIC_DRAW);
+    unsigned int paddleIB = createBlockIB(GL_STATIC_DRAW);
+    setBlockVertexAttributes();
 
-    Vec2 position = { (float)COORDINATE_SPACE / 2 - (float)paddleWidth / 2, (float)COORDINATE_SPACE / 6 };
-    Block* paddle = createBlock(position, paddleWidth, paddleHeight, GL_DYNAMIC_DRAW);
+    // unsigned int blockShader = createShader(blockVertexShaderSrcData, blockFragmentShaderSrcData);
+    // glUseProgram(blockShader);
 
-    int timeUnifLocation = glGetUniformLocation(blockShader, "time");
+    unsigned int paddleShader = createShader(paddleVertexShaderSrcData, paddleFragmentShaderSrcData);
+    glUseProgram(paddleShader);
 
     float prevTime = (float)glfwGetTime();
 
@@ -61,14 +70,10 @@ int main()
         float time = (float)glfwGetTime();
         float deltaTime = time - prevTime;
 
-        glUniform1f(timeUnifLocation, time);
-
         glClear(GL_COLOR_BUFFER_BIT);
 
-        movePaddle(paddle, window, deltaTime);
-
-        updateBlockVB(paddle);
-        drawBlock(paddle);
+        movePaddle(&paddle, paddleVB, window, deltaTime);
+        drawVertices(paddleVA, 6, GL_UNSIGNED_SHORT);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -76,12 +81,11 @@ int main()
         prevTime = time;
     }
 
-    glDeleteVertexArrays(1, &VA);
-    glDeleteBuffers(1, &paddle->glVB);
-    glDeleteBuffers(1, &rectangleIB);
-    glDeleteProgram(blockShader);
-
-    free(paddle);
+    glDeleteVertexArrays(1, &paddleVA);
+    glDeleteBuffers(1, &paddleVB);
+    glDeleteBuffers(1, &paddleIB);
+    // glDeleteProgram(blockShader);
+    glDeleteProgram(paddleShader);
 
     glfwTerminate();
     return 0;
