@@ -15,8 +15,8 @@
 
 #include "defines.h"
 
-// INCTXT(blockVertexShaderSrc, "../shaders/block.vert");
-// INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
+INCTXT(blockVertexShaderSrc, "../shaders/block.vert");
+INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
 
 INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
 INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
@@ -44,8 +44,6 @@ int main()
     glfwSetFramebufferSizeCallback(window, onWindowResize);
     puts((const char*)glGetString(GL_VERSION));
 
-    unsigned int paddleVA = genVA();
-
     Vec2 paddlePosition = { (float)COORDINATE_SPACE / 2 - PADDLE_WIDTH / 2, (float)COORDINATE_SPACE / 6 };
     Block paddle = {
         paddlePosition,
@@ -53,15 +51,22 @@ int main()
         PADDLE_HEIGHT,
     };
 
+    unsigned int paddleVA = genVA();
     unsigned int paddleVB = createBlockVB(&paddle, GL_DYNAMIC_DRAW);
     unsigned int paddleIB = createBlockIB(GL_STATIC_DRAW);
     setBlockVertexAttributes();
 
-    // unsigned int blockShader = createShader(blockVertexShaderSrcData, blockFragmentShaderSrcData);
-    // glUseProgram(blockShader);
-
     unsigned int paddleShader = createShader(paddleVertexShaderSrcData, paddleFragmentShaderSrcData);
-    glUseProgram(paddleShader);
+
+    size_t blockCount;
+    Block* blocks = createBlocks(1, &blockCount);
+
+    unsigned int blocksVA = genVA();
+    unsigned int blocksVB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW);
+    unsigned int blocksIB = createBlocksIB(blockCount, GL_DYNAMIC_DRAW);
+    setBlockVertexAttributes();
+
+    unsigned int blockShader = createShader(blockVertexShaderSrcData, blockFragmentShaderSrcData);
 
     float prevTime = (float)glfwGetTime();
 
@@ -73,7 +78,12 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         movePaddle(&paddle, paddleVB, window, deltaTime);
+
+        glUseProgram(paddleShader);
         drawVertices(paddleVA, 6, GL_UNSIGNED_SHORT);
+
+        glUseProgram(blockShader);
+        drawVertices(blocksVA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -82,10 +92,17 @@ int main()
     }
 
     glDeleteVertexArrays(1, &paddleVA);
+    glDeleteVertexArrays(1, &blocksVA);
+
     glDeleteBuffers(1, &paddleVB);
     glDeleteBuffers(1, &paddleIB);
-    // glDeleteProgram(blockShader);
+    glDeleteBuffers(1, &blocksVB);
+    glDeleteBuffers(1, &blocksIB);
+
     glDeleteProgram(paddleShader);
+    glDeleteProgram(blockShader);
+
+    free(blocks);
 
     glfwTerminate();
     return 0;

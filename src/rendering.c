@@ -2,6 +2,9 @@
 
 #include <glad/glad.h>
 
+#include <stdlib.h>
+#include <assert.h>
+
 #include "board.h"
 #include "defines.h"
 
@@ -32,15 +35,15 @@ unsigned int genIB()
     return IB;
 }
 
-unsigned int createBlockVB(Block* paddle, GLenum usage)
+unsigned int createBlockVB(Block* block, GLenum usage)
 {
     unsigned int VB = genVB();
 
     float positions[BLOCK_VERTEX_FLOATS * 4] = {
-        paddle->position.x, paddle->position.y,
-        paddle->position.x + paddle->width, paddle->position.y,
-        paddle->position.x + paddle->width, paddle->position.y - paddle->height,
-        paddle->position.x, paddle->position.y - paddle->height,
+        block->position.x, block->position.y,
+        block->position.x + block->width, block->position.y,
+        block->position.x + block->width, block->position.y - block->height,
+        block->position.x, block->position.y - block->height,
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * BLOCK_VERTEX_FLOATS * 4, positions, usage);
@@ -48,13 +51,13 @@ unsigned int createBlockVB(Block* paddle, GLenum usage)
     return VB;
 }
 
-void updateBlockVB(Block* paddle, unsigned int paddleVB)
+void updateBlockVB(Block* block, unsigned int paddleVB)
 {
     float positions[BLOCK_VERTEX_FLOATS * 4] = {
-        paddle->position.x, paddle->position.y,
-        paddle->position.x + paddle->width, paddle->position.y,
-        paddle->position.x + paddle->width, paddle->position.y - paddle->height,
-        paddle->position.x, paddle->position.y - paddle->height,
+        block->position.x, block->position.y,
+        block->position.x + block->width, block->position.y,
+        block->position.x + block->width, block->position.y - block->height,
+        block->position.x, block->position.y - block->height,
     };
 
     glBindBuffer(GL_ARRAY_BUFFER, paddleVB);
@@ -82,6 +85,54 @@ unsigned int createBlockIB(GLenum usage)
     };
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * 3 * 2, indices, usage);
+
+    return IB;
+}
+
+unsigned int createNormalizedBlocksVB(Block* blocks, size_t count, GLenum usage)
+{
+    unsigned int VB = genVB();
+
+    size_t stride = sizeof(float) * 4 * BLOCK_VERTEX_FLOATS;
+    float* positions = malloc(stride * count);
+
+    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
+    static_assert(BLOCK_VERTEX_FLOATS == 2);
+
+    for (size_t i = 0; i < count; i++)
+        normalizeBlockCoordinates(positions + 4 * BLOCK_VERTEX_FLOATS * i, &blocks[i]);
+
+    glBufferData(GL_ARRAY_BUFFER, (GLsizei)stride * (GLsizei)count, positions, usage);
+    free(positions);
+
+    return VB;
+}
+
+unsigned int createBlocksIB(size_t count, GLenum usage)
+{
+    unsigned int IB = genIB();
+
+    size_t dataSize = sizeof(unsigned short) * 2 * 3 * count;
+    unsigned short* positions = malloc(dataSize);
+
+    for (unsigned short i = 0; i < count; i++)
+    {
+        unsigned short indexOffset = i * 2 * 3;
+        unsigned short vertexOffset = i * 4;
+
+        // first triangle
+        positions[indexOffset + 0] = vertexOffset + 0; 
+        positions[indexOffset + 1] = vertexOffset + 1; 
+        positions[indexOffset + 2] = vertexOffset + 2;
+
+        // second triangle
+        positions[indexOffset + 3] = vertexOffset + 0; 
+        positions[indexOffset + 4] = vertexOffset + 2; 
+        positions[indexOffset + 5] = vertexOffset + 3;
+    }
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)dataSize, positions, usage);
+    free(positions);
 
     return IB;
 }
