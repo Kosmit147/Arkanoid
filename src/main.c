@@ -63,7 +63,7 @@ int main()
 
     unsigned int blocksVA = genVA();
     unsigned int blocksVB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW);
-    unsigned int blocksIB = createBlocksIB(blockCount, GL_DYNAMIC_DRAW);
+    unsigned int blocksIB = createBlocksIB(blockCount, GL_STATIC_DRAW);
     setBlockVertexAttributes();
 
     unsigned int blockShader = createShader(blockVertexShaderSrcData, blockFragmentShaderSrcData);

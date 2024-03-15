@@ -39,6 +39,9 @@ unsigned int createBlockVB(Block* block, GLenum usage)
 {
     unsigned int VB = genVB();
 
+    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
+    static_assert(BLOCK_VERTEX_FLOATS == 2);
+
     float positions[BLOCK_VERTEX_FLOATS * 4] = {
         block->position.x, block->position.y,
         block->position.x + block->width, block->position.y,
@@ -53,6 +56,9 @@ unsigned int createBlockVB(Block* block, GLenum usage)
 
 void updateBlockVB(Block* block, unsigned int paddleVB)
 {
+    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
+    static_assert(BLOCK_VERTEX_FLOATS == 2);
+
     float positions[BLOCK_VERTEX_FLOATS * 4] = {
         block->position.x, block->position.y,
         block->position.x + block->width, block->position.y,
@@ -68,6 +74,9 @@ unsigned int createNormalizedBlockVB(Block* block, GLenum usage)
 {
     unsigned int VB = genVB();
 
+    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
+    static_assert(BLOCK_VERTEX_FLOATS == 2);
+
     float normalizedPositions[BLOCK_VERTEX_FLOATS * 4];
     normalizeBlockCoordinates(normalizedPositions, block);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * BLOCK_VERTEX_FLOATS * 4, normalizedPositions, usage);
@@ -79,7 +88,7 @@ unsigned int createBlockIB(GLenum usage)
 {
     unsigned int IB = genIB();
 
-    unsigned short indices[] = {
+    static const unsigned short indices[] = {
         0, 1, 2,
         0, 2, 3,
     };
