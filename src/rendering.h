@@ -20,4 +20,4 @@ unsigned int createBlocksIB(size_t count, GLenum usage);
 
 void setBlockVertexAttributes();
 
-void drawVertices(unsigned int VA, unsigned int count, GLenum IBType);
+void drawVertices(unsigned int VA, int count, GLenum IBType);

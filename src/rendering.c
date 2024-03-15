@@ -92,7 +92,7 @@ void setBlockVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
-void drawVertices(unsigned int VA, unsigned int count, GLenum IBType)
+void drawVertices(unsigned int VA, int count, GLenum IBType)
 {
     glBindVertexArray(VA);
     glDrawElements(GL_TRIANGLES, count, IBType, NULL);
