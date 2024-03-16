@@ -13,12 +13,12 @@ float normalizeCoordinate(float coord)
     return coord / (float)COORDINATE_SPACE * 2.0f - 1.0f;
 }
 
-void normalizeBlockCoordinates(float* normalizedPositions, Vec2 position, unsigned int width, unsigned int height)
+void normalizeBlockCoordinates(float* normalizedPositions, Block* block)
 {
-    float normalizedX1 = normalizeCoordinate(position.x);
-    float normalizedY1 = normalizeCoordinate(position.y);
-    float normalizedX2 = normalizedX1 + (float)width / COORDINATE_SPACE * 2.0f;
-    float normalizedY2 = normalizedY1 - (float)height / COORDINATE_SPACE * 2.0f;
+    float normalizedX1 = normalizeCoordinate(block->position.x);
+    float normalizedY1 = normalizeCoordinate(block->position.y);
+    float normalizedX2 = normalizedX1 + block->width / COORDINATE_SPACE * 2.0f;
+    float normalizedY2 = normalizedY1 - block->height / COORDINATE_SPACE * 2.0f;
 
     normalizedPositions[0] = normalizedX1; normalizedPositions[1] = normalizedY1;
     normalizedPositions[2] = normalizedX2; normalizedPositions[3] = normalizedY1;
@@ -26,17 +26,46 @@ void normalizeBlockCoordinates(float* normalizedPositions, Vec2 position, unsign
     normalizedPositions[6] = normalizedX1; normalizedPositions[7] = normalizedY2;
 }
 
-Block* createBlock(Vec2 position, unsigned int width, unsigned int height, GLenum usage)
+Block* createBlocks(unsigned int /*level*/, size_t* blockCount)
 {
-    Block* block = malloc(sizeof(Block));
-    block->position = position;
-    block->width = width;
-    block->height = height;
+    // TODO: load level from a file based on level arg
 
-    float normalizedPositions[4 * 2]; // 4 vertices
+    *blockCount = 3;
+    Block* blocks = malloc(sizeof(Block) * *blockCount);
 
-    normalizeBlockCoordinates(normalizedPositions, position, width, height);
-    bufferBlockGLData(block, normalizedPositions, usage);
+    Vec2 position1 = { 0.0f, 4096.0f };
+    float width1 = 1024.0f;
+    float height1 = 1024.0f;
 
-    return block;
+    Vec2 position2 = { 1856.0f, 3234.0f };
+    float width2 = 1000.0f;
+    float height2 = 200.0f;
+
+    Vec2 position3 = { 4000.0f, 3000.0f };
+    float width3 = 100.0f;
+    float height3 = 150.0f;
+
+    Block block1 = {
+        position1,
+        width1,
+        height1,
+    };
+
+    Block block2 = {
+        position2,
+        width2,
+        height2,
+    };
+
+    Block block3 = {
+        position3,
+        width3,
+        height3,
+    };
+
+    blocks[0] = block1;
+    blocks[1] = block2;
+    blocks[2] = block3;
+
+    return blocks;
 }
