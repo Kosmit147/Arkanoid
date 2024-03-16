@@ -44,7 +44,7 @@ int main()
     glfwSetFramebufferSizeCallback(window, onWindowResize);
     puts((const char*)glGetString(GL_VERSION));
 
-    Vec2 paddlePosition = { (float)COORDINATE_SPACE / 2 - PADDLE_WIDTH / 2, (float)COORDINATE_SPACE / 6 };
+    Vec2 paddlePosition = { PADDLE_START_POS_X, PADDLE_START_POS_Y };
     Block paddle = {
         paddlePosition,
         PADDLE_WIDTH,
