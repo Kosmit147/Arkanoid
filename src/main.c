@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define INCBIN_PREFIX 
+#define INCBIN_PREFIX
 #include <incbin.h>
 
 #include "window.h"
@@ -12,7 +12,7 @@
 #include "board.h"
 #include "rendering.h"
 #include "shader.h"
-
+#include "input.h"
 #include "defines.h"
 
 INCTXT(blockVertexShaderSrc, "../shaders/block.vert");
@@ -21,19 +21,9 @@ INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
 INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
 INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
 
-void movePaddle(Block* paddle, unsigned int paddleVB, GLFWwindow* window, float deltaTime)
-{    
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        paddle->position.x += PADDLE_SPEED * deltaTime;
-    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        paddle->position.x -= PADDLE_SPEED * deltaTime;
-
-    updateBlockVB(paddle, paddleVB);
-}
-
 int main()
 {
-    GLFWwindow* window = setUpWindow("Arkanoid", 1200, 1200);
+    GLFWwindow *window = setUpWindow("Arkanoid", 1200, 1200);
 
     if (!window)
         return -1;
@@ -42,9 +32,9 @@ int main()
         return -1;
 
     glfwSetFramebufferSizeCallback(window, onWindowResize);
-    puts((const char*)glGetString(GL_VERSION));
+    puts((const char *)glGetString(GL_VERSION));
 
-    Vec2 paddlePosition = { PADDLE_START_POS_X, PADDLE_START_POS_Y };
+    Vec2 paddlePosition = {PADDLE_START_POS_X, PADDLE_START_POS_Y};
     Block paddle = {
         paddlePosition,
         PADDLE_WIDTH,
@@ -59,7 +49,7 @@ int main()
     unsigned int paddleShader = createShader(paddleVertexShaderSrcData, paddleFragmentShaderSrcData);
 
     size_t blockCount;
-    Block* blocks = createBlocks(1, &blockCount);
+    Block *blocks = createBlocks(1, &blockCount);
 
     unsigned int blocksVA = genVA();
     unsigned int blocksVB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW);
