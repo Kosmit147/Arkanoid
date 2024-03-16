@@ -10,12 +10,18 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE On)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO On)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL On)
 
-file(GLOB_RECURSE ArkanoidSources src/*.c)
+file(GLOB_RECURSE ARKANOID_SOURCES src/*.c)
+
+if (CMAKE_BUILD_TYPE MATCHES "Debug")
+    set(SUBSYSTEM "")
+else()
+    set(SUBSYSTEM "WIN32")
+endif()
 
 add_executable(
-    arkanoid
+    arkanoid ${SUBSYSTEM}
     dependencies/GLAD/src/glad.c
-    ${ArkanoidSources}
+    ${ARKANOID_SOURCES}
 )
 
 if (CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID MATCHES "GNU")
