@@ -4,9 +4,17 @@
 
 #include "entities.h"
 
+typedef struct GLBuffers
+{
+    unsigned int VA, VB, IB;
+} GLBuffers;
+
 unsigned int genVA();
 unsigned int genVB();
 unsigned int genIB();
+
+GLBuffers createBlockGLBuffers(Block* block);
+GLBuffers createNormalizedBlocksGLBuffers(Block* blocks, size_t blockCount);
 
 unsigned int createBlockVB(Block* block, GLenum usage);
 void updateBlockVB(Block* block, unsigned int blockVB);
@@ -19,3 +27,5 @@ unsigned int createBlocksIB(size_t count, GLenum usage);
 void setBlockVertexAttributes();
 
 void drawVertices(unsigned int VA, int count, GLenum IBType);
+
+void freeGLBuffers(GLBuffers* buffers);
