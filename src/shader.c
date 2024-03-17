@@ -5,32 +5,32 @@
 
 static bool verifyShaderCompilation(unsigned int shader)
 {
-	int success;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    int success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
-	if (!success)
-	{
-		char infoLog[512];
-		glGetShaderInfoLog(shader, 512, NULL, infoLog);
+    if (!success)
+    {
+        char infoLog[512];
+        glGetShaderInfoLog(shader, 512, NULL, infoLog);
         fprintf(stderr, "Shader compilation failed: %s.\n", infoLog);
-	}
+    }
 
-	return success;
+    return success;
 }
 
 static bool verifyProgramLinkage(unsigned int program)
 {
-	int success;
-	glGetProgramiv(program, GL_LINK_STATUS, &success);
+    int success;
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
 
-	if (!success)
-	{
-		char infoLog[512];
-		glGetProgramInfoLog(program, 512, NULL, infoLog);
-		fprintf(stderr, "Shader program linkage failed: %s.\n", infoLog);
-	}
+    if (!success)
+    {
+        char infoLog[512];
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        fprintf(stderr, "Shader program linkage failed: %s.\n", infoLog);
+    }
 
-	return success;
+    return success;
 }
 
 static unsigned int compileShader(const char* shaderSrc, GLenum type)

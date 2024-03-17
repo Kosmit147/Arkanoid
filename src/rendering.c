@@ -154,13 +154,13 @@ unsigned int createBlocksIB(size_t count, GLenum usage)
         unsigned short vertexOffset = i * 4;
 
         // first triangle
-        positions[indexOffset + 0] = vertexOffset + 0; 
-        positions[indexOffset + 1] = vertexOffset + 1; 
+        positions[indexOffset + 0] = vertexOffset + 0;
+        positions[indexOffset + 1] = vertexOffset + 1;
         positions[indexOffset + 2] = vertexOffset + 2;
 
         // second triangle
-        positions[indexOffset + 3] = vertexOffset + 0; 
-        positions[indexOffset + 4] = vertexOffset + 2; 
+        positions[indexOffset + 3] = vertexOffset + 0;
+        positions[indexOffset + 4] = vertexOffset + 2;
         positions[indexOffset + 5] = vertexOffset + 3;
     }
 

@@ -64,5 +64,5 @@ void onWindowResize(GLFWwindow* /*window*/, int width, int height)
         width = height;
     }
 
-	glViewport(xOffset, yOffset, width, height);
+    glViewport(xOffset, yOffset, width, height);
 }
