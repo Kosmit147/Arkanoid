@@ -1,5 +1,5 @@
 #pragma once
-#include "defines.h"
+
 #include "vec.h"
 
 typedef struct Block

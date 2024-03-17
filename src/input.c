@@ -1,5 +1,8 @@
 #include "input.h"
+
 #include "rendering.h"
+
+#include "defines.h"
 
 void movePaddle(Block *paddle, unsigned int paddleVB, GLFWwindow *window, float deltaTime)
 {
