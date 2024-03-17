@@ -14,8 +14,10 @@ file(GLOB_RECURSE ARKANOID_SOURCES src/*.c)
 
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
     set(SUBSYSTEM "")
-else()
+    add_compile_definitions(_DEBUG)
+elseif(CMAKE_BUILD_TYPE MATCHES "Release" OR CMAKE_BUILD_TYPE MATCHES "MinSizeRel" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
     set(SUBSYSTEM "WIN32")
+    add_compile_definitions(_RELEASE)
 endif()
 
 add_executable(

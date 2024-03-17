@@ -35,6 +35,30 @@ unsigned int genIB()
     return IB;
 }
 
+GLBuffers createBlockGLBuffers(Block* block)
+{
+    GLBuffers buffers;
+
+    buffers.VA = genVA();
+    buffers.VB = createBlockVB(block, GL_DYNAMIC_DRAW);
+    buffers.IB = createBlockIB(GL_STATIC_DRAW);
+    setBlockVertexAttributes();
+
+    return buffers;
+}
+
+GLBuffers createNormalizedBlocksGLBuffers(Block* blocks, size_t blockCount)
+{
+    GLBuffers buffers;
+
+    buffers.VA = genVA();
+    buffers.VB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW);
+    buffers.IB = createBlocksIB(blockCount, GL_STATIC_DRAW);
+    setBlockVertexAttributes();
+
+    return buffers;
+}
+
 unsigned int createBlockVB(Block* block, GLenum usage)
 {
     unsigned int VB = genVB();
@@ -156,4 +180,11 @@ void drawVertices(unsigned int VA, int count, GLenum IBType)
 {
     glBindVertexArray(VA);
     glDrawElements(GL_TRIANGLES, count, IBType, NULL);
+}
+
+void freeGLBuffers(GLBuffers* buffers)
+{
+    glDeleteVertexArrays(1, &buffers->VA);
+    glDeleteBuffers(1, &buffers->VB);
+    glDeleteBuffers(1, &buffers->IB);
 }
