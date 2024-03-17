@@ -24,7 +24,7 @@ INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
 
 int main()
 {
-    GLFWwindow* window = setUpWindow("Arkanoid", 1200, 1200);
+    GLFWwindow* window = setUpWindow("Arkanoid", WINDOW_WIDTH, WINDOW_HEIGHT);
 
     if (!window)
         return -1;
