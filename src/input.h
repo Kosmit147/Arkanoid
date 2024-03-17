@@ -5,4 +5,4 @@
 
 #include "entities.h"
 
-void movePaddle(Block *paddle, unsigned int paddleVB, GLFWwindow *window, float deltaTime);
+void movePaddle(Block* paddle, GLFWwindow* window, float deltaTime);

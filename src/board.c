@@ -4,8 +4,6 @@
 
 #include <stdlib.h>
 
-#include "rendering.h"
-
 #include "defines.h"
 
 float normalizeCoordinate(float coord)
@@ -24,6 +22,18 @@ void normalizeBlockCoordinates(float* normalizedPositions, Block* block)
     normalizedPositions[2] = normalizedX2; normalizedPositions[3] = normalizedY1;
     normalizedPositions[4] = normalizedX2; normalizedPositions[5] = normalizedY2;
     normalizedPositions[6] = normalizedX1; normalizedPositions[7] = normalizedY2;
+}
+
+Block createPaddle(float startPosX, float startPosY, float width, float height)
+{
+    Vec2 paddlePosition = { startPosX, startPosY };
+    Block paddle = {
+        paddlePosition,
+        width,
+        height,
+    };
+
+    return paddle;
 }
 
 Block* createBlocks(unsigned int /*level*/, size_t* blockCount)
