@@ -1,17 +1,18 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#define INCBIN_PREFIX
+#include <incbin.h>
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#define INCBIN_PREFIX 
-#include <incbin.h>
 
 #include "window.h"
 #include "entities.h"
 #include "board.h"
 #include "rendering.h"
 #include "shader.h"
+#include "input.h"
 
 #include "defines.h"
 
@@ -20,16 +21,6 @@ INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
 
 INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
 INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
-
-void movePaddle(Block* paddle, unsigned int paddleVB, GLFWwindow* window, float deltaTime)
-{    
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        paddle->position.x += PADDLE_SPEED * deltaTime;
-    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        paddle->position.x -= PADDLE_SPEED * deltaTime;
-
-    updateBlockVB(paddle, paddleVB);
-}
 
 int main()
 {
