@@ -4,6 +4,9 @@
 
 #include "entities.h"
 
+void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, 
+    GLsizei length, const GLchar* message, const void* userParam);
+
 unsigned int genVA();
 unsigned int genVB();
 unsigned int genIB();

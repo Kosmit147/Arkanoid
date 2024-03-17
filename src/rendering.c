@@ -3,10 +3,46 @@
 #include <glad/glad.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 
+#include "log.h"
 #include "board.h"
+
 #include "defines.h"
+
+void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum severity, 
+    GLsizei /*length*/, const GLchar* message, const void* /*userParam*/)
+{
+    if (severity > DEBUG_MESSAGE_MIN_SEVERITY)
+        return;
+
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION && DEBUG_MESSAGE_MIN_SEVERITY != GL_DEBUG_SEVERITY_NOTIFICATION)
+        return;
+
+    const char* color;
+
+    switch (severity)
+    {
+    case GL_DEBUG_SEVERITY_NOTIFICATION:
+        color = ANSI_COLOR_WHITE;
+        break;
+    case GL_DEBUG_SEVERITY_LOW:
+        color = ANSI_COLOR_YELLOW;
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        color = ANSI_COLOR_YELLOW;
+        break;
+    case GL_DEBUG_SEVERITY_HIGH:
+        color = ANSI_COLOR_RED;
+        break;
+    }
+
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
+        logNotification("[OpenGL Debug Message]: %s.\n", message, color);
+    else
+        logError("[OpenGL Error Message]: %s.\n", message, color);
+}
 
 unsigned int genVA()
 {

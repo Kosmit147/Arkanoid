@@ -1,5 +1,9 @@
 #pragma once
 
+#include <glad/glad.h>
+
+#define DEBUG_MESSAGE_MIN_SEVERITY GL_DEBUG_SEVERITY_NOTIFICATION
+
 // (0, 0) is at the bottom-left corner
 #define COORDINATE_SPACE 4096
 #define COORDINATE_SCALING (COORDINATE_SPACE / 1000.0f)
