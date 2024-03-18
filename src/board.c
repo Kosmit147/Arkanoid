@@ -5,6 +5,7 @@
 #define INCBIN_PREFIX
 #include <incbin.h>
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -87,6 +88,8 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
         break;
     default:
         fprintf(stderr, "Error: Tried to load level %u, which doesn't exist!", level);
+        *blockCount = 0;
+        return NULL;
         break;
     }
 
