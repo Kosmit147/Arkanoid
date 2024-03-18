@@ -2,9 +2,15 @@
 
 #include <glad/glad.h>
 
+#define INCBIN_PREFIX
+#include <incbin.h>
+
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "defines.h"
+
+INCTXT(level1, "../levels/level1.txt");
 
 float normalizeCoordinate(float coord)
 {
@@ -36,46 +42,102 @@ Block createPaddle(float startPosX, float startPosY, float width, float height)
     return paddle;
 }
 
-Block* createBlocks(unsigned int /*level*/, size_t* blockCount)
+inline static void getLineCountAndMaxLength(const char* str, size_t* lineCount, size_t* maxLineLength)
 {
-    // TODO: load level from a file based on level arg
+    *lineCount = 0;
+    *maxLineLength = 0;
 
-    *blockCount = 3;
-    Block* blocks = malloc(sizeof(Block) * *blockCount);
+    size_t lineLength = 0;
 
-    Vec2 position1 = { 0.0f, 4096.0f };
-    float width1 = 1024.0f;
-    float height1 = 1024.0f;
+    const char* ch;
+    for (ch = str; *ch; ch++)
+    {
+        if (*ch != '\n' && *ch != '\r')
+        {
+            lineLength++;
+        }
+        else if (*ch == '\n')
+        {
+            if (lineLength > *maxLineLength)
+                *maxLineLength = lineLength;
 
-    Vec2 position2 = { 1856.0f, 3234.0f };
-    float width2 = 1000.0f;
-    float height2 = 200.0f;
+            lineLength = 0;
+            (*lineCount)++;
+        }
+    }
 
-    Vec2 position3 = { 4000.0f, 3000.0f };
-    float width3 = 100.0f;
-    float height3 = 150.0f;
+    if (*(ch - 1) != '\n')
+        (*lineCount)++;
+}
 
-    Block block1 = {
-        position1,
-        width1,
-        height1,
-    };
+typedef enum EntityChar
+{
+    BLOCK_CHAR = '#',
+    EMPTY_CHAR = '.'
+} EntityChar;
 
-    Block block2 = {
-        position2,
-        width2,
-        height2,
-    };
+Block* createBlocks(unsigned int level, size_t* blockCount)
+{
+    const char* levelData;
 
-    Block block3 = {
-        position3,
-        width3,
-        height3,
-    };
+    switch (level)
+    {
+    case 1:
+        levelData = level1Data;
+        break;
+    default:
+        fprintf(stderr, "Error: Tried to load level %u, which doesn't exist!", level);
+        break;
+    }
 
-    blocks[0] = block1;
-    blocks[1] = block2;
-    blocks[2] = block3;
+    size_t maxLineLength;
+    size_t lineCount;
+    getLineCountAndMaxLength(levelData, &lineCount, &maxLineLength);
+
+    float gridCellHeight = (float)COORDINATE_SPACE / (float)lineCount;
+    float gridCellWidth = (float)COORDINATE_SPACE / (float)maxLineLength;
+    float blockWidth = gridCellWidth - BLOCK_HORIZONTAL_PADDING * 2;
+    float blockHeight = gridCellHeight - BLOCK_VERTICAL_PADDING * 2;
+
+    *blockCount = 0;
+    size_t reservedBlocksCount = 10;
+    Block* blocks = malloc(sizeof(Block) * reservedBlocksCount);
+
+    size_t row = 0;
+    size_t col = 0;
+
+    for (const char* currChar = levelData; *currChar; currChar++)
+    {
+        if (*currChar == BLOCK_CHAR)
+        {
+            if (reservedBlocksCount <= *blockCount)
+            {
+                reservedBlocksCount *= 2;
+                blocks = realloc(blocks, sizeof(Block) * reservedBlocksCount);
+            }
+
+            Vec2 position = {
+                (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
+                (float)(lineCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
+            };
+
+            blocks[*blockCount].width = blockWidth;
+            blocks[*blockCount].height = blockHeight;
+            blocks[*blockCount].position = position;
+
+            (*blockCount)++;
+        }
+
+        if (*currChar == '\n')
+        {
+            row++;
+            col = 0;
+        }
+        else
+        {
+            col++;
+        }
+    }
 
     return blocks;
 }
