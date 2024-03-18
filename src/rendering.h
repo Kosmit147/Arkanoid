@@ -6,6 +6,9 @@
 
 #include "entities.h"
 
+void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, 
+    GLsizei length, const GLchar* message, const void* userParam);
+    
 typedef struct GLBuffers
 {
     unsigned int VA, VB, IB;

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <glad/glad.h>
+
+#define GL_DEBUG_MESSAGE_MIN_SEVERITY GL_DEBUG_SEVERITY_NOTIFICATION
+
 #define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 1200
 

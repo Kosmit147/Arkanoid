@@ -33,7 +33,11 @@ int main()
         return -1;
 
     glfwSetFramebufferSizeCallback(window, onWindowResize);
+
+#ifdef _DEBUG
+    glDebugMessageCallback(GLDebugCallback, NULL);
     puts((const char*)glGetString(GL_VERSION));
+#endif
 
     Block paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
     GLBuffers paddleBuffers = createBlockGLBuffers(&paddle);
