@@ -2,6 +2,8 @@
 
 #include <glad/glad.h>
 
+#include <stddef.h>
+
 #include "entities.h"
 
 typedef struct GLBuffers

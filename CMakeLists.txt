@@ -26,8 +26,10 @@ add_executable(
     ${ARKANOID_SOURCES}
 )
 
-if (CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID MATCHES "GNU")
+if (CMAKE_C_COMPILER_ID MATCHES "GNU")
     target_compile_options(arkanoid PRIVATE -Wall -Wextra -Werror -Wconversion)
+elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+    target_compile_options(arkanoid PRIVATE -Wall -Wextra -Werror -Wconversion -Wno-c2x-extensions)
 endif()
 
 target_include_directories(arkanoid PUBLIC dependencies/GLFW/include)

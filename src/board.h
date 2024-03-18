@@ -2,6 +2,8 @@
 
 #include <glad/glad.h>
 
+#include <stddef.h>
+
 #include "entities.h"
 
 void normalizeBlockCoordinates(float* normalizedPositions, Block* block);
