@@ -1,4 +1,4 @@
-name: Build Arkanoid on multiple platforms
+name: Build on Windows(gcc) and Linux(gcc, clang)
 
 
 on:
