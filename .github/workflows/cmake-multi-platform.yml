@@ -43,6 +43,7 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
+        -G "MinGW Makefiles"
 
     - name: Build
       # Build your program with the given configuration.
