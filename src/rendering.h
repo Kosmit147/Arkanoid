@@ -29,6 +29,9 @@ unsigned int createBlockIB(GLenum usage);
 unsigned int createNormalizedBlocksVB(Block* blocks, size_t count, GLenum usage);
 unsigned int createBlocksIB(size_t count, GLenum usage);
 
+GLBuffers createBallGLBuffers(Ball* ball);
+unsigned int createBallVB(Ball* ball, GLenum usage);
+
 void setBlockVertexAttributes();
 
 void drawVertices(unsigned int VA, int count, GLenum IBType);

@@ -36,6 +36,19 @@ Block createPaddle(float startPosX, float startPosY, float width, float height)
     return paddle;
 }
 
+Ball createBall(float startPosX, float startPosY, float radious, float direction, float speed)
+{
+    Vec2 ballPosition = { startPosX, startPosY };
+    Vec2 ballTranslation = {direction, speed};
+    Ball ball = {
+        ballPosition,
+        ballTranslation,
+        radious,
+    };
+
+    return ball;
+}
+
 Block* createBlocks(unsigned int /*level*/, size_t* blockCount)
 {
     // TODO: load level from a file based on level arg

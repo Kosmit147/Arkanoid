@@ -22,6 +22,9 @@ INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
 INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
 INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
 
+INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
+INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
+
 int main()
 {
     GLFWwindow* window = setUpWindow("Arkanoid", WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -42,14 +45,27 @@ int main()
     Block paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
     GLBuffers paddleBuffers = createBlockGLBuffers(&paddle);
 
+    Ball ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, BALL_DIRECTION, BALL_SPEED);
+    GLBuffers ballBuffers = createBallGLBuffers(&ball);
+
     size_t blockCount;
     Block* blocks = createBlocks(1, &blockCount);
     GLBuffers blocksBuffers = createNormalizedBlocksGLBuffers(blocks, blockCount);
 
     unsigned int paddleShader = createShader(paddleVertexShaderSrcData, paddleFragmentShaderSrcData);
     unsigned int blockShader = createShader(blockVertexShaderSrcData, blockFragmentShaderSrcData);
+    unsigned int ballShader = createShader(ballVertexShaderSrcData, ballFragmentShaderSrcData);
 
     float prevTime = (float)glfwGetTime();
+
+    glUseProgram(ballShader);
+
+    int ballCenterUnifLocation = glGetUniformLocation(ballShader, "ballCenter");
+    glUniform2f(ballCenterUnifLocation,normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
+
+    int ballRadiusUnifLocation = glGetUniformLocation(ballShader, "ballRadius");
+    glUniform1f(ballRadiusUnifLocation, ball.radius / COORDINATE_SPACE * 2.0f - 1);
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -63,6 +79,9 @@ int main()
 
         glUseProgram(paddleShader);
         drawVertices(paddleBuffers.VA, 6, GL_UNSIGNED_SHORT);
+
+        glUseProgram(ballShader);
+        drawVertices(ballBuffers.VA, 6, GL_UNSIGNED_SHORT);
 
         glUseProgram(blockShader);
         drawVertices(blocksBuffers.VA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
