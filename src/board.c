@@ -8,9 +8,11 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "defines.h"
 
+INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
 
 float normalizeCoordinate(float coord)
@@ -91,6 +93,9 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
 
     switch (level)
     {
+    case 0:
+        levelData = level0Data;
+        break;
     case 1:
         levelData = level1Data;
         break;
@@ -151,4 +156,17 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
     }
 
     return blocks;
+}
+
+void removeBlock(Block* blocks, size_t* blockCount, size_t index)
+{
+    size_t blocksToMove = *blockCount - index - 1;
+
+    Block* dst = &blocks[index];
+    Block* src = &blocks[index + 1];
+    size_t dataSize = sizeof(Block) * blocksToMove;
+
+    memcpy(dst, src, dataSize);
+
+    (*blockCount)--;
 }
