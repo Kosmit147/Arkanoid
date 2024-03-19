@@ -98,7 +98,7 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
     float blockHeight = gridCellHeight - BLOCK_VERTICAL_PADDING * 2;
 
     *blockCount = 0;
-    size_t reservedBlocksCount = 10;
+    size_t reservedBlocksCount = 30;
     Block* blocks = malloc(sizeof(Block) * reservedBlocksCount);
 
     size_t row = 0;
