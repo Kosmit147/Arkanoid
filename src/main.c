@@ -91,9 +91,11 @@ int main()
 
     freeGLBuffers(&paddleBuffers);
     freeGLBuffers(&blocksBuffers);
+    freeGLBuffers(&ballBuffers);
 
     glDeleteProgram(paddleShader);
     glDeleteProgram(blockShader);
+    glDeleteProgram(ballShader);
 
     free(blocks);
 
