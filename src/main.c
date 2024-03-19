@@ -35,6 +35,7 @@ int main()
         return -1;
 
     glfwSetFramebufferSizeCallback(window, onWindowResize);
+    resetWindowViewport(window);
 
 #ifdef _DEBUG
     glDebugMessageCallback(GLDebugCallback, NULL);
