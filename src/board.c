@@ -36,14 +36,14 @@ Block createPaddle(float startPosX, float startPosY, float width, float height)
     return paddle;
 }
 
-Ball createBall(float startPosX, float startPosY, float radious, float direction, float speed)
+Ball createBall(float startPosX, float startPosY, float radius, float direction, float speed)
 {
     Vec2 ballPosition = { startPosX, startPosY };
-    Vec2 ballTranslation = {direction, speed};
+    Vec2 ballTranslation = { direction, speed };
     Ball ball = {
         ballPosition,
         ballTranslation,
-        radious,
+        radius,
     };
 
     return ball;
