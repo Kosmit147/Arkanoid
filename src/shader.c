@@ -8,6 +8,8 @@
 
 INCTXT(definesShared, "../src/defines_shared.h");
 
+#define SHADER_SOURCES_COUNT 4
+
 static bool verifyShaderCompilation(unsigned int shader)
 {
     int success;
@@ -40,14 +42,15 @@ static bool verifyProgramLinkage(unsigned int program)
 
 static unsigned int compileShader(const char* shaderSrc, GLenum type, const char* versionDecl)
 {
-    const char* shaderSources[] = {
+    const char* shaderSources[SHADER_SOURCES_COUNT] = {
         versionDecl,
         definesSharedData,
+        "\n", // in case there is no new line at the end of "defines_shared.h" file
         shaderSrc,
     };
 
     unsigned int shader = glCreateShader(type);
-    glShaderSource(shader, 3, shaderSources, NULL);
+    glShaderSource(shader, SHADER_SOURCES_COUNT, shaderSources, NULL);
     glCompileShader(shader);
 
     return shader;
