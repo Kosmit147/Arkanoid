@@ -11,7 +11,7 @@
 
 #include "defines.h"
 
-void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum severity, 
+void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum severity,
     GLsizei /*length*/, const GLchar* message, const void* /*userParam*/)
 {
     if (severity > GL_DEBUG_MESSAGE_MIN_SEVERITY)
@@ -71,7 +71,7 @@ unsigned int genIB()
     return IB;
 }
 
-GLBuffers createBlockGLBuffers(Block* block)
+GLBuffers createBlockGLBuffers(const Block* block)
 {
     GLBuffers buffers;
 
@@ -83,7 +83,7 @@ GLBuffers createBlockGLBuffers(Block* block)
     return buffers;
 }
 
-GLBuffers createNormalizedBlocksGLBuffers(Block* blocks, size_t blockCount)
+GLBuffers createNormalizedBlocksGLBuffers(const Block* blocks, size_t blockCount)
 {
     GLBuffers buffers;
 
@@ -95,7 +95,7 @@ GLBuffers createNormalizedBlocksGLBuffers(Block* blocks, size_t blockCount)
     return buffers;
 }
 
-unsigned int createBlockVB(Block* block, GLenum usage)
+unsigned int createBlockVB(const Block* block, GLenum usage)
 {
     unsigned int VB = genVB();
 
@@ -114,7 +114,7 @@ unsigned int createBlockVB(Block* block, GLenum usage)
     return VB;
 }
 
-void updateBlockVB(Block* block, unsigned int paddleVB)
+void updateBlockVB(const Block* block, unsigned int paddleVB)
 {
     // if BLOCK_VERTEX_FLOATS changed, we have to update this code
     static_assert(BLOCK_VERTEX_FLOATS == 2);
@@ -130,7 +130,7 @@ void updateBlockVB(Block* block, unsigned int paddleVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * BLOCK_VERTEX_FLOATS * 4, positions);
 }
 
-unsigned int createNormalizedBlockVB(Block* block, GLenum usage)
+unsigned int createNormalizedBlockVB(const Block* block, GLenum usage)
 {
     unsigned int VB = genVB();
 
@@ -158,7 +158,7 @@ unsigned int createBlockIB(GLenum usage)
     return IB;
 }
 
-unsigned int createNormalizedBlocksVB(Block* blocks, size_t count, GLenum usage)
+unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum usage)
 {
     unsigned int VB = genVB();
 
