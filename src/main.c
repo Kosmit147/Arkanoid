@@ -57,15 +57,13 @@ int main()
     unsigned int blockShader = createShader(blockVertexShaderSrcData, blockFragmentShaderSrcData);
     unsigned int ballShader = createShader(ballVertexShaderSrcData, ballFragmentShaderSrcData);
 
-    float prevTime = (float)glfwGetTime();
-
-    glUseProgram(ballShader);
-
     int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
     glUniform2f(ballCenterUnifLocation, normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
 
     int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
     glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(ball.radius / COORDINATE_SPACE * 2.0f, 2));
+
+    float prevTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
