@@ -2,13 +2,14 @@
 
 #include <glad/glad.h>
 
+#include "defines_shared.h"
+
 #define GL_DEBUG_MESSAGE_MIN_SEVERITY GL_DEBUG_SEVERITY_NOTIFICATION
+#define GL_SHADER_VERSION_DECL "#version 430 core\n"
 
 #define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 1200
 
-// (0, 0) is at the bottom-left corner
-#define COORDINATE_SPACE 4096
 #define COORDINATE_SCALING (COORDINATE_SPACE / 1000.0f)
 
 #define PADDLE_WIDTH (150.0f * COORDINATE_SCALING)
