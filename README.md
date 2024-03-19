@@ -8,3 +8,11 @@
 A simple Arkanoid-like game made for a university project.
 
 </div>
+
+### How to build
+
+Use CMake to generate project files or makefiles. On Linux additional dependencies need to be installed.
+
+#### Installing dependencies on Linux (Debian-based distros)
+
+Run ```sudo apt install libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev```
