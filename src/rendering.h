@@ -6,9 +6,9 @@
 
 #include "entities.h"
 
-void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, 
+void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
     GLsizei length, const GLchar* message, const void* userParam);
-    
+
 typedef struct GLBuffers
 {
     unsigned int VA, VB, IB;
@@ -29,8 +29,8 @@ unsigned int createBlockIB(GLenum usage);
 unsigned int createNormalizedBlocksVB(Block* blocks, size_t count, GLenum usage);
 unsigned int createBlocksIB(size_t count, GLenum usage);
 
-GLBuffers createBallGLBuffers(Ball* ball);
-unsigned int createBallVB(Ball* ball, GLenum usage);
+GLBuffers createBallGLBuffers(const Ball* ball);
+unsigned int createBallVB(const Ball* ball, GLenum usage);
 
 void setBlockVertexAttributes();
 

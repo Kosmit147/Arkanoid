@@ -11,7 +11,7 @@
 
 #include "defines.h"
 
-void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum severity, 
+void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum severity,
     GLsizei /*length*/, const GLchar* message, const void* /*userParam*/)
 {
     if (severity > GL_DEBUG_MESSAGE_MIN_SEVERITY)
@@ -83,7 +83,7 @@ GLBuffers createBlockGLBuffers(Block* block)
     return buffers;
 }
 
-GLBuffers createBallGLBuffers(Ball* ball)
+GLBuffers createBallGLBuffers(const Ball* ball)
 {
     GLBuffers buffers;
 
@@ -126,7 +126,7 @@ unsigned int createBlockVB(Block* block, GLenum usage)
     return VB;
 }
 
-unsigned int createBallVB(Ball* ball, GLenum usage)
+unsigned int createBallVB(const Ball* ball, GLenum usage)
 {
     unsigned int VB = genVB();
 
