@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "window.h"
 #include "entities.h"
@@ -18,9 +19,10 @@
 
 INCTXT(blockVertexShaderSrc, "../shaders/block.vert");
 INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
-
 INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
 INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
+INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
+INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
 
 int main()
 {
@@ -42,12 +44,22 @@ int main()
     Block paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
     GLBuffers paddleBuffers = createBlockGLBuffers(&paddle);
 
+    Ball ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, BALL_TRANSLATION_X, BALL_TRANSLATION_Y);
+    GLBuffers ballBuffers = createBallGLBuffers(&ball);
+
     size_t blockCount;
     Block* blocks = createBlocks(1, &blockCount);
     GLBuffers blocksBuffers = createNormalizedBlocksGLBuffers(blocks, blockCount);
 
     unsigned int paddleShader = createShader(paddleVertexShaderSrcData, paddleFragmentShaderSrcData);
     unsigned int blockShader = createShader(blockVertexShaderSrcData, blockFragmentShaderSrcData);
+    unsigned int ballShader = createShader(ballVertexShaderSrcData, ballFragmentShaderSrcData);
+
+    int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
+    glUniform2f(ballCenterUnifLocation, normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
+
+    int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
+    glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(ball.radius / COORDINATE_SPACE * 2.0f, 2));
 
     float prevTime = (float)glfwGetTime();
 
@@ -63,6 +75,9 @@ int main()
 
         glUseProgram(paddleShader);
         drawVertices(paddleBuffers.VA, 6, GL_UNSIGNED_SHORT);
+
+        glUseProgram(ballShader);
+        drawVertices(ballBuffers.VA, 6, GL_UNSIGNED_SHORT);
 
         glUseProgram(blockShader);
         drawVertices(blocksBuffers.VA, (int)blockCount * 6, GL_UNSIGNED_SHORT);

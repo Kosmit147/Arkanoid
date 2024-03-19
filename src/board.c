@@ -43,6 +43,19 @@ Block createPaddle(float startPosX, float startPosY, float width, float height)
     return paddle;
 }
 
+Ball createBall(float startPosX, float startPosY, float radius, float translationX, float translationY)
+{
+    Vec2 ballPosition = { startPosX, startPosY };
+    Vec2 ballTranslation = { translationX, translationY };
+    Ball ball = {
+        ballPosition,
+        ballTranslation,
+        radius,
+    };
+
+    return ball;
+}
+
 static void getLineCountAndMaxLength(const char* str, size_t* lineCount, size_t* maxLineLength)
 {
     *lineCount = 0;

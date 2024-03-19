@@ -83,6 +83,18 @@ GLBuffers createBlockGLBuffers(const Block* block)
     return buffers;
 }
 
+GLBuffers createBallGLBuffers(const Ball* ball)
+{
+    GLBuffers buffers;
+
+    buffers.VA = genVA();
+    buffers.VB = createBallVB(ball, GL_DYNAMIC_DRAW);
+    buffers.IB = createBlockIB(GL_STATIC_DRAW);
+    setBlockVertexAttributes();
+
+    return buffers;
+}
+
 GLBuffers createNormalizedBlocksGLBuffers(const Block* blocks, size_t blockCount)
 {
     GLBuffers buffers;
@@ -100,16 +112,45 @@ unsigned int createBlockVB(const Block* block, GLenum usage)
     unsigned int VB = genVB();
 
     // if BLOCK_VERTEX_FLOATS changed, we have to update this code
-    static_assert(BLOCK_VERTEX_FLOATS == 2);
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
 
-    float positions[BLOCK_VERTEX_FLOATS * 4] = {
-        block->position.x, block->position.y,
-        block->position.x + block->width, block->position.y,
-        block->position.x + block->width, block->position.y - block->height,
-        block->position.x, block->position.y - block->height,
+    float x1 = block->position.x;
+    float x2 = block->position.x + block->width;
+    float y1 = block->position.y;
+    float y2 = block->position.y - block->height;
+
+    float positions[FLOATS_PER_BLOCK_VERTEX * 4] = {
+        x1, y1,
+        x2, y1,
+        x2, y2,
+        x1, y2,
     };
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * BLOCK_VERTEX_FLOATS * 4, positions, usage);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions, usage);
+
+    return VB;
+}
+
+unsigned int createBallVB(const Ball* ball, GLenum usage)
+{
+    unsigned int VB = genVB();
+
+    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+
+    float x1 = ball->position.x - ball->radius;
+    float x2 = ball->position.x + ball->radius;
+    float y1 = ball->position.y - ball->radius;
+    float y2 = ball->position.y + ball->radius;
+
+    float positions[FLOATS_PER_BLOCK_VERTEX * 4] = {
+        x1, y1,
+        x2, y1,
+        x2, y2,
+        x1, y2,
+    };
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions, usage);
 
     return VB;
 }
@@ -117,17 +158,22 @@ unsigned int createBlockVB(const Block* block, GLenum usage)
 void updateBlockVB(const Block* block, unsigned int paddleVB)
 {
     // if BLOCK_VERTEX_FLOATS changed, we have to update this code
-    static_assert(BLOCK_VERTEX_FLOATS == 2);
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
 
-    float positions[BLOCK_VERTEX_FLOATS * 4] = {
-        block->position.x, block->position.y,
-        block->position.x + block->width, block->position.y,
-        block->position.x + block->width, block->position.y - block->height,
-        block->position.x, block->position.y - block->height,
+    float x1 = block->position.x;
+    float x2 = block->position.x + block->width;
+    float y1 = block->position.y;
+    float y2 = block->position.y - block->height;
+
+    float positions[FLOATS_PER_BLOCK_VERTEX * 4] = {
+        x1, y1,
+        x2, y1,
+        x2, y2,
+        x1, y2,
     };
 
     glBindBuffer(GL_ARRAY_BUFFER, paddleVB);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * BLOCK_VERTEX_FLOATS * 4, positions);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions);
 }
 
 unsigned int createNormalizedBlockVB(const Block* block, GLenum usage)
@@ -135,11 +181,11 @@ unsigned int createNormalizedBlockVB(const Block* block, GLenum usage)
     unsigned int VB = genVB();
 
     // if BLOCK_VERTEX_FLOATS changed, we have to update this code
-    static_assert(BLOCK_VERTEX_FLOATS == 2);
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
 
-    float normalizedPositions[BLOCK_VERTEX_FLOATS * 4];
+    float normalizedPositions[FLOATS_PER_BLOCK_VERTEX * 4];
     normalizeBlockCoordinates(normalizedPositions, block);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * BLOCK_VERTEX_FLOATS * 4, normalizedPositions, usage);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, normalizedPositions, usage);
 
     return VB;
 }
@@ -162,14 +208,14 @@ unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum 
 {
     unsigned int VB = genVB();
 
-    size_t stride = sizeof(float) * 4 * BLOCK_VERTEX_FLOATS;
+    size_t stride = sizeof(float) * 4 * FLOATS_PER_BLOCK_VERTEX;
     float* positions = malloc(stride * count);
 
     // if BLOCK_VERTEX_FLOATS changed, we have to update this code
-    static_assert(BLOCK_VERTEX_FLOATS == 2);
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
 
     for (size_t i = 0; i < count; i++)
-        normalizeBlockCoordinates(positions + 4 * BLOCK_VERTEX_FLOATS * i, &blocks[i]);
+        normalizeBlockCoordinates(positions + 4 * FLOATS_PER_BLOCK_VERTEX * i, &blocks[i]);
 
     glBufferData(GL_ARRAY_BUFFER, (GLsizei)stride * (GLsizei)count, positions, usage);
     free(positions);
@@ -208,7 +254,7 @@ unsigned int createBlocksIB(size_t count, GLenum usage)
 
 void setBlockVertexAttributes()
 {
-    glVertexAttribPointer(0, BLOCK_VERTEX_FLOATS, GL_FLOAT, GL_FALSE, sizeof(float) * BLOCK_VERTEX_FLOATS, NULL);
+    glVertexAttribPointer(0, FLOATS_PER_BLOCK_VERTEX, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_VERTEX, NULL);
     glEnableVertexAttribArray(0);
 }
 

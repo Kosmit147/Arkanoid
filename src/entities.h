@@ -13,4 +13,5 @@ typedef struct Ball
 {
     Vec2 position; // ball center
     Vec2 translation;
+    float radius;
 } Ball;
