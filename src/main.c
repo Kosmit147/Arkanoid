@@ -14,6 +14,7 @@
 #include "rendering.h"
 #include "shader.h"
 #include "input.h"
+#include "helpers.h"
 
 #include "defines.h"
 
@@ -70,7 +71,7 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         float time = (float)glfwGetTime();
-        float deltaTime = time - prevTime;
+        float deltaTime = minf(time - prevTime, DELTA_TIME_LIMIT);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
