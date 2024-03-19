@@ -19,10 +19,8 @@
 
 INCTXT(blockVertexShaderSrc, "../shaders/block.vert");
 INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
-
 INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
 INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
-
 INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
 INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
 

@@ -10,9 +10,10 @@ out vec4 outColor;
 void main()
 {
     vec2 vec = vec2(normalBallCenter.x - Position.x, normalBallCenter.y - Position.y);
-    float len = (vec.x * vec.x + vec.y * vec.y);
+    float lenSquared = (vec.x * vec.x + vec.y * vec.y);
     
-    if(normalBallRadiusSquared < len){
+    if (lenSquared > normalBallRadiusSquared) 
+    {
         discard;
     }
     
