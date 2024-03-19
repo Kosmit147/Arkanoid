@@ -8,7 +8,14 @@
 
 INCTXT(definesShared, "../src/defines_shared.h");
 
-#define SHADER_SOURCES_COUNT 4
+#define SHADER_SOURCES_COUNT 5
+
+static const char* commonShaderSrc = "";
+
+void setCommonShaderSrc(const char* src)
+{
+    commonShaderSrc = src;
+}
 
 static bool verifyShaderCompilation(unsigned int shader)
 {
@@ -46,6 +53,7 @@ static unsigned int compileShader(const char* shaderSrc, GLenum type, const char
         versionDecl,
         definesSharedData,
         "\n", // in case there is no new line at the end of "defines_shared.h" file
+        commonShaderSrc,
         shaderSrc,
     };
 
