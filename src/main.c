@@ -53,15 +53,18 @@ int main()
     Block* blocks = createBlocks(1, &blockCount);
     GLBuffers blocksBuffers = createNormalizedBlocksGLBuffers(blocks, blockCount);
 
-    unsigned int paddleShader = createShader(paddleVertexShaderSrcData, paddleFragmentShaderSrcData);
-    unsigned int blockShader = createShader(blockVertexShaderSrcData, blockFragmentShaderSrcData);
-    unsigned int ballShader = createShader(ballVertexShaderSrcData, ballFragmentShaderSrcData);
+    unsigned int paddleShader = createShader(paddleVertexShaderSrcData,
+        paddleFragmentShaderSrcData, GL_SHADER_VERSION_DECL);
+    unsigned int blockShader = createShader(blockVertexShaderSrcData,
+        blockFragmentShaderSrcData, GL_SHADER_VERSION_DECL);
+    unsigned int ballShader = createShader(ballVertexShaderSrcData,
+        ballFragmentShaderSrcData, GL_SHADER_VERSION_DECL);
 
     int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
     glUniform2f(ballCenterUnifLocation, normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
 
     int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
-    glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(ball.radius / COORDINATE_SPACE * 2.0f, 2));
+    glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(normalizeLength(ball.radius), 2));
 
     float prevTime = (float)glfwGetTime();
 
