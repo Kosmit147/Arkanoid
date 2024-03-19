@@ -44,7 +44,7 @@ int main()
     Block paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
     GLBuffers paddleBuffers = createBlockGLBuffers(&paddle);
 
-    Ball ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, BALL_DIRECTION, BALL_SPEED);
+    Ball ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, BALL_TRANSLATION_X, BALL_TRANSLATION_Y);
     GLBuffers ballBuffers = createBallGLBuffers(&ball);
 
     size_t blockCount;
