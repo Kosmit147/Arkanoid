@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "window.h"
 #include "entities.h"
@@ -60,11 +61,11 @@ int main()
 
     glUseProgram(ballShader);
 
-    int ballCenterUnifLocation = glGetUniformLocation(ballShader, "ballCenter");
-    glUniform2f(ballCenterUnifLocation,normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
+    int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
+    glUniform2f(ballCenterUnifLocation, normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
 
-    int ballRadiusUnifLocation = glGetUniformLocation(ballShader, "ballRadius");
-    glUniform1f(ballRadiusUnifLocation, ball.radius / COORDINATE_SPACE * 2.0f);
+    int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
+    glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(ball.radius / COORDINATE_SPACE * 2.0f, 2));
 
     while (!glfwWindowShouldClose(window))
     {
