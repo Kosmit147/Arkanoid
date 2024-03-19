@@ -114,11 +114,16 @@ unsigned int createBlockVB(const Block* block, GLenum usage)
     // if BLOCK_VERTEX_FLOATS changed, we have to update this code
     static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
 
+    float x1 = block->position.x;
+    float x2 = block->position.x + block->width;
+    float y1 = block->position.y;
+    float y2 = block->position.y - block->height;
+
     float positions[FLOATS_PER_BLOCK_VERTEX * 4] = {
-        block->position.x, block->position.y,
-        block->position.x + block->width, block->position.y,
-        block->position.x + block->width, block->position.y - block->height,
-        block->position.x, block->position.y - block->height,
+        x1, y1,
+        x2, y1,
+        x2, y2,
+        x1, y2,
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions, usage);
@@ -133,11 +138,16 @@ unsigned int createBallVB(const Ball* ball, GLenum usage)
     // if BLOCK_VERTEX_FLOATS changed, we have to update this code
     static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
 
+    float x1 = ball->position.x - ball->radius;
+    float x2 = ball->position.x + ball->radius;
+    float y1 = ball->position.y - ball->radius;
+    float y2 = ball->position.y + ball->radius;
+
     float positions[FLOATS_PER_BLOCK_VERTEX * 4] = {
-        ball->position.x - ball->radius, ball->position.y - ball->radius,
-        ball->position.x + ball->radius, ball->position.y - ball->radius,
-        ball->position.x + ball->radius, ball->position.y + ball->radius,
-        ball->position.x - ball->radius, ball->position.y + ball->radius,
+        x1, y1,
+        x2, y1,
+        x2, y2,
+        x1, y2,
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions, usage);
@@ -150,11 +160,16 @@ void updateBlockVB(const Block* block, unsigned int paddleVB)
     // if BLOCK_VERTEX_FLOATS changed, we have to update this code
     static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
 
+    float x1 = block->position.x;
+    float x2 = block->position.x + block->width;
+    float y1 = block->position.y;
+    float y2 = block->position.y - block->height;
+
     float positions[FLOATS_PER_BLOCK_VERTEX * 4] = {
-        block->position.x, block->position.y,
-        block->position.x + block->width, block->position.y,
-        block->position.x + block->width, block->position.y - block->height,
-        block->position.x, block->position.y - block->height,
+        x1, y1,
+        x2, y1,
+        x2, y2,
+        x1, y2,
     };
 
     glBindBuffer(GL_ARRAY_BUFFER, paddleVB);
