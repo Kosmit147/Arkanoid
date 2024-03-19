@@ -18,7 +18,7 @@ float normalizeCoordinate(float coord)
     return coord / (float)COORDINATE_SPACE * 2.0f - 1.0f;
 }
 
-void normalizeBlockCoordinates(float* normalizedPositions, Block* block)
+void normalizeBlockCoordinates(float* normalizedPositions, const Block* block)
 {
     float normalizedX1 = normalizeCoordinate(block->position.x);
     float normalizedY1 = normalizeCoordinate(block->position.y);
@@ -43,7 +43,7 @@ Block createPaddle(float startPosX, float startPosY, float width, float height)
     return paddle;
 }
 
-inline static void getLineCountAndMaxLength(const char* str, size_t* lineCount, size_t* maxLineLength)
+static void getLineCountAndMaxLength(const char* str, size_t* lineCount, size_t* maxLineLength)
 {
     *lineCount = 0;
     *maxLineLength = 0;
@@ -67,15 +67,10 @@ inline static void getLineCountAndMaxLength(const char* str, size_t* lineCount, 
         }
     }
 
-    if (*(ch - 1) != '\n')
+    // in case there was no new line at the end of the file
+    if (ch != str && *(ch - 1) != '\n')
         (*lineCount)++;
 }
-
-typedef enum EntityChar
-{
-    BLOCK_CHAR = '#',
-    EMPTY_CHAR = '.'
-} EntityChar;
 
 Block* createBlocks(unsigned int level, size_t* blockCount)
 {

@@ -6,6 +6,6 @@
 
 #include "entities.h"
 
-void normalizeBlockCoordinates(float* normalizedPositions, Block* block);
+void normalizeBlockCoordinates(float* normalizedPositions, const Block* block);
 Block createPaddle(float startPosX, float startPosY, float width, float height);
 Block* createBlocks(unsigned int level, size_t* blockCount);
