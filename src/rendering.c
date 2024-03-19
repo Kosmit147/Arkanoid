@@ -174,6 +174,27 @@ void updateBlockVB(const Block* block, unsigned int paddleVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions);
 }
 
+void updateBallVB(const Ball* ball, unsigned int ballVB)
+{
+    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+
+    float x1 = ball->position.x - ball->radius;
+    float x2 = ball->position.x + ball->radius;
+    float y1 = ball->position.y - ball->radius;
+    float y2 = ball->position.y + ball->radius;
+
+    float positions[FLOATS_PER_BLOCK_VERTEX * 4] = {
+        x1, y1,
+        x2, y1,
+        x2, y2,
+        x1, y2,
+    };
+
+    glBindBuffer(GL_ARRAY_BUFFER, ballVB);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions);
+}
+
 unsigned int createNormalizedBlockVB(const Block* block, GLenum usage)
 {
     unsigned int VB = genVB();

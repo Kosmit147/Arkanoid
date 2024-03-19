@@ -31,6 +31,7 @@ unsigned int createBlocksIB(size_t count, GLenum usage);
 
 GLBuffers createBallGLBuffers(const Ball* ball);
 unsigned int createBallVB(const Ball* ball, GLenum usage);
+void updateBallVB(const Ball* ball, unsigned int ballVB);
 
 void setBlockVertexAttributes();
 
