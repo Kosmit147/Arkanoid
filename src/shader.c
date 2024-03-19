@@ -1,7 +1,14 @@
 #include "shader.h"
 
+#define INCBIN_PREFIX
+#include <incbin.h>
+
 #include <stdio.h>
 #include <stdbool.h>
+
+INCTXT(definesShared, "../src/defines_shared.h");
+
+#define SHADER_SOURCES_COUNT 4
 
 static bool verifyShaderCompilation(unsigned int shader)
 {
@@ -33,21 +40,27 @@ static bool verifyProgramLinkage(unsigned int program)
     return success;
 }
 
-static unsigned int compileShader(const char* shaderSrc, GLenum type)
+static unsigned int compileShader(const char* shaderSrc, GLenum type, const char* versionDecl)
 {
+    const char* shaderSources[SHADER_SOURCES_COUNT] = {
+        versionDecl,
+        definesSharedData,
+        "\n", // in case there is no new line at the end of "defines_shared.h" file
+        shaderSrc,
+    };
+
     unsigned int shader = glCreateShader(type);
-    const char* srcDataPtr = shaderSrc;
-    glShaderSource(shader, 1, &srcDataPtr, NULL);
+    glShaderSource(shader, SHADER_SOURCES_COUNT, shaderSources, NULL);
     glCompileShader(shader);
 
     return shader;
 }
 
-unsigned int createShader(const char* vertexShaderSrc, const char* fragmentShaderSrc)
+unsigned int createShader(const char* vertexShaderSrc, const char* fragmentShaderSrc, const char* versionDecl)
 {
-    unsigned int vertexShader = compileShader(vertexShaderSrc, GL_VERTEX_SHADER);
+    unsigned int vertexShader = compileShader(vertexShaderSrc, GL_VERTEX_SHADER, versionDecl);
     verifyShaderCompilation(vertexShader);
-    unsigned int fragmentShader = compileShader(fragmentShaderSrc, GL_FRAGMENT_SHADER);
+    unsigned int fragmentShader = compileShader(fragmentShaderSrc, GL_FRAGMENT_SHADER, versionDecl);
     verifyShaderCompilation(fragmentShader);
 
     unsigned int shaderProgram = glCreateProgram();

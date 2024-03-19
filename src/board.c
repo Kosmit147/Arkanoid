@@ -20,12 +20,17 @@ float normalizeCoordinate(float coord)
     return coord / (float)COORDINATE_SPACE * 2.0f - 1.0f;
 }
 
+float normalizeLength(float length)
+{
+    return length / (float)COORDINATE_SPACE * 2.0f;
+}
+
 void normalizeBlockCoordinates(float* normalizedPositions, const Block* block)
 {
     float normalizedX1 = normalizeCoordinate(block->position.x);
     float normalizedY1 = normalizeCoordinate(block->position.y);
-    float normalizedX2 = normalizedX1 + block->width / COORDINATE_SPACE * 2.0f;
-    float normalizedY2 = normalizedY1 - block->height / COORDINATE_SPACE * 2.0f;
+    float normalizedX2 = normalizedX1 + normalizeLength(block->width);
+    float normalizedY2 = normalizedY1 - normalizeLength(block->height);
 
     normalizedPositions[0] = normalizedX1; normalizedPositions[1] = normalizedY1;
     normalizedPositions[2] = normalizedX2; normalizedPositions[3] = normalizedY1;
