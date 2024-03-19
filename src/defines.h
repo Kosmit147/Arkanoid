@@ -7,6 +7,8 @@
 #define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 1200
 
+#define DELTA_TIME_LIMIT 0.035f
+
 // (0, 0) is at the bottom-left corner
 #define COORDINATE_SPACE 4096
 #define COORDINATE_SCALING (COORDINATE_SPACE / 1000.0f)
