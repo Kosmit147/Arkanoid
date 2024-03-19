@@ -1,4 +1,4 @@
-name: Build on Windows(gcc) and Linux(gcc, clang)
+name: Build
 
 
 on:
