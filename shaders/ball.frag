@@ -2,18 +2,25 @@
 
 out vec4 outColor;
 
-in uniform vec2 ballCenter;
-in uniform float radius;
+in vec4 Position;
+
+uniform vec2 ballCenter;
+uniform float ballRadius;
+
+
 
 void main()
 {
     
-    vec2 vec = vec2(ballCenter.x - gl_FragCoord.x, ballCenter.y - gl_FragCoord.y);
-    float length = sqrt((vec.x * vec.x + vec.y * vec.y));
+    vec2 vec = vec2(ballCenter.x - Position.x, ballCenter.y - Position.y);
+    float len = sqrt((vec.x * vec.x + vec.y * vec.y));
     
-    if(radius < length){
+    if(ballRadius < len){
         discard;
     }
-
+    
+        
     outColor = vec4(1.0, 1.0, 1.0, 1.0);
+    
+    
 }

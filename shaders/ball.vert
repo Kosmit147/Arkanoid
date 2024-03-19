@@ -14,7 +14,10 @@ vec4 normalizeVertexCoordinates(vec4 position)
     return vec4(normalizeCoordinate(position.x), normalizeCoordinate(position.y), 0.0, 1.0);
 }
 
+out vec4 Position;
+
 void main()
 {
     gl_Position = normalizeVertexCoordinates(inPosition);
+    Position = gl_Position;
 }

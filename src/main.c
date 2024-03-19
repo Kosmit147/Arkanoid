@@ -64,8 +64,7 @@ int main()
     glUniform2f(ballCenterUnifLocation,normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
 
     int ballRadiusUnifLocation = glGetUniformLocation(ballShader, "ballRadius");
-    glUniform1f(ballRadiusUnifLocation, ball.radius / COORDINATE_SPACE * 2.0f - 1);
-
+    glUniform1f(ballRadiusUnifLocation, ball.radius / COORDINATE_SPACE * 2.0f);
 
     while (!glfwWindowShouldClose(window))
     {
