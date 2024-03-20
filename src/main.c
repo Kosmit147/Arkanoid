@@ -18,6 +18,7 @@
 
 #include "defines.h"
 
+INCTXT(commonShaderSrc, "../shaders/common.glsl");
 INCTXT(blockVertexShaderSrc, "../shaders/block.vert");
 INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
 INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
@@ -53,12 +54,14 @@ int main()
     Block* blocks = createBlocks(STARTING_LEVEL, &blockCount);
     GLBuffers blocksBuffers = createNormalizedBlocksGLBuffers(blocks, blockCount);
 
+    setExtraShaderSrc(commonShaderSrcData);
+
     unsigned int paddleShader = createShader(paddleVertexShaderSrcData,
-        paddleFragmentShaderSrcData, GL_SHADER_VERSION_DECL);
+        paddleFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL);
     unsigned int blockShader = createShader(blockVertexShaderSrcData,
-        blockFragmentShaderSrcData, GL_SHADER_VERSION_DECL);
+        blockFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL);
     unsigned int ballShader = createShader(ballVertexShaderSrcData,
-        ballFragmentShaderSrcData, GL_SHADER_VERSION_DECL);
+        ballFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL);
 
     int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
     glUniform2f(ballCenterUnifLocation, normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
@@ -66,10 +69,10 @@ int main()
     int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
     glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(normalizeLength(ball.radius), 2));
 
-    float prevTime = (float)glfwGetTime();
-
     removeBlock(blocks, &blockCount, 1);
     updateBlocksVBOnBlockDestroyed(blocksBuffers.VB, 1, blockCount);
+
+    float prevTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
