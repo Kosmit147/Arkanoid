@@ -9,6 +9,7 @@
 
 #include "defines.h"
 
+#ifdef _DEBUG
 void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum severity,
     GLsizei /*length*/, const GLchar* message, const void* /*userParam*/)
 {
@@ -44,6 +45,7 @@ void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum s
     else
         logError("[OpenGL Error Message]: %s.\n", message, color);
 }
+#endif
 
 unsigned int genVA()
 {
