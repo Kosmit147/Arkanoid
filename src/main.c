@@ -78,7 +78,6 @@ int main()
     {
         float time = (float)glfwGetTime();
         float deltaTime = minf(time - prevTime, DELTA_TIME_LIMIT);
-        prevTime = time;
 
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -96,6 +95,8 @@ int main()
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        prevTime = time;
     }
 
     freeGLBuffers(&paddleBuffers);
