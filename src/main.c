@@ -54,7 +54,7 @@ int main()
     Block* blocks = createBlocks(STARTING_LEVEL, &blockCount);
     GLBuffers blocksBuffers = createNormalizedBlocksGLBuffers(blocks, blockCount);
 
-    setCommonShaderSrc(commonShaderSrcData);
+    setExtraShaderSrc(commonShaderSrcData);
 
     unsigned int paddleShader = createShader(paddleVertexShaderSrcData,
         paddleFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL);
@@ -69,10 +69,10 @@ int main()
     int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
     glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(normalizeLength(ball.radius), 2));
 
-    float prevTime = (float)glfwGetTime();
-
     removeBlock(blocks, &blockCount, 1);
     updateBlocksVBOnBlockDestroyed(blocksBuffers.VB, 1, blockCount);
+
+    float prevTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
