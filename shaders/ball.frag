@@ -1,4 +1,4 @@
-in vec4 Position;
+in vec2 Position;
 
 uniform vec2 normalBallCenter;
 uniform float normalBallRadiusSquared;
@@ -7,13 +7,15 @@ out vec4 outColor;
 
 void main()
 {
-    vec2 distanceVec = vec2(normalBallCenter.x - Position.x, normalBallCenter.y - Position.y);
-    float lenSquared = distanceVec.x * distanceVec.x + distanceVec.y * distanceVec.y;
+    float aaLevel = BALL_SHADER_AA_LEVEL;
+
+    vec2 distVec = Position - normalBallCenter;
+    float distSquared = dot(distVec, distVec);
     
-    if (lenSquared > normalBallRadiusSquared) 
-    {
+    if (distSquared > normalBallRadiusSquared) 
         discard;
-    }
     
-    outColor = vec4(1.0, 1.0, 1.0, 1.0);   
+    float alpha = 1.0 - smoothstep(normalBallRadiusSquared - aaLevel, normalBallRadiusSquared, distSquared);
+
+    outColor = vec4(1.0, 1.0, 1.0, alpha);
 }

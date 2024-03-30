@@ -46,6 +46,9 @@ int main()
     puts((const char*)glGetString(GL_VERSION));
 #endif
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     Block paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
     GLBuffers paddleBuffers = createBlockGLBuffers(&paddle);
 

@@ -3,3 +3,4 @@
 
 // (0, 0) is in the bottom-left corner
 #define COORDINATE_SPACE 1024
+#define BALL_SHADER_AA_LEVEL 0.0001
