@@ -23,28 +23,19 @@ void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum s
         return;
     }
 
-    const char* color;
-
     switch (severity)
     {
     case GL_DEBUG_SEVERITY_NOTIFICATION:
-        color = ANSI_COLOR_WHITE;
+        logNotification("[OpenGL Notification]: %s.\n", message);
         break;
     case GL_DEBUG_SEVERITY_LOW:
-        color = ANSI_COLOR_YELLOW;
-        break;
     case GL_DEBUG_SEVERITY_MEDIUM:
-        color = ANSI_COLOR_YELLOW;
+        logWarning("[OpenGL Warning]: %s.\n", message);
         break;
     case GL_DEBUG_SEVERITY_HIGH:
-        color = ANSI_COLOR_RED;
+        logError("[OpenGL Error]: %s.\n", message);
         break;
     }
-
-    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
-        logNotification("[OpenGL Debug Message]: %s.\n", message, color);
-    else
-        logError("[OpenGL Error Message]: %s.\n", message, color);
 }
 #endif
 
@@ -320,12 +311,24 @@ void setBlockVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
+int retrieveUniformLocation(unsigned int shader, const char* name)
+{
+    int location = glGetUniformLocation(shader, name);
+
+#ifdef _DEBUG
+    if (location == -1)
+        logWarning("[OpenGL Warning]: Uniform %s in shader %d does not exist!\n", name, shader);
+#endif
+
+    return location;
+}
+
 BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
 {
     BallShaderUnifs unifs;
 
-    unifs.normalBallCenter = glGetUniformLocation(ballShader, "normalBallCenter");
-    unifs.normalBallRadiusSquared = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
+    unifs.normalBallCenter = retrieveUniformLocation(ballShader, "normalBallCenter");
+    unifs.normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalBallRadiusSquared");
 
     return unifs;
 }
