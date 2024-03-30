@@ -61,6 +61,8 @@ int main()
         ballFragmentShaderSrcData, GL_SHADER_VERSION_DECL);
 
     float prevTime = (float)glfwGetTime();
+    int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
+    int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
 
     while (!glfwWindowShouldClose(window))
     {
@@ -73,16 +75,14 @@ int main()
         updateBlockVB(&paddle, paddleBuffers.VB);
 
 
-        launchBall(&ball, &paddle, window);
+        ballLaunched(&ball, &paddle, window);
         moveBall(&ball, deltaTime);
         updateBallVB(&ball, ballBuffers.VB);
 
         glUseProgram(ballShader);
 
-        int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
-        glUniform2f(ballCenterUnifLocation, normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
 
-        int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
+        glUniform2f(ballCenterUnifLocation, normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
         glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(normalizeLength(ball.radius), 2));
 
         glUseProgram(paddleShader);
