@@ -66,6 +66,6 @@ BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader);
 void drawVertices(unsigned int VA, int count, GLenum IBType);
 
 // Draw Game Objects
-void drawBall(const Ball* ball, const BallShaderUnifs* unifs, unsigned int shader, unsigned int VA);
-void drawPaddle(const Block* paddle, unsigned int shader, unsigned int VA);
-void drawBlocks(const Block* blocks, size_t blockCount, unsigned int shader, unsigned int VA);
+void drawBall(const Ball* ball, const BallShaderUnifs* unifs, unsigned int shader, unsigned int ballVA);
+void drawPaddle(unsigned int shader, unsigned int paddleVA);
+void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA);

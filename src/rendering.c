@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <math.h>
 
 #include "log.h"
 #include "board.h"
@@ -335,24 +336,24 @@ void drawVertices(unsigned int VA, int count, GLenum IBType)
     glDrawElements(GL_TRIANGLES, count, IBType, NULL);
 }
 
-void drawBall(const Ball* ball, const BallShaderUnifs* unifs, unsigned int shader, unsigned int VA)
+void drawBall(const Ball* ball, const BallShaderUnifs* unifs, unsigned int shader, unsigned int ballVA)
 {
     glUseProgram(shader);
 
     glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x), normalizeCoordinate(ball->position.y));
     glUniform1f(unifs->normalBallRadiusSquared, (float)pow(normalizeLength(ball->radius), 2));
 
-    drawVertices(VA, 6, GL_UNSIGNED_SHORT);
+    drawVertices(ballVA, 6, GL_UNSIGNED_SHORT);
 }
 
-void drawPaddle(const Block* paddle, unsigned int shader, unsigned int VA)
+void drawPaddle(unsigned int shader, unsigned int paddleVA)
 {
     glUseProgram(shader);
-    drawVertices(VA, 6, GL_UNSIGNED_SHORT);
+    drawVertices(paddleVA, 6, GL_UNSIGNED_SHORT);
 }
 
-void drawBlocks(const Block* blocks, size_t blockCount, unsigned int shader, unsigned int VA)
+void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA)
 {
     glUseProgram(shader);
-    drawVertices(VA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
+    drawVertices(blocksVA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
 }

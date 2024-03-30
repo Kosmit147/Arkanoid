@@ -85,9 +85,9 @@ int main()
         updateBlockVB(&paddle, paddleBuffers.VB);
         updateBallVB(&ball, ballBuffers.VB);
 
-        drawPaddle(&paddle, paddleShader, paddleBuffers.VA);
-        drawBlocks(blocks, blockCount, blockShader, blocksBuffers.VA);
-        drawBall(&ball, ballShader, &ballShaderUnifs, ballBuffers.VA);
+        drawPaddle(paddleShader, paddleBuffers.VA);
+        drawBlocks(blockCount, blockShader, blocksBuffers.VA);
+        drawBall(&ball, &ballShaderUnifs, ballShader, ballBuffers.VA);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
