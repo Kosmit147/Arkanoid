@@ -69,6 +69,28 @@ unsigned int genIB()
     return IB;
 }
 
+void moveDataWithinGLBuffer(GLenum bufferType, unsigned int buffer, GLintptr dstOffset,
+    GLintptr srcOffset, GLsizeiptr size)
+{
+    void* tmpData = malloc((size_t)size);
+
+    glBindBuffer(bufferType, buffer);
+    glGetBufferSubData(bufferType, srcOffset, size, tmpData);
+    glBufferSubData(bufferType, dstOffset, size, tmpData);
+
+    free(tmpData);
+}
+
+void moveObjectsWithinGLBuffer(GLenum bufferType, unsigned int buffer, size_t dstIndex,
+    size_t srcIndex, size_t count, size_t objSize)
+{
+    GLintptr srcOffset = (GLintptr)(objSize * srcIndex);
+    GLintptr dstOffset = (GLintptr)(objSize * dstIndex);
+    GLsizeiptr dataSize = (GLsizeiptr)(objSize * count);
+
+    moveDataWithinGLBuffer(bufferType, buffer, dstOffset, srcOffset, dataSize);
+}
+
 GLBuffers createBlockGLBuffers(const Block* block)
 {
     GLBuffers buffers;
@@ -76,6 +98,18 @@ GLBuffers createBlockGLBuffers(const Block* block)
     buffers.VA = genVA();
     buffers.VB = createBlockVB(block, GL_DYNAMIC_DRAW);
     buffers.IB = createBlockIB(GL_STATIC_DRAW);
+    setBlockVertexAttributes();
+
+    return buffers;
+}
+
+GLBuffers createNormalizedBlocksGLBuffers(const Block* blocks, size_t blockCount)
+{
+    GLBuffers buffers;
+
+    buffers.VA = genVA();
+    buffers.VB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW);
+    buffers.IB = createBlocksIB(blockCount, GL_STATIC_DRAW);
     setBlockVertexAttributes();
 
     return buffers;
@@ -93,16 +127,11 @@ GLBuffers createBallGLBuffers(const Ball* ball)
     return buffers;
 }
 
-GLBuffers createNormalizedBlocksGLBuffers(const Block* blocks, size_t blockCount)
+void freeGLBuffers(GLBuffers* buffers)
 {
-    GLBuffers buffers;
-
-    buffers.VA = genVA();
-    buffers.VB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW);
-    buffers.IB = createBlocksIB(blockCount, GL_STATIC_DRAW);
-    setBlockVertexAttributes();
-
-    return buffers;
+    glDeleteVertexArrays(1, &buffers->VA);
+    glDeleteBuffers(1, &buffers->VB);
+    glDeleteBuffers(1, &buffers->IB);
 }
 
 unsigned int createBlockVB(const Block* block, GLenum usage)
@@ -125,6 +154,39 @@ unsigned int createBlockVB(const Block* block, GLenum usage)
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions, usage);
+
+    return VB;
+}
+
+unsigned int createNormalizedBlockVB(const Block* block, GLenum usage)
+{
+    unsigned int VB = genVB();
+
+    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+
+    float normalizedPositions[FLOATS_PER_BLOCK_VERTEX * 4];
+    normalizeBlockCoordinates(normalizedPositions, block);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, normalizedPositions, usage);
+
+    return VB;
+}
+
+unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum usage)
+{
+    unsigned int VB = genVB();
+
+    size_t stride = sizeof(float) * 4 * FLOATS_PER_BLOCK_VERTEX;
+    float* positions = malloc(stride * count);
+
+    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+
+    for (size_t i = 0; i < count; i++)
+        normalizeBlockCoordinates(positions + 4 * FLOATS_PER_BLOCK_VERTEX * i, &blocks[i]);
+
+    glBufferData(GL_ARRAY_BUFFER, (GLsizei)stride * (GLsizei)count, positions, usage);
+    free(positions);
 
     return VB;
 }
@@ -195,18 +257,11 @@ void updateBallVB(const Ball* ball, unsigned int ballVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions);
 }
 
-unsigned int createNormalizedBlockVB(const Block* block, GLenum usage)
+void updateBlocksVBOnBlockDestroyed(unsigned int blocksVB, size_t destroyedIndex, size_t newBlockCount)
 {
-    unsigned int VB = genVB();
-
-    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
-
-    float normalizedPositions[FLOATS_PER_BLOCK_VERTEX * 4];
-    normalizeBlockCoordinates(normalizedPositions, block);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, normalizedPositions, usage);
-
-    return VB;
+    size_t blocksToMoveCount = newBlockCount - destroyedIndex;
+    moveObjectsWithinGLBuffer(GL_ARRAY_BUFFER, blocksVB, destroyedIndex,
+        destroyedIndex + 1, blocksToMoveCount, BLOCK_VERTICES_SIZE);
 }
 
 unsigned int createBlockIB(GLenum usage)
@@ -221,25 +276,6 @@ unsigned int createBlockIB(GLenum usage)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * 3 * 2, indices, usage);
 
     return IB;
-}
-
-unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum usage)
-{
-    unsigned int VB = genVB();
-
-    size_t stride = sizeof(float) * 4 * FLOATS_PER_BLOCK_VERTEX;
-    float* positions = malloc(stride * count);
-
-    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
-
-    for (size_t i = 0; i < count; i++)
-        normalizeBlockCoordinates(positions + 4 * FLOATS_PER_BLOCK_VERTEX * i, &blocks[i]);
-
-    glBufferData(GL_ARRAY_BUFFER, (GLsizei)stride * (GLsizei)count, positions, usage);
-    free(positions);
-
-    return VB;
 }
 
 unsigned int createBlocksIB(size_t count, GLenum usage)
@@ -281,11 +317,4 @@ void drawVertices(unsigned int VA, int count, GLenum IBType)
 {
     glBindVertexArray(VA);
     glDrawElements(GL_TRIANGLES, count, IBType, NULL);
-}
-
-void freeGLBuffers(GLBuffers* buffers)
-{
-    glDeleteVertexArrays(1, &buffers->VA);
-    glDeleteBuffers(1, &buffers->VB);
-    glDeleteBuffers(1, &buffers->IB);
 }

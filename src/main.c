@@ -50,7 +50,7 @@ int main()
     GLBuffers ballBuffers = createBallGLBuffers(&ball);
 
     size_t blockCount;
-    Block* blocks = createBlocks(1, &blockCount);
+    Block* blocks = createBlocks(STARTING_LEVEL, &blockCount);
     GLBuffers blocksBuffers = createNormalizedBlocksGLBuffers(blocks, blockCount);
 
     unsigned int paddleShader = createShader(paddleVertexShaderSrcData,
@@ -63,6 +63,9 @@ int main()
     float prevTime = (float)glfwGetTime();
     int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
     int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
+
+    removeBlock(blocks, &blockCount, 1);
+    updateBlocksVBOnBlockDestroyed(blocksBuffers.VB, 1, blockCount);
 
     while (!glfwWindowShouldClose(window))
     {
