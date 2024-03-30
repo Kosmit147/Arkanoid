@@ -241,6 +241,27 @@ void updateBlockVB(const Block* block, unsigned int paddleVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions);
 }
 
+void updateBallVB(const Ball* ball, unsigned int ballVB)
+{
+    // if BLOCK_VERTEX_FLOATS changed, we have to update this code
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+
+    float x1 = ball->position.x - ball->radius;
+    float x2 = ball->position.x + ball->radius;
+    float y1 = ball->position.y - ball->radius;
+    float y2 = ball->position.y + ball->radius;
+
+    float positions[FLOATS_PER_BLOCK_VERTEX * 4] = {
+        x1, y1,
+        x2, y1,
+        x2, y2,
+        x1, y2,
+    };
+
+    glBindBuffer(GL_ARRAY_BUFFER, ballVB);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4, positions);
+}
+
 void updateBlocksVBOnBlockDestroyed(unsigned int blocksVB, size_t destroyedIndex, size_t newBlockCount)
 {
     size_t blocksToMoveCount = newBlockCount - destroyedIndex;
@@ -269,20 +290,21 @@ unsigned int createBlocksIB(size_t count, GLenum usage)
     size_t dataSize = sizeof(unsigned short) * 2 * 3 * count;
     unsigned short* positions = malloc(dataSize);
 
-    for (unsigned short i = 0; i < count; i++)
-    {
-        unsigned short indexOffset = i * 2 * 3;
-        unsigned short vertexOffset = i * 4;
+    unsigned short vertexOffset = 0;
 
+    for (unsigned short i = 0; i < count * 6; i += 6)
+    {
         // first triangle
-        positions[indexOffset + 0] = vertexOffset + 0;
-        positions[indexOffset + 1] = vertexOffset + 1;
-        positions[indexOffset + 2] = vertexOffset + 2;
+        positions[i + 0] = vertexOffset + 0;
+        positions[i + 1] = vertexOffset + 1;
+        positions[i + 2] = vertexOffset + 2;
 
         // second triangle
-        positions[indexOffset + 3] = vertexOffset + 0;
-        positions[indexOffset + 4] = vertexOffset + 2;
-        positions[indexOffset + 5] = vertexOffset + 3;
+        positions[i + 3] = vertexOffset + 0;
+        positions[i + 4] = vertexOffset + 2;
+        positions[i + 5] = vertexOffset + 3;
+
+        vertexOffset += 4;
     }
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)dataSize, positions, usage);
