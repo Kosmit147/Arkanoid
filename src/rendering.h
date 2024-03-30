@@ -58,6 +58,7 @@ unsigned int createBlocksIB(size_t count, GLenum usage);
 
 // Set Vertex Attributes
 void setBlockVertexAttributes();
+void setBallVertexAttributes();
 
 // Retrieve Uniform Locations
 int retrieveUniformLocation(unsigned int shader, const char* name);

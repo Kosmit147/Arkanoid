@@ -27,6 +27,8 @@ float normalizeLength(float length)
 
 void normalizeBlockCoordinates(float* normalizedPositions, const Block* block)
 {
+    // TODO: update to use getVertices function, rename func
+
     float normalizedX1 = normalizeCoordinate(block->position.x);
     float normalizedY1 = normalizeCoordinate(block->position.y);
     float normalizedX2 = normalizedX1 + normalizeLength(block->width);
