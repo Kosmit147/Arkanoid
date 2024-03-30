@@ -285,20 +285,21 @@ unsigned int createBlocksIB(size_t count, GLenum usage)
     size_t dataSize = sizeof(unsigned short) * 2 * 3 * count;
     unsigned short* positions = malloc(dataSize);
 
-    for (unsigned short i = 0; i < count; i++)
-    {
-        unsigned short indexOffset = i * 2 * 3;
-        unsigned short vertexOffset = i * 4;
+    unsigned short vertexOffset = 0;
 
+    for (unsigned short i = 0; i < count * 6; i += 6)
+    {
         // first triangle
-        positions[indexOffset + 0] = vertexOffset + 0;
-        positions[indexOffset + 1] = vertexOffset + 1;
-        positions[indexOffset + 2] = vertexOffset + 2;
+        positions[i + 0] = vertexOffset + 0;
+        positions[i + 1] = vertexOffset + 1;
+        positions[i + 2] = vertexOffset + 2;
 
         // second triangle
-        positions[indexOffset + 3] = vertexOffset + 0;
-        positions[indexOffset + 4] = vertexOffset + 2;
-        positions[indexOffset + 5] = vertexOffset + 3;
+        positions[i + 3] = vertexOffset + 0;
+        positions[i + 4] = vertexOffset + 2;
+        positions[i + 5] = vertexOffset + 3;
+
+        vertexOffset += 4;
     }
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)dataSize, positions, usage);
