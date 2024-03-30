@@ -38,6 +38,7 @@ unsigned int createBlockVB(const Block* block, GLenum usage);
 unsigned int createNormalizedBlockVB(const Block* block, GLenum usage);
 unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum usage);
 unsigned int createBallVB(const Ball* ball, GLenum usage);
+void updateBallVB(const Ball* ball, unsigned int ballVB);
 
 // Update Vertex Buffers
 void updateBlockVB(const Block* block, unsigned int blockVB);

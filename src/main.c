@@ -46,7 +46,7 @@ int main()
     Block paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
     GLBuffers paddleBuffers = createBlockGLBuffers(&paddle);
 
-    Ball ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, BALL_TRANSLATION_X, BALL_TRANSLATION_Y);
+    Ball ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, 0.0f, 0.0f);
     GLBuffers ballBuffers = createBallGLBuffers(&ball);
 
     size_t blockCount;
@@ -60,13 +60,9 @@ int main()
     unsigned int ballShader = createShader(ballVertexShaderSrcData,
         ballFragmentShaderSrcData, GL_SHADER_VERSION_DECL);
 
-    int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
-    glUniform2f(ballCenterUnifLocation, normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
-
-    int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
-    glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(normalizeLength(ball.radius), 2));
-
     float prevTime = (float)glfwGetTime();
+    int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
+    int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
 
     removeBlock(blocks, &blockCount, 1);
     updateBlocksVBOnBlockDestroyed(blocksBuffers.VB, 1, blockCount);
@@ -80,6 +76,17 @@ int main()
 
         movePaddle(&paddle, window, deltaTime);
         updateBlockVB(&paddle, paddleBuffers.VB);
+
+
+        ballLaunched(&ball, &paddle, window);
+        moveBall(&ball, deltaTime);
+        updateBallVB(&ball, ballBuffers.VB);
+
+        glUseProgram(ballShader);
+
+
+        glUniform2f(ballCenterUnifLocation, normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
+        glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(normalizeLength(ball.radius), 2));
 
         glUseProgram(paddleShader);
         drawVertices(paddleBuffers.VA, 6, GL_UNSIGNED_SHORT);
