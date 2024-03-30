@@ -166,12 +166,11 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
 void removeBlock(Block* blocks, size_t* blockCount, size_t index)
 {
     size_t blocksToMove = *blockCount - index - 1;
-
     Block* dst = &blocks[index];
     Block* src = &blocks[index + 1];
     size_t dataSize = sizeof(Block) * blocksToMove;
 
-    memcpy(dst, src, dataSize);
+    memmove(dst, src, dataSize);
 
     (*blockCount)--;
 }
