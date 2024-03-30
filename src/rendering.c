@@ -9,14 +9,18 @@
 
 #include "defines.h"
 
+#ifdef _DEBUG
 void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum severity,
     GLsizei /*length*/, const GLchar* message, const void* /*userParam*/)
 {
-    if (severity > GL_DEBUG_MESSAGE_MIN_SEVERITY)
+    if (severity > ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY)
         return;
 
-    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION && GL_DEBUG_MESSAGE_MIN_SEVERITY != GL_DEBUG_SEVERITY_NOTIFICATION)
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION &&
+        ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY != GL_DEBUG_SEVERITY_NOTIFICATION)
+    {
         return;
+    }
 
     const char* color;
 
@@ -41,6 +45,7 @@ void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum s
     else
         logError("[OpenGL Error Message]: %s.\n", message, color);
 }
+#endif
 
 unsigned int genVA()
 {
