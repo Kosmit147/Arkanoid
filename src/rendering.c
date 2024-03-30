@@ -319,8 +319,40 @@ void setBlockVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
+BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
+{
+    BallShaderUnifs unifs;
+
+    unifs.normalBallCenter = glGetUniformLocation(ballShader, "normalBallCenter");
+    unifs.normalBallRadiusSquared = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
+
+    return unifs;
+}
+
 void drawVertices(unsigned int VA, int count, GLenum IBType)
 {
     glBindVertexArray(VA);
     glDrawElements(GL_TRIANGLES, count, IBType, NULL);
+}
+
+void drawBall(const Ball* ball, const BallShaderUnifs* unifs, unsigned int shader, unsigned int VA)
+{
+    glUseProgram(shader);
+
+    glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x), normalizeCoordinate(ball->position.y));
+    glUniform1f(unifs->normalBallRadiusSquared, (float)pow(normalizeLength(ball->radius), 2));
+
+    drawVertices(VA, 6, GL_UNSIGNED_SHORT);
+}
+
+void drawPaddle(const Block* paddle, unsigned int shader, unsigned int VA)
+{
+    glUseProgram(shader);
+    drawVertices(VA, 6, GL_UNSIGNED_SHORT);
+}
+
+void drawBlocks(const Block* blocks, size_t blockCount, unsigned int shader, unsigned int VA)
+{
+    glUseProgram(shader);
+    drawVertices(VA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
 }
