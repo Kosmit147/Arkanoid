@@ -71,8 +71,6 @@ int main()
     removeBlock(blocks, &blockCount, 1);
     updateBlocksVBOnBlockDestroyed(blocksBuffers.VB, 1, blockCount);
 
-    float prevTime = (float)glfwGetTime();
-
     while (!glfwWindowShouldClose(window))
     {
         float time = (float)glfwGetTime();
