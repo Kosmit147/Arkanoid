@@ -2,11 +2,13 @@
 
 #include <stdio.h>
 
+#include "log.h"
+
 GLFWwindow* setUpWindow(const char* title, int width, int height)
 {
     if (!glfwInit())
     {
-        fprintf(stderr, "Failed to initialize GLFW.\n");
+        logError("Failed to initialize GLFW.\n");
         return NULL;
     }
 
@@ -28,7 +30,7 @@ GLFWwindow* setUpWindow(const char* title, int width, int height)
 
     if (!window)
     {
-        fprintf(stderr, "Failed to create a window.\n");
+        logError("Failed to create a window.\n");
         glfwTerminate();
         return NULL;
     }
@@ -44,7 +46,7 @@ bool loadGlad()
 {
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        fprintf(stderr, "Failed to initialize GLAD.\n");
+        logError("Failed to initialize GLAD.\n");
         glfwTerminate();
         return false;
     }

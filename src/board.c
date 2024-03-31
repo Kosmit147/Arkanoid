@@ -6,9 +6,10 @@
 #include <incbin.h>
 
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "log.h"
 
 #include "defines.h"
 
@@ -23,21 +24,6 @@ float normalizeCoordinate(float coord)
 float normalizeLength(float length)
 {
     return length / (float)COORDINATE_SPACE * 2.0f;
-}
-
-void normalizeBlockCoordinates(float* normalizedPositions, const Block* block)
-{
-    // TODO: update to use getVertices function, rename func
-
-    float normalizedX1 = normalizeCoordinate(block->position.x);
-    float normalizedY1 = normalizeCoordinate(block->position.y);
-    float normalizedX2 = normalizedX1 + normalizeLength(block->width);
-    float normalizedY2 = normalizedY1 - normalizeLength(block->height);
-
-    normalizedPositions[0] = normalizedX1; normalizedPositions[1] = normalizedY1;
-    normalizedPositions[2] = normalizedX2; normalizedPositions[3] = normalizedY1;
-    normalizedPositions[4] = normalizedX2; normalizedPositions[5] = normalizedY2;
-    normalizedPositions[6] = normalizedX1; normalizedPositions[7] = normalizedY2;
 }
 
 Block createPaddle(float startPosX, float startPosY, float width, float height)
@@ -107,7 +93,7 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
         levelData = level1Data;
         break;
     default:
-        fprintf(stderr, "Error: Tried to load level %u, which doesn't exist!", level);
+        logError("Error: Tried to load level %u, which doesn't exist!", level);
         *blockCount = 0;
         return NULL;
         break;

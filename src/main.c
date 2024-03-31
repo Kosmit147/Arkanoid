@@ -14,6 +14,7 @@
 #include "shader.h"
 #include "input.h"
 #include "helpers.h"
+#include "log.h"
 
 #include "defines.h"
 
@@ -43,7 +44,7 @@ int main()
 
 #ifdef _DEBUG
     glDebugMessageCallback(GLDebugCallback, NULL);
-    puts((const char*)glGetString(GL_VERSION));
+    logNotification("%s\n", (const char*)glGetString(GL_VERSION));
 #endif
 
     glEnable(GL_BLEND);
@@ -59,7 +60,7 @@ int main()
     Block* const blocks = createBlocks(STARTING_LEVEL, &blockCount);
     GLBuffers blocksBuffers = createNormalizedBlocksGLBuffers(blocks, blockCount);
 
-    setExtraShaderSrc(commonShaderSrcData);
+    setCommonShaderSrc(commonShaderSrcData);
 
     unsigned int paddleShader = createShader(paddleVertexShaderSrcData,
         paddleFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL);
@@ -71,14 +72,16 @@ int main()
     BallShaderUnifs ballShaderUnifs = retrieveBallShaderUnifs(ballShader);
 
     removeBlock(blocks, &blockCount, 1);
-    updateBlocksVBOnBlockDestroyed(blocksBuffers.VB, 1, blockCount);
+    removeBlock(blocks, &blockCount, 2);
+    removeBlock(blocks, &blockCount, 3);
+    updateBlocksVBOnBlocksDestroyed(blocksBuffers.VB, 1, 3, blockCount);
 
     float prevTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
         time = (float)glfwGetTime();
-        deltaTime = minf(time - prevTime, DELTA_TIME_LIMIT);
+        deltaTime = min(time - prevTime, DELTA_TIME_LIMIT);
 
         glClear(GL_COLOR_BUFFER_BIT);
 

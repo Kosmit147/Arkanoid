@@ -7,7 +7,7 @@ out vec4 outColor;
 
 void main()
 {
-    float aaLevel = BALL_SHADER_AA_LEVEL;
+    float aaLevel = 0.0001;
 
     vec2 distVec = Position - normalBallCenter;
     float distSquared = dot(distVec, distVec);
