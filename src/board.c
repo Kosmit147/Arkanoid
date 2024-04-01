@@ -11,28 +11,16 @@
 
 #include "log.h"
 
-#include "defines.h"
-
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
-
-float normalizeCoordinate(float coord)
-{
-    return coord / (float)COORDINATE_SPACE * 2.0f - 1.0f;
-}
-
-float normalizeLength(float length)
-{
-    return length / (float)COORDINATE_SPACE * 2.0f;
-}
 
 Block createPaddle(float startPosX, float startPosY, float width, float height)
 {
     Vec2 paddlePosition = { startPosX, startPosY };
     Block paddle = {
-        paddlePosition,
-        width,
-        height,
+        .position = paddlePosition,
+        .width = width,
+        .height = height,
     };
 
     return paddle;
@@ -43,9 +31,9 @@ Ball createBall(float startPosX, float startPosY, float radius, float translatio
     Vec2 ballPosition = { startPosX, startPosY };
     Vec2 ballTranslation = { translationX, translationY };
     Ball ball = {
-        ballPosition,
-        ballTranslation,
-        radius,
+        .position = ballPosition,
+        .translation = ballTranslation,
+        .radius = radius,
     };
 
     return ball;

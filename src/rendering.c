@@ -89,11 +89,12 @@ void moveObjectsWithinGLBuffer(GLenum bufferType, unsigned int buffer, size_t ds
 
 GLBuffers createBlockGLBuffers(const Block* block)
 {
-    GLBuffers buffers;
+    GLBuffers buffers = {
+        .VA = genVA(),
+        .VB = createBlockVB(block, GL_DYNAMIC_DRAW),
+        .IB = createBlockIB(GL_STATIC_DRAW),
+    };
 
-    buffers.VA = genVA();
-    buffers.VB = createBlockVB(block, GL_DYNAMIC_DRAW);
-    buffers.IB = createBlockIB(GL_STATIC_DRAW);
     setBlockVertexAttributes();
 
     return buffers;
@@ -101,11 +102,12 @@ GLBuffers createBlockGLBuffers(const Block* block)
 
 GLBuffers createNormalizedBlocksGLBuffers(const Block* blocks, size_t blockCount)
 {
-    GLBuffers buffers;
+    GLBuffers buffers = {
+        .VA = genVA(),
+        .VB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW),
+        .IB = createBlocksIB(blockCount, GL_STATIC_DRAW),
+    };
 
-    buffers.VA = genVA();
-    buffers.VB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW);
-    buffers.IB = createBlocksIB(blockCount, GL_STATIC_DRAW);
     setBlockVertexAttributes();
 
     return buffers;
@@ -113,11 +115,12 @@ GLBuffers createNormalizedBlocksGLBuffers(const Block* blocks, size_t blockCount
 
 GLBuffers createBallGLBuffers(const Ball* ball)
 {
-    GLBuffers buffers;
+    GLBuffers buffers = {
+        .VA = genVA(),
+        .VB = createBallVB(ball, GL_DYNAMIC_DRAW),
+        .IB = createBlockIB(GL_STATIC_DRAW),
+    };
 
-    buffers.VA = genVA();
-    buffers.VB = createBallVB(ball, GL_DYNAMIC_DRAW);
-    buffers.IB = createBlockIB(GL_STATIC_DRAW);
     setBallVertexAttributes();
 
     return buffers;
@@ -339,10 +342,10 @@ int retrieveUniformLocation(unsigned int shader, const char* name)
 
 BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
 {
-    BallShaderUnifs unifs;
-
-    unifs.normalBallCenter = retrieveUniformLocation(ballShader, "normalBallCenter");
-    unifs.normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalBallRadiusSquared");
+    BallShaderUnifs unifs = {
+        .normalBallCenter = retrieveUniformLocation(ballShader, "normalBallCenter"),
+        .normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalBallRadiusSquared"),
+    };
 
     return unifs;
 }
