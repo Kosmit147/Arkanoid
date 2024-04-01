@@ -11,6 +11,12 @@ typedef struct GLBuffers
     unsigned int VA, VB, IB;
 } GLBuffers;
 
+typedef struct BallShaderUnifs
+{
+    int normalBallCenter;
+    int normalBallRadiusSquared;
+} BallShaderUnifs;
+
 #ifdef _DEBUG
 void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
     GLsizei length, const GLchar* message, const void* userParam);
@@ -35,16 +41,22 @@ GLBuffers createBallGLBuffers(const Ball* ball);
 // Free GLBuffers
 void freeGLBuffers(GLBuffers* buffers);
 
+// Get Vertex Data
+void getBlockVertices(float* vertices, const Block* block);
+void getNormalizedBlockVertices(float* vertices, const Block* block);
+void getBallVertices(float* vertices, const Ball* ball);
+
 // Create Vertex Buffers
 unsigned int createBlockVB(const Block* block, GLenum usage);
 unsigned int createNormalizedBlockVB(const Block* block, GLenum usage);
 unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum usage);
 unsigned int createBallVB(const Ball* ball, GLenum usage);
-void updateBallVB(const Ball* ball, unsigned int ballVB);
 
 // Update Vertex Buffers
 void updateBlockVB(const Block* block, unsigned int blockVB);
-void updateBlocksVBOnBlockDestroyed(unsigned int blocksVB, size_t destroyedIndex, size_t newBlockCount);
+void updateBlocksVBOnBlocksDestroyed(unsigned int blocksVB, size_t destroyedIndex,
+    size_t destroyedCount, size_t newBlockCount);
+void updateBallVB(const Ball* ball, unsigned int ballVB);
 
 // Create Index Buffers
 unsigned int createBlockIB(GLenum usage);
@@ -52,6 +64,16 @@ unsigned int createBlocksIB(size_t count, GLenum usage);
 
 // Set Vertex Attributes
 void setBlockVertexAttributes();
+void setBallVertexAttributes();
+
+// Retrieve Uniforms
+int retrieveUniformLocation(unsigned int shader, const char* name);
+BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader);
 
 // Draw Vertices
 void drawVertices(unsigned int VA, int count, GLenum IBType);
+
+// Draw Game Objects
+void drawBall(const Ball* ball, const BallShaderUnifs* unifs, unsigned int shader, unsigned int ballVA);
+void drawPaddle(unsigned int shader, unsigned int paddleVA);
+void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA);

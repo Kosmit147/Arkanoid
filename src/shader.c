@@ -3,18 +3,19 @@
 #define INCBIN_PREFIX
 #include <incbin.h>
 
-#include <stdio.h>
 #include <stdbool.h>
+
+#include "log.h"
 
 INCTXT(definesShared, "../src/defines_shared.h");
 
 #define SHADER_SOURCES_COUNT 6
 
-static const char* extraShaderSrc = "";
+static const char* commonShaderSrc = "";
 
-void setExtraShaderSrc(const char* src)
+void setCommonShaderSrc(const char* src)
 {
-    extraShaderSrc = src;
+    commonShaderSrc = src;
 }
 
 static bool verifyShaderCompilation(unsigned int shader)
@@ -26,7 +27,7 @@ static bool verifyShaderCompilation(unsigned int shader)
     {
         char infoLog[512];
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        fprintf(stderr, "Shader compilation failed: %s.\n", infoLog);
+        logError("Shader compilation failed: %s.\n", infoLog);
     }
 
     return success;
@@ -41,7 +42,7 @@ static bool verifyProgramLinkage(unsigned int program)
     {
         char infoLog[512];
         glGetProgramInfoLog(program, 512, NULL, infoLog);
-        fprintf(stderr, "Shader program linkage failed: %s.\n", infoLog);
+        logError("Shader program linkage failed: %s.\n", infoLog);
     }
 
     return success;
@@ -53,7 +54,7 @@ static unsigned int compileShader(const char* shaderSrc, GLenum type, const char
         versionDecl,
         definesSharedData,
         "\n", // in case there is no new line at the end of "defines_shared.h" file
-        extraShaderSrc,
+        commonShaderSrc,
         "\n", // like above
         shaderSrc,
     };
@@ -77,12 +78,12 @@ unsigned int createShader(const char* vertexShaderSrc, const char* fragmentShade
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
     verifyProgramLinkage(shaderProgram);
-    glUseProgram(shaderProgram);
 
 #ifndef _DEBUG
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 #endif
 
+    glUseProgram(shaderProgram);
     return shaderProgram;
 }

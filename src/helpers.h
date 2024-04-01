@@ -1,6 +1,3 @@
 #pragma once
 
-static inline float minf(float a, float b)
-{
-    return a < b ? a : b;
-}
+#define min(a, b) ((a) < (b) ? (a) : (b))

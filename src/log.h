@@ -7,16 +7,15 @@
 #define ANSI_COLOR_WHITE    "\x1b[37m"
 #define ANSI_COLOR_RESET    "\x1b[0m"
 
-static inline void logNotification(const char* format, const char* message, const char* color)
-{
-    printf("%s", color);
-    printf(format, message);
-    printf("%s", ANSI_COLOR_RESET);
-}
+// use like printf
+#define logNotification(...) printf(__VA_ARGS__);
 
-static inline void logError(const char* format, const char* message, const char* color)
-{
-    fprintf(stderr, "%s", color);
-    fprintf(stderr, format, message);
-    fprintf(stderr, "%s", ANSI_COLOR_RESET);
-}
+// use like printf
+#define logWarning(...) { printf("%s", ANSI_COLOR_YELLOW);\
+    printf(__VA_ARGS__);\
+    printf("%s", ANSI_COLOR_RESET); }
+
+// use like printf
+#define logError(...) { fprintf(stderr, "%s", ANSI_COLOR_RED);\
+    fprintf(stderr, __VA_ARGS__);\
+    fprintf(stderr, "%s", ANSI_COLOR_RESET); }

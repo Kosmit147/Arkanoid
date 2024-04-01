@@ -6,45 +6,21 @@
 #include <incbin.h>
 
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "defines.h"
+#include "log.h"
 
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
-
-float normalizeCoordinate(float coord)
-{
-    return coord / (float)COORDINATE_SPACE * 2.0f - 1.0f;
-}
-
-float normalizeLength(float length)
-{
-    return length / (float)COORDINATE_SPACE * 2.0f;
-}
-
-void normalizeBlockCoordinates(float* normalizedPositions, const Block* block)
-{
-    float normalizedX1 = normalizeCoordinate(block->position.x);
-    float normalizedY1 = normalizeCoordinate(block->position.y);
-    float normalizedX2 = normalizedX1 + normalizeLength(block->width);
-    float normalizedY2 = normalizedY1 - normalizeLength(block->height);
-
-    normalizedPositions[0] = normalizedX1; normalizedPositions[1] = normalizedY1;
-    normalizedPositions[2] = normalizedX2; normalizedPositions[3] = normalizedY1;
-    normalizedPositions[4] = normalizedX2; normalizedPositions[5] = normalizedY2;
-    normalizedPositions[6] = normalizedX1; normalizedPositions[7] = normalizedY2;
-}
 
 Block createPaddle(float startPosX, float startPosY, float width, float height)
 {
     Vec2 paddlePosition = { startPosX, startPosY };
     Block paddle = {
-        paddlePosition,
-        width,
-        height,
+        .position = paddlePosition,
+        .width = width,
+        .height = height,
     };
 
     return paddle;
@@ -55,9 +31,9 @@ Ball createBall(float startPosX, float startPosY, float radius, float translatio
     Vec2 ballPosition = { startPosX, startPosY };
     Vec2 ballTranslation = { translationX, translationY };
     Ball ball = {
-        ballPosition,
-        ballTranslation,
-        radius,
+        .position = ballPosition,
+        .translation = ballTranslation,
+        .radius = radius,
     };
 
     return ball;
@@ -105,7 +81,7 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
         levelData = level1Data;
         break;
     default:
-        fprintf(stderr, "Error: Tried to load level %u, which doesn't exist!", level);
+        logError("Error: Tried to load level %u, which doesn't exist!", level);
         *blockCount = 0;
         return NULL;
         break;
@@ -166,12 +142,11 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
 void removeBlock(Block* blocks, size_t* blockCount, size_t index)
 {
     size_t blocksToMove = *blockCount - index - 1;
-
     Block* dst = &blocks[index];
     Block* src = &blocks[index + 1];
     size_t dataSize = sizeof(Block) * blocksToMove;
 
-    memcpy(dst, src, dataSize);
+    memmove(dst, src, dataSize);
 
     (*blockCount)--;
 }

@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #include "window.h"
 #include "entities.h"
@@ -15,6 +14,7 @@
 #include "shader.h"
 #include "input.h"
 #include "helpers.h"
+#include "log.h"
 
 #include "defines.h"
 
@@ -25,6 +25,9 @@ INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
 INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
 INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
 INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
+
+float time;
+float deltaTime;
 
 int main()
 {
@@ -41,8 +44,11 @@ int main()
 
 #ifdef _DEBUG
     glDebugMessageCallback(GLDebugCallback, NULL);
-    puts((const char*)glGetString(GL_VERSION));
+    logNotification("%s\n", (const char*)glGetString(GL_VERSION));
 #endif
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     Block paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
     GLBuffers paddleBuffers = createBlockGLBuffers(&paddle);
@@ -51,10 +57,10 @@ int main()
     GLBuffers ballBuffers = createBallGLBuffers(&ball);
 
     size_t blockCount;
-    Block* blocks = createBlocks(STARTING_LEVEL, &blockCount);
+    Block* const blocks = createBlocks(STARTING_LEVEL, &blockCount);
     GLBuffers blocksBuffers = createNormalizedBlocksGLBuffers(blocks, blockCount);
 
-    setExtraShaderSrc(commonShaderSrcData);
+    setCommonShaderSrc(commonShaderSrcData);
 
     unsigned int paddleShader = createShader(paddleVertexShaderSrcData,
         paddleFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL);
@@ -63,43 +69,31 @@ int main()
     unsigned int ballShader = createShader(ballVertexShaderSrcData,
         ballFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL);
 
-    float prevTime = (float)glfwGetTime();
-    int ballCenterUnifLocation = glGetUniformLocation(ballShader, "normalBallCenter");
-    int ballRadiusSquaredUnifLocation = glGetUniformLocation(ballShader, "normalBallRadiusSquared");
-    glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(normalizeLength(ball.radius), 2));
+    BallShaderUnifs ballShaderUnifs = retrieveBallShaderUnifs(ballShader);
 
     removeBlock(blocks, &blockCount, 1);
-    updateBlocksVBOnBlockDestroyed(blocksBuffers.VB, 1, blockCount);
+    removeBlock(blocks, &blockCount, 2);
+    removeBlock(blocks, &blockCount, 3);
+    updateBlocksVBOnBlocksDestroyed(blocksBuffers.VB, 1, 3, blockCount);
+
+    float prevTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
-        float time = (float)glfwGetTime();
-        float deltaTime = minf(time - prevTime, DELTA_TIME_LIMIT);
+        time = (float)glfwGetTime();
+        deltaTime = min(time - prevTime, DELTA_TIME_LIMIT);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        movePaddle(&paddle, window, deltaTime);
+        movePaddle(&paddle, window);
+        moveBall(&ball, &paddle, window);
+
         updateBlockVB(&paddle, paddleBuffers.VB);
-
-
-        ballLaunched(&ball, &paddle, window);
-        moveBall(&ball, deltaTime);
         updateBallVB(&ball, ballBuffers.VB);
 
-        glUseProgram(ballShader);
-
-
-        glUniform2f(ballCenterUnifLocation, normalizeCoordinate(ball.position.x), normalizeCoordinate(ball.position.y));
-        glUniform1f(ballRadiusSquaredUnifLocation, (float)pow(normalizeLength(ball.radius), 2));
-
-        glUseProgram(paddleShader);
-        drawVertices(paddleBuffers.VA, 6, GL_UNSIGNED_SHORT);
-
-        glUseProgram(ballShader);
-        drawVertices(ballBuffers.VA, 6, GL_UNSIGNED_SHORT);
-
-        glUseProgram(blockShader);
-        drawVertices(blocksBuffers.VA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
+        drawPaddle(paddleShader, paddleBuffers.VA);
+        drawBlocks(blockCount, blockShader, blocksBuffers.VA);
+        drawBall(&ball, &ballShaderUnifs, ballShader, ballBuffers.VA);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
