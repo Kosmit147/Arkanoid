@@ -128,6 +128,8 @@ GLBuffers createBallGLBuffers(const Ball* ball)
 
 void freeGLBuffers(GLBuffers* buffers)
 {
+    static_assert(sizeof(GLBuffers) == sizeof(unsigned int) * 3);
+
     glDeleteVertexArrays(1, &buffers->VA);
     glDeleteBuffers(1, &buffers->VB);
     glDeleteBuffers(1, &buffers->IB);
