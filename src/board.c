@@ -5,7 +5,6 @@
 #define INCBIN_PREFIX
 #include <incbin.h>
 
-#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -13,6 +12,8 @@
 
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
+
+extern float deltaTime;
 
 Block createPaddle(float startPosX, float startPosY, float width, float height)
 {
@@ -137,6 +138,33 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
     }
 
     return blocks;
+}
+
+GameObjects createGameObjects()
+{
+    GameObjects gameObjects;
+
+    gameObjects.paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
+    gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
+    gameObjects.ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, 0.0f, 0.0f);
+
+    return gameObjects;
+}
+
+void freeGameObjects(const GameObjects* objects)
+{
+    free(objects->blocks);
+}
+
+void moveBall(Ball* ball)
+{
+    ball->position.x += ball->translation.x * deltaTime;
+    ball->position.y += ball->translation.y * deltaTime;
+}
+
+void moveGameObjects(GameObjects* objects)
+{
+    moveBall(&objects->ball);
 }
 
 void removeBlock(Block* blocks, size_t* blockCount, size_t index)
