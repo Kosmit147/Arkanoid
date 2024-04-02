@@ -59,7 +59,7 @@ int main()
         processInput(&state, &objects, window);
         moveGameObjects(&objects);
         updateRenderingData(&renderingData, &objects);
-        render(&renderingData);
+        render(&renderingData, &objects);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

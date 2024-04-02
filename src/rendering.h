@@ -71,7 +71,6 @@ void getBallVertices(float* vertices, const Ball* ball);
 
 // Create Vertex Buffers
 unsigned int createBlockVB(const Block* block, GLenum usage);
-unsigned int createNormalizedBlockVB(const Block* block, GLenum usage);
 unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum usage);
 unsigned int createBallVB(const Ball* ball, GLenum usage);
 
@@ -94,7 +93,7 @@ int retrieveUniformLocation(unsigned int shader, const char* name);
 BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader);
 
 // Update uniforms
-void updateBallUnifs(const BallShaderUnifs* unifs, const Ball* ball);
+void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball);
 
 // Get Rendering Data
 GameShaders createGameShaders();
@@ -111,9 +110,9 @@ void freeRenderingData(const RenderingData* renderingData);
 void drawVertices(unsigned int VA, int count, GLenum IBType);
 
 // Draw Game Objects
-void drawBall(unsigned int shader, unsigned int ballVA);
+void drawBall(const Ball* ball, unsigned int ballShader, const BallShaderUnifs* unifs, unsigned int ballVA);
 void drawPaddle(unsigned int shader, unsigned int paddleVA);
 void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA);
 
 // Render
-void render(const RenderingData* renderingData);
+void render(const RenderingData* renderingData, const GameObjects* gameObjects);
