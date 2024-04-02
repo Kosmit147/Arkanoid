@@ -5,7 +5,6 @@
 #include "log.h"
 #include "window.h"
 #include "game_state.h"
-#include "entities.h"
 #include "board.h"
 #include "input.h"
 #include "rendering.h"
