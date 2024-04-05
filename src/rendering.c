@@ -204,20 +204,6 @@ unsigned int createBlockVB(const Block* block, GLenum usage)
     return VB;
 }
 
-unsigned int createNormalizedBlockVB(const Block* block, GLenum usage)
-{
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
-
-    unsigned int VB = genVB();
-
-    float normalizedVertices[FLOATS_PER_BLOCK_VERTEX * 4];
-    getNormalizedBlockVertices(normalizedVertices, block);
-
-    glBufferData(GL_ARRAY_BUFFER, BLOCK_VERTICES_SIZE, normalizedVertices, usage);
-
-    return VB;
-}
-
 unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum usage)
 {
     static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
@@ -362,7 +348,7 @@ BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
     return unifs;
 }
 
-void updateBallUnifs(const BallShaderUnifs* unifs, const Ball* ball)
+void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
 {
     glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x), normalizeCoordinate(ball->position.y));
     glUniform1f(unifs->normalBallRadiusSquared, (float)pow(normalizeLength(ball->radius), 2));
@@ -403,7 +389,6 @@ void updateRenderingData(RenderingData* renderingData, const GameObjects* gameOb
     renderingData->blocksToRender = gameObjects->blockCount;
     updateBlockVB(&gameObjects->paddle, renderingData->paddleBuffers.VB);
     updateBallVB(&gameObjects->ball, renderingData->ballBuffers.VB);
-    updateBallUnifs(&renderingData->ballShaderUnifs, &gameObjects->ball);
 }
 
 void freeGameShaders(const GameShaders* shaders)
@@ -428,9 +413,10 @@ void drawVertices(unsigned int VA, int count, GLenum IBType)
     glDrawElements(GL_TRIANGLES, count, IBType, NULL);
 }
 
-void drawBall(unsigned int shader, unsigned int ballVA)
+void drawBall(const Ball* ball, unsigned int ballShader, const BallShaderUnifs* unifs, unsigned int ballVA)
 {
-    glUseProgram(shader);
+    glUseProgram(ballShader);
+    updateBallShaderUnifs(unifs, ball);
     drawVertices(ballVA, 6, GL_UNSIGNED_SHORT);
 }
 
@@ -446,9 +432,10 @@ void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA)
     drawVertices(blocksVA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
 }
 
-void render(const RenderingData* renderingData)
+void render(const RenderingData* renderingData, const GameObjects* gameObjects)
 {
     drawPaddle(renderingData->shaders.paddleShader, renderingData->paddleBuffers.VA);
     drawBlocks(renderingData->blocksToRender, renderingData->shaders.blockShader, renderingData->blocksBuffers.VA);
-    drawBall(renderingData->shaders.ballShader, renderingData->ballBuffers.VA);
+    drawBall(&gameObjects->ball, renderingData->shaders.ballShader,
+        &renderingData->ballShaderUnifs, renderingData->ballBuffers.VA);
 }
