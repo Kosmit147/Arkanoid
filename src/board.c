@@ -156,7 +156,7 @@ void freeGameObjects(const GameObjects* objects)
     free(objects->blocks);
 }
 
-void moveBall(Ball* ball)
+static void moveBall(Ball* ball)
 {
     ball->position.x += ball->translation.x * deltaTime;
     ball->position.y += ball->translation.y * deltaTime;

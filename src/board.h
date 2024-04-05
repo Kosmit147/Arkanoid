@@ -26,7 +26,6 @@ Block* createBlocks(unsigned int level, size_t* blockCount);
 GameObjects createGameObjects();
 void freeGameObjects(const GameObjects* objects);
 
-void moveBall(Ball* ball);
 void moveGameObjects(GameObjects* objects);
 
 void removeBlock(Block* blocks, size_t* blockCount, size_t index);
