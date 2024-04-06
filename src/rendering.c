@@ -367,23 +367,17 @@ GameShaders createGameShaders()
     return gameShaders;
 }
 
-RenderingData createRenderingData(const GameObjects* gameObjects)
+void initRenderingData(RenderingData* data, const GameObjects* gameObjects)
 {
-    RenderingData data;
-
-    data.shaders = createGameShaders();
-    data.ballShaderUnifs = retrieveBallShaderUnifs(data.shaders.ballShader);
-    data.paddleBuffers = createBlockGLBuffers(&gameObjects->paddle);
-    data.blocksBuffers = createNormalizedBlocksGLBuffers(gameObjects->blocks, gameObjects->blockCount);
-    data.ballBuffers = createBallGLBuffers(&gameObjects->ball);
-    data.blocksToRender = gameObjects->blockCount;
-
-    return data;
+    data->shaders = createGameShaders();
+    data->ballShaderUnifs = retrieveBallShaderUnifs(data->shaders.ballShader);
+    data->paddleBuffers = createBlockGLBuffers(&gameObjects->paddle);
+    data->blocksBuffers = createNormalizedBlocksGLBuffers(gameObjects->blocks, gameObjects->blockCount);
+    data->ballBuffers = createBallGLBuffers(&gameObjects->ball);
 }
 
 void updateRenderingData(RenderingData* renderingData, const GameObjects* gameObjects)
 {
-    renderingData->blocksToRender = gameObjects->blockCount;
     updateBlockVB(&gameObjects->paddle, renderingData->paddleBuffers.VB);
     updateBallVB(&gameObjects->ball, renderingData->ballBuffers.VB);
 }
@@ -432,7 +426,7 @@ void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA)
 void render(const RenderingData* renderingData, const GameObjects* gameObjects)
 {
     drawPaddle(renderingData->shaders.paddleShader, renderingData->paddleBuffers.VA);
-    drawBlocks(renderingData->blocksToRender, renderingData->shaders.blockShader, renderingData->blocksBuffers.VA);
+    drawBlocks(gameObjects->blockCount, renderingData->shaders.blockShader, renderingData->blocksBuffers.VA);
     drawBall(&gameObjects->ball, renderingData->shaders.ballShader,
         &renderingData->ballShaderUnifs, renderingData->ballBuffers.VA);
 }

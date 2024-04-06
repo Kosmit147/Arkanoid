@@ -40,7 +40,8 @@ int main()
     };
 
     GameObjects objects = createGameObjects();
-    RenderingData renderingData = createRenderingData(&objects);
+    RenderingData renderingData;
+    initRenderingData(&renderingData, &objects);
 
     removeBlock(objects.blocks, &objects.blockCount, 1);
     removeBlock(objects.blocks, &objects.blockCount, 2);

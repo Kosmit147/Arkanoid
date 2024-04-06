@@ -6,7 +6,7 @@
 
 extern float deltaTime;
 
-static void launchBall(GameState* state, Ball* ball, const Block* paddle, GLFWwindow* window)
+static void moveBall(GameState* state, Ball* ball, const Block* paddle, GLFWwindow* window)
 {
     if (!state->ballLaunched)
     {
@@ -33,5 +33,5 @@ static void movePaddle(Block* paddle, GLFWwindow* window)
 void processInput(GameState* state, GameObjects* gameObjects, GLFWwindow* window)
 {
     movePaddle(&gameObjects->paddle, window);
-    launchBall(state, &gameObjects->ball, &gameObjects->paddle, window);
+    moveBall(state, &gameObjects->ball, &gameObjects->paddle, window);
 }

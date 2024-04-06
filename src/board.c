@@ -40,26 +40,26 @@ Ball createBall(float startPosX, float startPosY, float radius, float translatio
     return ball;
 }
 
-static void getLineCountAndMaxLength(const char* str, size_t* lineCount, size_t* maxLineLength)
+static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, size_t* maxLineLength)
 {
     *lineCount = 0;
     *maxLineLength = 0;
 
-    size_t lineLength = 0;
+    size_t currLineLength = 0;
 
     const char* ch;
     for (ch = str; *ch; ch++)
     {
         if (*ch != '\n' && *ch != '\r')
         {
-            lineLength++;
+            currLineLength++;
         }
         else if (*ch == '\n')
         {
-            if (lineLength > *maxLineLength)
-                *maxLineLength = lineLength;
+            if (currLineLength > *maxLineLength)
+                *maxLineLength = currLineLength;
 
-            lineLength = 0;
+            currLineLength = 0;
             (*lineCount)++;
         }
     }
@@ -90,12 +90,12 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
 
     size_t maxLineLength;
     size_t lineCount;
-    getLineCountAndMaxLength(levelData, &lineCount, &maxLineLength);
+    getLineCountAndMaxLineLength(levelData, &lineCount, &maxLineLength);
 
     float gridCellHeight = (float)COORDINATE_SPACE / (float)lineCount;
     float gridCellWidth = (float)COORDINATE_SPACE / (float)maxLineLength;
-    float blockWidth = gridCellWidth - BLOCK_HORIZONTAL_PADDING * 2;
-    float blockHeight = gridCellHeight - BLOCK_VERTICAL_PADDING * 2;
+    float blockWidth = gridCellWidth - BLOCK_HORIZONTAL_PADDING * 2.0f;
+    float blockHeight = gridCellHeight - BLOCK_VERTICAL_PADDING * 2.0f;
 
     *blockCount = 0;
     size_t reservedBlocksCount = 30;

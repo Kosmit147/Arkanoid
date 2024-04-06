@@ -37,7 +37,6 @@ typedef struct RenderingData
     GLBuffers paddleBuffers;
     GLBuffers blocksBuffers;
     GLBuffers ballBuffers;
-    size_t blocksToRender;
 } RenderingData;
 
 #ifdef _DEBUG
@@ -97,7 +96,7 @@ void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball);
 
 // Get Rendering Data
 GameShaders createGameShaders();
-RenderingData createRenderingData(const GameObjects* gameObjects);
+void initRenderingData(RenderingData* data, const GameObjects* gameObjects);
 
 // Update Rendering Data
 void updateRenderingData(RenderingData* renderingData, const GameObjects* gameObjects);
