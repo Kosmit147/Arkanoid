@@ -1,30 +1,15 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#define INCBIN_PREFIX
-#include <incbin.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "window.h"
-#include "entities.h"
-#include "board.h"
-#include "rendering.h"
-#include "shader.h"
-#include "input.h"
 #include "helpers.h"
 #include "log.h"
+#include "window.h"
+#include "game_state.h"
+#include "board.h"
+#include "input.h"
+#include "rendering.h"
 
 #include "defines.h"
-
-INCTXT(commonShaderSrc, "../shaders/common.glsl");
-INCTXT(blockVertexShaderSrc, "../shaders/block.vert");
-INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
-INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
-INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
-INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
-INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
 
 float time;
 float deltaTime;
@@ -50,31 +35,17 @@ int main()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    Block paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
-    GLBuffers paddleBuffers = createBlockGLBuffers(&paddle);
+    GameState state = {
+        .ballLaunched = false,
+    };
 
-    Ball ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, 0.0f, 0.0f);
-    GLBuffers ballBuffers = createBallGLBuffers(&ball);
+    GameObjects objects = createGameObjects();
+    RenderingData renderingData = createRenderingData(&objects);
 
-    size_t blockCount;
-    Block* const blocks = createBlocks(STARTING_LEVEL, &blockCount);
-    GLBuffers blocksBuffers = createNormalizedBlocksGLBuffers(blocks, blockCount);
-
-    setCommonShaderSrc(commonShaderSrcData);
-
-    unsigned int paddleShader = createShader(paddleVertexShaderSrcData,
-        paddleFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL);
-    unsigned int blockShader = createShader(blockVertexShaderSrcData,
-        blockFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL);
-    unsigned int ballShader = createShader(ballVertexShaderSrcData,
-        ballFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL);
-
-    BallShaderUnifs ballShaderUnifs = retrieveBallShaderUnifs(ballShader);
-
-    removeBlock(blocks, &blockCount, 1);
-    removeBlock(blocks, &blockCount, 2);
-    removeBlock(blocks, &blockCount, 3);
-    updateBlocksVBOnBlocksDestroyed(blocksBuffers.VB, 1, 3, blockCount);
+    removeBlock(objects.blocks, &objects.blockCount, 1);
+    removeBlock(objects.blocks, &objects.blockCount, 2);
+    removeBlock(objects.blocks, &objects.blockCount, 3);
+    updateBlocksVBOnBlocksDestroyed(renderingData.blocksBuffers.VB, 1, 3, objects.blockCount);
 
     float prevTime = (float)glfwGetTime();
 
@@ -85,15 +56,10 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        movePaddle(&paddle, window);
-        moveBall(&ball, &paddle, window);
-
-        updateBlockVB(&paddle, paddleBuffers.VB);
-        updateBallVB(&ball, ballBuffers.VB);
-
-        drawPaddle(paddleShader, paddleBuffers.VA);
-        drawBlocks(blockCount, blockShader, blocksBuffers.VA);
-        drawBall(&ball, &ballShaderUnifs, ballShader, ballBuffers.VA);
+        processInput(&state, &objects, window);
+        moveGameObjects(&objects);
+        updateRenderingData(&renderingData, &objects);
+        render(&renderingData, &objects);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -101,15 +67,8 @@ int main()
         prevTime = time;
     }
 
-    freeGLBuffers(&paddleBuffers);
-    freeGLBuffers(&blocksBuffers);
-    freeGLBuffers(&ballBuffers);
-
-    glDeleteProgram(paddleShader);
-    glDeleteProgram(blockShader);
-    glDeleteProgram(ballShader);
-
-    free(blocks);
+    freeRenderingData(&renderingData);
+    freeGameObjects(&objects);
 
     glfwTerminate();
     return 0;
