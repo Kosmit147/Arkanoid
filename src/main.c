@@ -29,7 +29,7 @@ int main()
 
 #ifdef _DEBUG
     glDebugMessageCallback(GLDebugCallback, NULL);
-    logNotification("%s\n", (const char*)glGetString(GL_VERSION));
+    logNotification("%s\n", glGetString(GL_VERSION));
 #endif
 
     glEnable(GL_BLEND);
