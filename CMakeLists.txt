@@ -22,14 +22,23 @@ endif()
 
 add_executable(
     arkanoid ${SUBSYSTEM}
-    dependencies/GLAD/src/glad.c
     ${ARKANOID_SOURCES}
 )
 
 if (CMAKE_C_COMPILER_ID MATCHES "GNU")
-    target_compile_options(arkanoid PRIVATE -Wall -Wextra -Werror -Wconversion)
+    target_compile_options(
+        arkanoid PRIVATE 
+        -Wall -Wextra -Werror -Wconversion 
+        -fanalyzer -Wno-analyzer-possible-null-dereference
+    )
 elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
-    target_compile_options(arkanoid PRIVATE -Wall -Wextra -Werror -Wconversion -Wno-c2x-extensions)
+    target_compile_options(
+        arkanoid PRIVATE 
+        -Wall -Wextra -Werror -Wconversion
+        -Wno-c2x-extensions
+        --analyze
+        -analyzer-config core.NullDereference:SuppressAddressSpaces=false
+    )
 endif()
 
 target_include_directories(arkanoid PUBLIC dependencies/GLFW/include)
@@ -39,5 +48,7 @@ target_include_directories(arkanoid PUBLIC dependencies/INCBIN/include)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW lib only")
 set(GLFW_INSTALL OFF CACHE BOOL "GLFW lib only")
 
+add_subdirectory(dependencies/GLAD)
 add_subdirectory(dependencies/GLFW)
+target_link_libraries(arkanoid glad)
 target_link_libraries(arkanoid glfw)

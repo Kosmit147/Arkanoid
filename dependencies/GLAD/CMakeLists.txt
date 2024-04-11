@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(glad)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED True)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE On)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO On)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL On)
+
+add_library(
+    glad STATIC
+    src/glad.c
+)
+
+target_include_directories(
+    glad PUBLIC 
+    ${PROJECT_SOURCE_DIR}/include
+)
