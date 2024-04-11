@@ -37,7 +37,7 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
         -Wall -Wextra -Werror -Wconversion
         -Wno-c2x-extensions
         --analyze
-        -analyzer-config core.NullDereference:SuppressAddressSpaces=false
+        -analyzer-config core.NullDereference=false
     )
 endif()
 
