@@ -36,7 +36,6 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
         arkanoid PRIVATE 
         -Wall -Wextra -Werror -Wconversion
         -Wno-c2x-extensions
-        --analyze
     )
 endif()
 
