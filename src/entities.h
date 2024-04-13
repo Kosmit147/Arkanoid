@@ -12,6 +12,7 @@ typedef struct Block
 typedef struct Ball
 {
     Vec2 position; // ball center
-    Vec2 translation;
+    Vec2 direction;
+    float speed;
     float radius;
 } Ball;

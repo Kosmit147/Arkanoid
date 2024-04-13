@@ -11,8 +11,7 @@ static void moveBall(GameState* state, Ball* ball, const Block* paddle, GLFWwind
     {
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         {
-            ball->translation.x = BALL_LAUNCH_TRANSLATION_X;
-            ball->translation.y = BALL_LAUNCH_TRANSLATION_Y;
+            ball->speed = BALL_LAUNCH_SPEED;
             state->ballLaunched = true;
         }
 
@@ -29,10 +28,10 @@ static void movePaddle(Block* paddle, GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         paddle->position.x -= PADDLE_SPEED * deltaTime;
 
-    if (paddle->position.x <= 0.f)
+    if (paddle->position.x < 0.f)
         paddle->position.x = 0.f;
 
-    else if (paddle->position.x + paddle->width >= COORDINATE_SPACE)
+    else if (paddle->position.x + paddle->width > COORDINATE_SPACE)
         paddle->position.x = COORDINATE_SPACE - paddle->width;
 
 

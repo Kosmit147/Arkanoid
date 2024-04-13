@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "log.h"
+#include "helpers.h"
 
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
@@ -27,14 +28,15 @@ Block createPaddle(float startPosX, float startPosY, float width, float height)
     return paddle;
 }
 
-Ball createBall(float startPosX, float startPosY, float radius, float translationX, float translationY)
+Ball createBall(float startPosX, float startPosY, float radius, float directionX, float directionY, float speed)
 {
     Vec2 ballPosition = { startPosX, startPosY };
-    Vec2 ballTranslation = { translationX, translationY };
+    Vec2 ballDirection = { directionX,  directionY };
     Ball ball = {
         .position = ballPosition,
-        .translation = ballTranslation,
+        .direction = ballDirection,
         .radius = radius,
+        .speed = speed,
     };
 
     return ball;
@@ -146,7 +148,7 @@ GameObjects createGameObjects()
 
     gameObjects.paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
     gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
-    gameObjects.ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, 0.0f, 0.0f);
+    gameObjects.ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, BALL_LAUNCH_DIRECTION_X, BALL_LAUNCH_DIRECTION_Y, 0.0f);
 
     return gameObjects;
 }
@@ -156,41 +158,92 @@ void freeGameObjects(const GameObjects* objects)
     free(objects->blocks);
 }
 
-void changeBallDirection(int direction, Ball* ball)
+typedef enum Direction
 {
-    switch (direction)
-    {
-    case 0:
-        ball->position.x += ball->translation.x * deltaTime;
-        ball->position.y += ball->translation.y * deltaTime;
-        break;
-    case 1:
-        ball->position.x += ball->translation.x * deltaTime;
-        ball->position.y -= ball->translation.y * deltaTime;
-        break;
-    case 2:
-        ball->position.x -= ball->translation.x * deltaTime;
-        ball->position.y += ball->translation.y * deltaTime;
-        break;
-    case 3:
-        ball->position.x -= ball->translation.x * deltaTime;
-        ball->position.y -= ball->translation.y * deltaTime;
-        break;
-
-    }
-}
-
+    VERTICAL, HORIZONTAL
+} Direction;
 
 static void moveBall(Ball* ball)
 {
-    ball->position.x += ball->translation.x * deltaTime;
-    ball->position.y += ball->translation.y * deltaTime;
-
+    ball->position.y += ball->direction.y * deltaTime * ball->speed;
+    ball->position.x += ball->direction.x * deltaTime * ball->speed;
 }
 
 void moveGameObjects(GameObjects* objects)
 {
     moveBall(&objects->ball);
+}
+
+void flipBallDirection(Direction direction, Ball* ball)
+{
+    switch (direction)
+    {
+    case VERTICAL:
+        ball->direction.y = -ball->direction.y;
+        break;
+    case HORIZONTAL:
+        ball->direction.x = -ball->direction.x;
+        break;
+    }
+}
+
+static void collideBallWithWalls(Ball* ball)
+{
+    if (ball->position.y + ball->radius >= COORDINATE_SPACE)
+        flipBallDirection(VERTICAL, ball);
+    else if (ball->position.x - ball->radius < 0.0f)
+        flipBallDirection(HORIZONTAL, ball);
+    else if (ball->position.x + ball->radius > COORDINATE_SPACE)
+        flipBallDirection(HORIZONTAL, ball);
+}
+
+static void collideBallWithPaddle(Ball* /*ball*/, const Block* /*paddle*/)
+{
+    //todo
+}
+
+static void collideBallWithBlock(Ball* ball, Block* block, size_t blockCount, size_t blockIndex, Block* blocks)
+{
+    Vec2 closestPoint =
+    {
+        .x = clamp(block->position.x, block->position.x + block->width, ball->position.x),
+        .y = clamp(block->position.y - block->height, block->position.y, ball->position.y),
+    };
+
+    Vec2 difference = subtractVec2(ball->position, closestPoint);
+
+    float distanceSquared = dot(difference, difference);
+
+    if (distanceSquared < ball->radius * ball->radius)
+    {
+        if (withinRange(block->position.x, block->position.x + block->width, ball->position.x))
+        {
+            flipBallDirection(VERTICAL, ball);
+        }
+        else
+        {
+            flipBallDirection(HORIZONTAL, ball);
+        }
+        removeBlock(blocks, &blockCount, blockIndex);
+    }
+
+}
+
+static void collideBall(Ball* ball, Block* paddle, Block* blocks, size_t blockCount)
+{
+    collideBallWithWalls(ball);
+    collideBallWithPaddle(ball, paddle);
+
+    for (size_t i = 0; i < blockCount; i++)
+    {
+        collideBallWithBlock(ball, &blocks[i], blockCount, i, blocks);
+    }
+
+}
+
+void collideGameObjects(GameObjects* objects)
+{
+    collideBall(&objects->ball, &objects->paddle, objects->blocks, objects->blockCount);
 }
 
 void removeBlock(Block* blocks, size_t* blockCount, size_t index)
