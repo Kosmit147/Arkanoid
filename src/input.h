@@ -3,7 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "entities.h"
+#include "game_state.h"
+#include "board.h"
 
-void movePaddle(Block* paddle, GLFWwindow* window);
-void moveBall(Ball* ball, Block* paddle, GLFWwindow* window);
+void processInput(GameState* state, GameObjects* gameObjects, GLFWwindow* window);

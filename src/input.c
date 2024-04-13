@@ -5,27 +5,22 @@
 
 extern float deltaTime;
 
-void moveBall(Ball* ball, Block* paddle, GLFWwindow* window)
+static void moveBall(GameState* state, Ball* ball, const Block* paddle, GLFWwindow* window)
 {
-    static bool ballLaunched = false;
-
-    if (!ballLaunched)
+    if (!state->ballLaunched)
     {
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         {
             ball->translation.x = BALL_LAUNCH_TRANSLATION_X;
             ball->translation.y = BALL_LAUNCH_TRANSLATION_Y;
-            ballLaunched = true;
+            state->ballLaunched = true;
         }
 
         ball->position.x = paddle->position.x + paddle->width / 2.0f;
     }
-
-    ball->position.x += ball->translation.x * deltaTime;
-    ball->position.y += ball->translation.y * deltaTime;
 }
 
-void movePaddle(Block* paddle, GLFWwindow* window)
+static void movePaddle(Block* paddle, GLFWwindow* window)
 {
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
@@ -41,4 +36,10 @@ void movePaddle(Block* paddle, GLFWwindow* window)
         paddle->position.x = COORDINATE_SPACE - paddle->width;
 
 
+}
+
+void processInput(GameState* state, GameObjects* gameObjects, GLFWwindow* window)
+{
+    movePaddle(&gameObjects->paddle, window);
+    moveBall(state, &gameObjects->ball, &gameObjects->paddle, window);
 }

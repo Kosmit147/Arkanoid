@@ -5,7 +5,6 @@
 #define INCBIN_PREFIX
 #include <incbin.h>
 
-#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -13,6 +12,8 @@
 
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
+
+extern float deltaTime;
 
 Block createPaddle(float startPosX, float startPosY, float width, float height)
 {
@@ -39,26 +40,26 @@ Ball createBall(float startPosX, float startPosY, float radius, float translatio
     return ball;
 }
 
-static void getLineCountAndMaxLength(const char* str, size_t* lineCount, size_t* maxLineLength)
+static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, size_t* maxLineLength)
 {
     *lineCount = 0;
     *maxLineLength = 0;
 
-    size_t lineLength = 0;
+    size_t currLineLength = 0;
 
     const char* ch;
     for (ch = str; *ch; ch++)
     {
         if (*ch != '\n' && *ch != '\r')
         {
-            lineLength++;
+            currLineLength++;
         }
         else if (*ch == '\n')
         {
-            if (lineLength > *maxLineLength)
-                *maxLineLength = lineLength;
+            if (currLineLength > *maxLineLength)
+                *maxLineLength = currLineLength;
 
-            lineLength = 0;
+            currLineLength = 0;
             (*lineCount)++;
         }
     }
@@ -89,12 +90,12 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
 
     size_t maxLineLength;
     size_t lineCount;
-    getLineCountAndMaxLength(levelData, &lineCount, &maxLineLength);
+    getLineCountAndMaxLineLength(levelData, &lineCount, &maxLineLength);
 
     float gridCellHeight = (float)COORDINATE_SPACE / (float)lineCount;
     float gridCellWidth = (float)COORDINATE_SPACE / (float)maxLineLength;
-    float blockWidth = gridCellWidth - BLOCK_HORIZONTAL_PADDING * 2;
-    float blockHeight = gridCellHeight - BLOCK_VERTICAL_PADDING * 2;
+    float blockWidth = gridCellWidth - BLOCK_HORIZONTAL_PADDING * 2.0f;
+    float blockHeight = gridCellHeight - BLOCK_VERTICAL_PADDING * 2.0f;
 
     *blockCount = 0;
     size_t reservedBlocksCount = 30;
@@ -137,6 +138,33 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
     }
 
     return blocks;
+}
+
+GameObjects createGameObjects()
+{
+    GameObjects gameObjects;
+
+    gameObjects.paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
+    gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
+    gameObjects.ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, 0.0f, 0.0f);
+
+    return gameObjects;
+}
+
+void freeGameObjects(const GameObjects* objects)
+{
+    free(objects->blocks);
+}
+
+static void moveBall(Ball* ball)
+{
+    ball->position.x += ball->translation.x * deltaTime;
+    ball->position.y += ball->translation.y * deltaTime;
+}
+
+void moveGameObjects(GameObjects* objects)
+{
+    moveBall(&objects->ball);
 }
 
 void removeBlock(Block* blocks, size_t* blockCount, size_t index)

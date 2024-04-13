@@ -1,23 +1,32 @@
 #include "rendering.h"
 
+#define INCBIN_PREFIX
+#include <incbin.h>
+
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
 
 #include "log.h"
 #include "board.h"
+#include "shader.h"
 
 #include "defines.h"
+
+INCTXT(commonShaderSrc, "../shaders/common.glsl");
+INCTXT(blockVertexShaderSrc, "../shaders/block.vert");
+INCTXT(blockFragmentShaderSrc, "../shaders/block.frag");
+INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
+INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
+INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
+INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
 
 #ifdef _DEBUG
 void GLDebugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/, GLenum severity,
     GLsizei /*length*/, const GLchar* message, const void* /*userParam*/)
 {
-    if (severity > ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY)
-        return;
-
-    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION &&
-        ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY != GL_DEBUG_SEVERITY_NOTIFICATION)
+    if (ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY != GL_DEBUG_SEVERITY_NOTIFICATION &&
+        severity > ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY)
     {
         return;
     }
@@ -126,10 +135,8 @@ GLBuffers createBallGLBuffers(const Ball* ball)
     return buffers;
 }
 
-void freeGLBuffers(GLBuffers* buffers)
+void freeGLBuffers(const GLBuffers* buffers)
 {
-    static_assert(sizeof(GLBuffers) == sizeof(unsigned int) * 3);
-
     glDeleteVertexArrays(1, &buffers->VA);
     glDeleteBuffers(1, &buffers->VB);
     glDeleteBuffers(1, &buffers->IB);
@@ -190,20 +197,6 @@ unsigned int createBlockVB(const Block* block, GLenum usage)
     getBlockVertices(vertices, block);
 
     glBufferData(GL_ARRAY_BUFFER, BLOCK_VERTICES_SIZE, vertices, usage);
-
-    return VB;
-}
-
-unsigned int createNormalizedBlockVB(const Block* block, GLenum usage)
-{
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
-
-    unsigned int VB = genVB();
-
-    float normalizedVertices[FLOATS_PER_BLOCK_VERTEX * 4];
-    getNormalizedBlockVertices(normalizedVertices, block);
-
-    glBufferData(GL_ARRAY_BUFFER, BLOCK_VERTICES_SIZE, normalizedVertices, usage);
 
     return VB;
 }
@@ -352,19 +345,69 @@ BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
     return unifs;
 }
 
+void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
+{
+    glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x), normalizeCoordinate(ball->position.y));
+    glUniform1f(unifs->normalBallRadiusSquared, (float)pow(normalizeLength(ball->radius), 2));
+}
+
+GameShaders createGameShaders()
+{
+    setCommonShaderSrc(commonShaderSrcData);
+
+    GameShaders gameShaders = {
+        .paddleShader = createShader(paddleVertexShaderSrcData,
+            paddleFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
+        .blockShader = createShader(blockVertexShaderSrcData,
+            blockFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
+        .ballShader = createShader(ballVertexShaderSrcData,
+            ballFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
+    };
+
+    return gameShaders;
+}
+
+void initRenderingData(RenderingData* data, const GameObjects* gameObjects)
+{
+    data->shaders = createGameShaders();
+    data->ballShaderUnifs = retrieveBallShaderUnifs(data->shaders.ballShader);
+    data->paddleBuffers = createBlockGLBuffers(&gameObjects->paddle);
+    data->blocksBuffers = createNormalizedBlocksGLBuffers(gameObjects->blocks, gameObjects->blockCount);
+    data->ballBuffers = createBallGLBuffers(&gameObjects->ball);
+}
+
+void updateRenderingData(RenderingData* renderingData, const GameObjects* gameObjects)
+{
+    updateBlockVB(&gameObjects->paddle, renderingData->paddleBuffers.VB);
+    updateBallVB(&gameObjects->ball, renderingData->ballBuffers.VB);
+}
+
+void freeGameShaders(const GameShaders* shaders)
+{
+    glDeleteProgram(shaders->paddleShader);
+    glDeleteProgram(shaders->blockShader);
+    glDeleteProgram(shaders->ballShader);
+}
+
+void freeRenderingData(const RenderingData* renderingData)
+{
+    freeGameShaders(&renderingData->shaders);
+
+    freeGLBuffers(&renderingData->paddleBuffers);
+    freeGLBuffers(&renderingData->blocksBuffers);
+    freeGLBuffers(&renderingData->ballBuffers);
+}
+
 void drawVertices(unsigned int VA, int count, GLenum IBType)
 {
     glBindVertexArray(VA);
     glDrawElements(GL_TRIANGLES, count, IBType, NULL);
 }
 
-void drawBall(const Ball* ball, const BallShaderUnifs* unifs, unsigned int shader, unsigned int ballVA)
+void drawBall(const Ball* ball, unsigned int ballShader, const BallShaderUnifs* unifs, unsigned int ballVA)
 {
-    glUseProgram(shader);
-
-    glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x), normalizeCoordinate(ball->position.y));
-    glUniform1f(unifs->normalBallRadiusSquared, (float)pow(normalizeLength(ball->radius), 2));
-
+    glUseProgram(ballShader);
+    updateBallShaderUnifs(unifs, ball);
     drawVertices(ballVA, 6, GL_UNSIGNED_SHORT);
 }
 
@@ -378,4 +421,12 @@ void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA)
 {
     glUseProgram(shader);
     drawVertices(blocksVA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
+}
+
+void render(const RenderingData* renderingData, const GameObjects* gameObjects)
+{
+    drawPaddle(renderingData->shaders.paddleShader, renderingData->paddleBuffers.VA);
+    drawBlocks(gameObjects->blockCount, renderingData->shaders.blockShader, renderingData->blocksBuffers.VA);
+    drawBall(&gameObjects->ball, renderingData->shaders.ballShader,
+        &renderingData->ballShaderUnifs, renderingData->ballBuffers.VA);
 }
