@@ -156,10 +156,36 @@ void freeGameObjects(const GameObjects* objects)
     free(objects->blocks);
 }
 
+void changeBallDirection(int direction, Ball* ball)
+{
+    switch (direction)
+    {
+    case 0:
+        ball->position.x += ball->translation.x * deltaTime;
+        ball->position.y += ball->translation.y * deltaTime;
+        break;
+    case 1:
+        ball->position.x += ball->translation.x * deltaTime;
+        ball->position.y -= ball->translation.y * deltaTime;
+        break;
+    case 2:
+        ball->position.x -= ball->translation.x * deltaTime;
+        ball->position.y += ball->translation.y * deltaTime;
+        break;
+    case 3:
+        ball->position.x -= ball->translation.x * deltaTime;
+        ball->position.y -= ball->translation.y * deltaTime;
+        break;
+
+    }
+}
+
+
 static void moveBall(Ball* ball)
 {
     ball->position.x += ball->translation.x * deltaTime;
     ball->position.y += ball->translation.y * deltaTime;
+
 }
 
 void moveGameObjects(GameObjects* objects)
