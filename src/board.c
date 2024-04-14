@@ -198,9 +198,21 @@ static void collideBallWithWalls(Ball* ball)
         flipBallDirection(DIRECTION_HORIZONTAL, ball);
 }
 
-static void collideBallWithPaddle(Ball* /*ball*/, const Block* /*paddle*/)
+static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 {
-    //todo
+    Vec2 closestPointOnBlock = {
+        .x = clamp(paddle->position.x, paddle->position.x + paddle->width, ball->position.x),
+        .y = clamp(paddle->position.y - paddle->height, paddle->position.y, ball->position.y),
+    };
+
+    Vec2 difference = subVecs(ball->position, closestPointOnBlock);
+    float distSquared = dot(difference, difference);
+
+    if (distSquared < powf(ball->radius, 2.0f))
+    {
+        Vec2 normal = normalize(difference);
+        ball->direction = normalize(reflect(ball->direction, normal));
+    }
 }
 
 static void collideBallWithBlock(Ball* ball, Block* block, size_t blockCount, size_t blockIndex, Block* blocks)
