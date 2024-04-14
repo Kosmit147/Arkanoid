@@ -203,11 +203,6 @@ static void collideBallWithPaddle(Ball* /*ball*/, const Block* /*paddle*/)
     //todo
 }
 
-static void reflectBallDirection(Ball* ball, Vec2 normal)
-{
-    ball->direction = normalize(reflect(ball->direction, normal));
-}
-
 static void collideBallWithBlock(Ball* ball, Block* block, size_t blockCount, size_t blockIndex, Block* blocks)
 {
     Vec2 closestPointOnBlock = {
@@ -220,7 +215,8 @@ static void collideBallWithBlock(Ball* ball, Block* block, size_t blockCount, si
 
     if (distSquared < powf(ball->radius, 2.0f))
     {
-        reflectBallDirection(ball, normalize(difference));
+        Vec2 normal = normalize(difference);
+        ball->direction = normalize(reflect(ball->direction, normal));
         removeBlock(blocks, &blockCount, blockIndex);
     }
 }
