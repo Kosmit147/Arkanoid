@@ -348,7 +348,7 @@ BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
 void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
 {
     glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x), normalizeCoordinate(ball->position.y));
-    glUniform1f(unifs->normalBallRadiusSquared, (float)pow(normalizeLength(ball->radius), 2));
+    glUniform1f(unifs->normalBallRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
 }
 
 GameShaders createGameShaders()
