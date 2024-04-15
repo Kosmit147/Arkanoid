@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "log.h"
 #include "helpers.h"
@@ -153,17 +154,6 @@ GameObjects createGameObjects()
     return gameObjects;
 }
 
-void freeGameObjects(const GameObjects* objects)
-{
-    free(objects->blocks);
-}
-
-typedef enum Direction
-{
-    DIRECTION_VERTICAL,
-    DIRECTION_HORIZONTAL,
-} Direction;
-
 static void moveBall(Ball* ball)
 {
     ball->position.y += ball->direction.y * deltaTime * ball->speed;
@@ -175,14 +165,14 @@ void moveGameObjects(GameObjects* objects)
     moveBall(&objects->ball);
 }
 
-static void flipBallDirection(Direction direction, Ball* ball)
+static void flipBallDirectionOnAxis(Axis axis, Ball* ball)
 {
-    switch (direction)
+    switch (axis)
     {
-    case DIRECTION_VERTICAL:
+    case AXIS_VERTICAL:
         ball->direction.y = -ball->direction.y;
         break;
-    case DIRECTION_HORIZONTAL:
+    case AXIS_HORIZONTAL:
         ball->direction.x = -ball->direction.x;
         break;
     }
@@ -190,32 +180,15 @@ static void flipBallDirection(Direction direction, Ball* ball)
 
 static void collideBallWithWalls(Ball* ball)
 {
-    if (ball->position.y + ball->radius >= COORDINATE_SPACE)
-        flipBallDirection(DIRECTION_VERTICAL, ball);
+    if (ball->position.y + ball->radius > COORDINATE_SPACE)
+        flipBallDirectionOnAxis(AXIS_VERTICAL, ball);
     else if (ball->position.x - ball->radius < 0.0f)
-        flipBallDirection(DIRECTION_HORIZONTAL, ball);
+        flipBallDirectionOnAxis(AXIS_HORIZONTAL, ball);
     else if (ball->position.x + ball->radius > COORDINATE_SPACE)
-        flipBallDirection(DIRECTION_HORIZONTAL, ball);
+        flipBallDirectionOnAxis(AXIS_HORIZONTAL, ball);
 }
 
-static void collideBallWithPaddle(Ball* ball, const Block* paddle)
-{
-    Vec2 closestPointOnBlock = {
-        .x = clamp(paddle->position.x, paddle->position.x + paddle->width, ball->position.x),
-        .y = clamp(paddle->position.y - paddle->height, paddle->position.y, ball->position.y),
-    };
-
-    Vec2 difference = subVecs(ball->position, closestPointOnBlock);
-    float distSquared = dot(difference, difference);
-
-    if (distSquared < powf(ball->radius, 2.0f))
-    {
-        Vec2 normal = normalize(difference);
-        ball->direction = normalize(reflect(ball->direction, normal));
-    }
-}
-
-static void collideBallWithBlock(Ball* ball, Block* block, size_t blockCount, size_t blockIndex, Block* blocks)
+static bool collideBallWithBlock(Ball* ball, const Block* block)
 {
     Vec2 closestPointOnBlock = {
         .x = clamp(block->position.x, block->position.x + block->width, ball->position.x),
@@ -229,22 +202,32 @@ static void collideBallWithBlock(Ball* ball, Block* block, size_t blockCount, si
     {
         Vec2 normal = normalize(difference);
         ball->direction = normalize(reflect(ball->direction, normal));
-        removeBlock(blocks, &blockCount, blockIndex);
+        return true;
     }
+
+    return false;
 }
 
 static void collideBall(Ball* ball, const Block* paddle, Block* blocks, size_t blockCount)
 {
     collideBallWithWalls(ball);
-    collideBallWithPaddle(ball, paddle);
+    collideBallWithBlock(ball, paddle);
 
     for (size_t i = 0; i < blockCount; i++)
-        collideBallWithBlock(ball, &blocks[i], blockCount, i, blocks);
+    {
+        if (collideBallWithBlock(ball, &blocks[i]))
+            removeBlock(blocks, &blockCount, i);
+    }
 }
 
 void collideGameObjects(GameObjects* objects)
 {
     collideBall(&objects->ball, &objects->paddle, objects->blocks, objects->blockCount);
+}
+
+void freeGameObjects(const GameObjects* objects)
+{
+    free(objects->blocks);
 }
 
 void removeBlock(Block* blocks, size_t* blockCount, size_t index)
