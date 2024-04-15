@@ -54,7 +54,7 @@ int main()
 
         processInput(&state, &objects, window);
         moveGameObjects(&objects);
-        collideGameObjects(&objects);
+        collideGameObjects(&objects, &renderingData);
         updateRenderingData(&renderingData, &objects);
         render(&renderingData, &objects);
 

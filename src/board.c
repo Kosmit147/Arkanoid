@@ -5,12 +5,12 @@
 #define INCBIN_PREFIX
 #include <incbin.h>
 
-#include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
 
 #include "log.h"
 #include "helpers.h"
+#include "vector.h"
+#include "rendering.h"
 
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
@@ -76,6 +76,10 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
 {
     const char* levelData;
 
+    Vector blocksVector = vectorCreate();
+    vectorReserve(&blocksVector, 30, sizeof(Block));
+    *blockCount = 0;
+
     switch (level)
     {
     case 0:
@@ -86,7 +90,6 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
         break;
     default:
         logError("Error: Tried to load level %u, which doesn't exist!", level);
-        *blockCount = 0;
         return NULL;
         break;
     }
@@ -100,10 +103,6 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
     float blockWidth = gridCellWidth - BLOCK_HORIZONTAL_PADDING * 2.0f;
     float blockHeight = gridCellHeight - BLOCK_VERTICAL_PADDING * 2.0f;
 
-    *blockCount = 0;
-    size_t reservedBlocksCount = 30;
-    Block* blocks = malloc(sizeof(Block) * reservedBlocksCount);
-
     size_t row = 0;
     size_t col = 0;
 
@@ -111,21 +110,18 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
     {
         if (*currChar == BLOCK_CHAR)
         {
-            if (reservedBlocksCount <= *blockCount)
-            {
-                reservedBlocksCount *= 2;
-                blocks = realloc(blocks, sizeof(Block) * reservedBlocksCount);
-            }
-
             Vec2 position = {
                 (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
                 (float)(lineCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
             };
 
-            blocks[*blockCount].width = blockWidth;
-            blocks[*blockCount].height = blockHeight;
-            blocks[*blockCount].position = position;
+            Block newBlock = {
+                .position = position,
+                .width = blockWidth,
+                .height = blockHeight,
+            };
 
+            vectorPushBack(&blocksVector, &newBlock, sizeof(Block));
             (*blockCount)++;
         }
 
@@ -140,7 +136,7 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
         }
     }
 
-    return blocks;
+    return blocksVector.data;
 }
 
 GameObjects createGameObjects()
@@ -188,56 +184,56 @@ static void collideBallWithWalls(Ball* ball)
         flipBallDirectionOnAxis(AXIS_HORIZONTAL, ball);
 }
 
+static void reflectBall(Ball* ball, Vec2 normal)
+{
+    ball->direction = normalize(reflect(ball->direction, normal));
+}
+
 static bool collideBallWithBlock(Ball* ball, const Block* block)
 {
-    Vec2 closestPointOnBlock = {
-        .x = clamp(block->position.x, block->position.x + block->width, ball->position.x),
-        .y = clamp(block->position.y - block->height, block->position.y, ball->position.y),
-    };
-
+    Vec2 closestPointOnBlock = getClosestPointOnBlock(ball, block);
     Vec2 difference = subVecs(ball->position, closestPointOnBlock);
     float distSquared = dot(difference, difference);
 
     if (distSquared < powf(ball->radius, 2.0f))
     {
         Vec2 normal = normalize(difference);
-        ball->direction = normalize(reflect(ball->direction, normal));
+        reflectBall(ball, normal);
         return true;
     }
 
     return false;
 }
 
-static void collideBall(Ball* ball, const Block* paddle, Block* blocks, size_t blockCount)
+static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 {
-    collideBallWithWalls(ball);
     collideBallWithBlock(ball, paddle);
+}
 
-    for (size_t i = 0; i < blockCount; i++)
+static void removeBlockAndUpdateVB(Block* blocks, size_t blockCount, size_t index, unsigned int blocksVB)
+{
+    eraseFromArr(blocks, index, blockCount, sizeof(Block));
+    eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, blocksVB, index, blockCount, BLOCK_VERTICES_SIZE);
+}
+
+static void collideBall(GameObjects* gameObjects, unsigned int blocksVB)
+{
+    collideBallWithWalls(&gameObjects->ball);
+    collideBallWithPaddle(&gameObjects->ball, &gameObjects->paddle);
+
+    for (size_t i = 0; i < gameObjects->blockCount; i++)
     {
-        if (collideBallWithBlock(ball, &blocks[i]))
-            removeBlock(blocks, &blockCount, i);
+        if (collideBallWithBlock(&gameObjects->ball, &gameObjects->blocks[i]))
+            removeBlockAndUpdateVB(gameObjects->blocks, gameObjects->blockCount--, i--, blocksVB);
     }
 }
 
-void collideGameObjects(GameObjects* objects)
+void collideGameObjects(GameObjects* objects, RenderingData* renderingData)
 {
-    collideBall(&objects->ball, &objects->paddle, objects->blocks, objects->blockCount);
+    collideBall(objects, renderingData->blocksBuffers.VB);
 }
 
 void freeGameObjects(const GameObjects* objects)
 {
     free(objects->blocks);
-}
-
-void removeBlock(Block* blocks, size_t* blockCount, size_t index)
-{
-    size_t blocksToMove = *blockCount - index - 1;
-    Block* dst = &blocks[index];
-    Block* src = &blocks[index + 1];
-    size_t dataSize = sizeof(Block) * blocksToMove;
-
-    memmove(dst, src, dataSize);
-
-    (*blockCount)--;
 }

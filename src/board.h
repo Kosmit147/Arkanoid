@@ -8,6 +8,8 @@
 
 #include "defines.h"
 
+typedef struct RenderingData RenderingData;
+
 typedef struct GameObjects
 {
     Block paddle;
@@ -28,8 +30,6 @@ static inline float normalizeLength(float length) { return length / (float)COORD
 GameObjects createGameObjects();
 
 void moveGameObjects(GameObjects* objects);
-void collideGameObjects(GameObjects* objects);
+void collideGameObjects(GameObjects* objects, RenderingData* renderingData);
 
 void freeGameObjects(const GameObjects* objects);
-
-void removeBlock(Block* blocks, size_t* blockCount, size_t index);
