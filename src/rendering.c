@@ -335,23 +335,7 @@ int retrieveUniformLocation(unsigned int shader, const char* name)
     return location;
 }
 
-BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
-{
-    BallShaderUnifs unifs = {
-        .normalBallCenter = retrieveUniformLocation(ballShader, "normalBallCenter"),
-        .normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalBallRadiusSquared"),
-    };
-
-    return unifs;
-}
-
-void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
-{
-    glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x), normalizeCoordinate(ball->position.y));
-    glUniform1f(unifs->normalBallRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
-}
-
-GameShaders createGameShaders()
+static GameShaders createGameShaders()
 {
     setCommonShaderSrc(commonShaderSrcData);
 
@@ -365,6 +349,16 @@ GameShaders createGameShaders()
     };
 
     return gameShaders;
+}
+
+static BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
+{
+    BallShaderUnifs unifs = {
+        .normalBallCenter = retrieveUniformLocation(ballShader, "normalBallCenter"),
+        .normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalBallRadiusSquared"),
+    };
+
+    return unifs;
 }
 
 void initRenderingData(RenderingData* data, const GameObjects* gameObjects)
@@ -404,20 +398,26 @@ void drawVertices(unsigned int VA, int count, GLenum IBType)
     glDrawElements(GL_TRIANGLES, count, IBType, NULL);
 }
 
-void drawBall(const Ball* ball, unsigned int ballShader, const BallShaderUnifs* unifs, unsigned int ballVA)
+static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
+{
+    glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x), normalizeCoordinate(ball->position.y));
+    glUniform1f(unifs->normalBallRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
+}
+
+static void drawBall(const Ball* ball, unsigned int ballShader, const BallShaderUnifs* unifs, unsigned int ballVA)
 {
     glUseProgram(ballShader);
     updateBallShaderUnifs(unifs, ball);
     drawVertices(ballVA, 6, GL_UNSIGNED_SHORT);
 }
 
-void drawPaddle(unsigned int shader, unsigned int paddleVA)
+static void drawPaddle(unsigned int shader, unsigned int paddleVA)
 {
     glUseProgram(shader);
     drawVertices(paddleVA, 6, GL_UNSIGNED_SHORT);
 }
 
-void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA)
+static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA)
 {
     glUseProgram(shader);
     drawVertices(blocksVA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
