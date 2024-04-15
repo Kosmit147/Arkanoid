@@ -216,7 +216,7 @@ static void removeBlockAndUpdateVB(Block* blocks, size_t blockCount, size_t inde
     eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, blocksVB, index, blockCount, BLOCK_VERTICES_SIZE);
 }
 
-static void collideBall(GameObjects* gameObjects, unsigned int blocksVB)
+static void collideBall(GameObjects* gameObjects, RenderingData* renderingData)
 {
     collideBallWithWalls(&gameObjects->ball);
     collideBallWithPaddle(&gameObjects->ball, &gameObjects->paddle);
@@ -224,13 +224,16 @@ static void collideBall(GameObjects* gameObjects, unsigned int blocksVB)
     for (size_t i = 0; i < gameObjects->blockCount; i++)
     {
         if (collideBallWithBlock(&gameObjects->ball, &gameObjects->blocks[i]))
-            removeBlockAndUpdateVB(gameObjects->blocks, gameObjects->blockCount--, i--, blocksVB);
+        {
+            removeBlockAndUpdateVB(gameObjects->blocks, gameObjects->blockCount--,
+                i--, renderingData->blocksBuffers.VB);
+        }
     }
 }
 
 void collideGameObjects(GameObjects* objects, RenderingData* renderingData)
 {
-    collideBall(objects, renderingData->blocksBuffers.VB);
+    collideBall(objects, renderingData);
 }
 
 void freeGameObjects(const GameObjects* objects)
