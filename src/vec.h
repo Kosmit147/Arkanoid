@@ -27,14 +27,14 @@ static inline Vec2 addVecs(Vec2 a, Vec2 b)
     return result;
 }
 
-static inline float vecLength(Vec2 vec)
-{
-    return sqrtf(vec.x * vec.x + vec.y * vec.y);
-}
-
 static inline float dot(Vec2 a, Vec2 b)
 {
     return a.x * b.x + a.y * b.y;
+}
+
+static inline float vecLength(Vec2 vec)
+{
+    return sqrtf(dot(vec, vec));
 }
 
 static inline Vec2 scalar(Vec2 vec, float val)
@@ -62,16 +62,6 @@ static inline Vec2 negate(Vec2 vec)
     Vec2 result = {
         .x = -vec.x,
         .y = -vec.y,
-    };
-
-    return result;
-}
-
-static inline Vec2 normal(Vec2 vec)
-{
-    Vec2 result = {
-        .x = -vec.y,
-        .y = vec.x,
     };
 
     return result;

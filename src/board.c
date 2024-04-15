@@ -32,12 +32,12 @@ static Block createPaddle(float startPosX, float startPosY, float width, float h
 static Ball createBall(float startPosX, float startPosY, float radius, float directionX, float directionY, float speed)
 {
     Vec2 ballPosition = { startPosX, startPosY };
-    Vec2 ballDirection = { directionX,  directionY };
+    Vec2 ballDirection = { directionX, directionY };
     Ball ball = {
         .position = ballPosition,
         .direction = ballDirection,
-        .radius = radius,
         .speed = speed,
+        .radius = radius,
     };
 
     return ball;
@@ -72,27 +72,33 @@ static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, siz
         (*lineCount)++;
 }
 
-static Block* createBlocks(unsigned int level, size_t* blockCount)
+static const char* getLevelData(unsigned int level)
 {
-    const char* levelData;
-
-    Vector blocksVector = vectorCreate();
-    vectorReserve(&blocksVector, 30, sizeof(Block));
-    *blockCount = 0;
-
     switch (level)
     {
     case 0:
-        levelData = level0Data;
-        break;
+        return level0Data;
     case 1:
-        levelData = level1Data;
-        break;
+        return level1Data;
     default:
+        return NULL;
+    }
+}
+
+static Block* createBlocks(unsigned int level, size_t* blockCount)
+{
+    *blockCount = 0;
+
+    const char* levelData = getLevelData(level);
+
+    if (!levelData)
+    {
         logError("Error: Tried to load level %u, which doesn't exist!", level);
         return NULL;
-        break;
     }
+
+    Vector blocksVector = vectorCreate();
+    vectorReserve(&blocksVector, 30, sizeof(Block));
 
     size_t maxLineLength;
     size_t lineCount;
@@ -145,15 +151,16 @@ GameObjects createGameObjects()
 
     gameObjects.paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
     gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
-    gameObjects.ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, BALL_LAUNCH_DIRECTION_X, BALL_LAUNCH_DIRECTION_Y, 0.0f);
+    gameObjects.ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS,
+        BALL_LAUNCH_DIRECTION_X, BALL_LAUNCH_DIRECTION_Y, 0.0f);
 
     return gameObjects;
 }
 
 static void moveBall(Ball* ball)
 {
-    ball->position.y += ball->direction.y * deltaTime * ball->speed;
-    ball->position.x += ball->direction.x * deltaTime * ball->speed;
+    ball->position.x += ball->direction.x * ball->speed * deltaTime;
+    ball->position.y += ball->direction.y * ball->speed * deltaTime;
 }
 
 void moveGameObjects(GameObjects* objects)
@@ -184,22 +191,22 @@ static void collideBallWithWalls(Ball* ball)
         flipBallDirectionOnAxis(AXIS_HORIZONTAL, ball);
 }
 
-static void reflectBall(Ball* ball, Vec2 normal)
-{
-    ball->direction = normalize(reflect(ball->direction, normal));
-}
-
+// returns true if there was a collision
 static bool collideBallWithBlock(Ball* ball, const Block* block)
 {
-    Vec2 closestPointOnBlock = getClosestPointOnBlock(ball, block);
-    Vec2 difference = subVecs(ball->position, closestPointOnBlock);
+    Vec2 closestPoint = getClosestPointOnBlock(ball, block);
+    Vec2 difference = subVecs(ball->position, closestPoint);
     float distSquared = dot(difference, difference);
 
     if (distSquared < powf(ball->radius, 2.0f))
     {
-        Vec2 normal = normalize(difference);
-        reflectBall(ball, normal);
-        return true;
+        // fail-safe in case both x and y are 0.0 (in that case we can't normalize)
+        if (difference.x != 0.0f || difference.y != 0.0f)
+        {
+            Vec2 normal = normalize(difference);
+            reflectBall(ball, normal);
+            return true;
+        }
     }
 
     return false;
@@ -208,6 +215,7 @@ static bool collideBallWithBlock(Ball* ball, const Block* block)
 static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 {
     collideBallWithBlock(ball, paddle);
+    // TODO
 }
 
 static void removeBlockAndUpdateVB(Block* blocks, size_t blockCount, size_t index, unsigned int blocksVB)

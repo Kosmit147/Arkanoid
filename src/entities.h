@@ -27,3 +27,8 @@ static inline Vec2 getClosestPointOnBlock(const Ball* ball, const Block* block)
 
     return result;
 }
+
+static inline void reflectBall(Ball* ball, Vec2 normal)
+{
+    ball->direction = normalize(reflect(ball->direction, normal));
+}

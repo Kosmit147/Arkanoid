@@ -39,7 +39,7 @@ static inline void vectorReserve(Vector* vector, size_t newElemCount, size_t ele
 
 static inline void* vectorGet(Vector* vector, size_t index, size_t elemSize)
 {
-    return (void*)(((char*)(vector->data)) + index * elemSize);
+    return (void*)((char*)(vector->data) + index * elemSize);
 }
 
 static inline void* vectorPushBack(Vector* vector, const void* elem, size_t elemSize)
