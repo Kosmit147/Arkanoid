@@ -44,63 +44,23 @@ void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
     GLsizei length, const GLchar* message, const void* userParam);
 #endif
 
-// Generate GL Buffers
 unsigned int genVA();
 unsigned int genVB();
 unsigned int genIB();
 
-// Operate on GL Buffers
+int retrieveUniformLocation(unsigned int shader, const char* name);
+void drawVertices(unsigned int VA, int count, GLenum IBType);
+
 void moveDataWithinGLBuffer(GLenum bufferType, unsigned int buffer, GLintptr dstOffset,
     GLintptr srcOffset, GLsizeiptr size);
 void moveObjectsWithinGLBuffer(GLenum bufferType, unsigned int buffer, size_t dstIndex,
     size_t srcIndex, size_t count, size_t objSize);
+void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer, size_t index,
+    size_t objectCount, size_t objSize);
 
-// Create GLBuffers
-GLBuffers createBlockGLBuffers(const Block* block);
-GLBuffers createNormalizedBlocksGLBuffers(const Block* blocks, size_t blockCount);
-GLBuffers createBallGLBuffers(const Ball* ball);
-
-// Free GLBuffers
 void freeGLBuffers(const GLBuffers* buffers);
 
-// Get Vertex Data
-void getBlockVertices(float* vertices, const Block* block);
-void getNormalizedBlockVertices(float* vertices, const Block* block);
-void getBallVertices(float* vertices, const Ball* ball);
-
-// Create Vertex Buffers
-unsigned int createBlockVB(const Block* block, GLenum usage);
-unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum usage);
-unsigned int createBallVB(const Ball* ball, GLenum usage);
-
-// Update Vertex Buffers
-void updateBlockVB(const Block* block, unsigned int blockVB);
-void removeBlockFromBlocksVB(unsigned int blocksVB, size_t destroyedIndex, size_t newBlockCount);
-void updateBallVB(const Ball* ball, unsigned int ballVB);
-
-// Create Index Buffers
-unsigned int createBlockIB(GLenum usage);
-unsigned int createBlocksIB(size_t count, GLenum usage);
-
-// Set Vertex Attributes
-void setBlockVertexAttributes();
-void setBallVertexAttributes();
-
-// Retrieve Uniforms
-int retrieveUniformLocation(unsigned int shader, const char* name);
-
-// Init Rendering Data
 void initRenderingData(RenderingData* data, const GameObjects* gameObjects);
-
-// Update Rendering Data
 void updateRenderingData(RenderingData* renderingData, const GameObjects* gameObjects);
-
-// Free Rendering Data
-void freeGameShaders(const GameShaders* shaders);
 void freeRenderingData(const RenderingData* renderingData);
-
-// Draw Vertices
-void drawVertices(unsigned int VA, int count, GLenum IBType);
-
-// Render
 void render(const RenderingData* renderingData, const GameObjects* gameObjects);
