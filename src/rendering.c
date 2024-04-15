@@ -244,11 +244,11 @@ void updateBlockVB(const Block* block, unsigned int blockVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, BLOCK_VERTICES_SIZE, vertices);
 }
 
-void updateBlocksVBOnBlocksDestroyed(unsigned int blocksVB, size_t destroyedIndex, size_t destroyedCount, size_t newBlockCount)
+void removeBlockFromBlocksVB(unsigned int blocksVB, size_t destroyedIndex, size_t newBlockCount)
 {
     size_t blocksToMove = newBlockCount - destroyedIndex;
     moveObjectsWithinGLBuffer(GL_ARRAY_BUFFER, blocksVB, destroyedIndex,
-        destroyedIndex + destroyedCount, blocksToMove, BLOCK_VERTICES_SIZE);
+        destroyedIndex + 1, blocksToMove, BLOCK_VERTICES_SIZE);
 }
 
 void updateBallVB(const Ball* ball, unsigned int ballVB)

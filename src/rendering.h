@@ -75,8 +75,7 @@ unsigned int createBallVB(const Ball* ball, GLenum usage);
 
 // Update Vertex Buffers
 void updateBlockVB(const Block* block, unsigned int blockVB);
-void updateBlocksVBOnBlocksDestroyed(unsigned int blocksVB, size_t destroyedIndex,
-    size_t destroyedCount, size_t newBlockCount);
+void removeBlockFromBlocksVB(unsigned int blocksVB, size_t destroyedIndex, size_t newBlockCount);
 void updateBallVB(const Ball* ball, unsigned int ballVB);
 
 // Create Index Buffers
