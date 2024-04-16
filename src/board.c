@@ -98,7 +98,7 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
     }
 
     Vector blocksVector = vectorCreate();
-    vectorReserve(&blocksVector, 30, sizeof(Block));
+    vectorReserve(&blocksVector, 30, Block);
 
     size_t maxLineLength;
     size_t lineCount;
@@ -127,7 +127,7 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
                 .height = blockHeight,
             };
 
-            vectorPushBack(&blocksVector, &newBlock, sizeof(Block));
+            vectorPushBack(&blocksVector, &newBlock, Block);
             (*blockCount)++;
         }
 
