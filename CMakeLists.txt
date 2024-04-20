@@ -25,15 +25,15 @@ add_executable(
     ${ARKANOID_SOURCES}
 )
 
-if (CMAKE_C_COMPILER_ID MATCHES "GNU")
+if (CMAKE_C_COMPILER_ID MATCHES ".*GNU.*")
     target_compile_options(
-        arkanoid PRIVATE 
-        -Wall -Wextra -Werror -Wconversion 
+        arkanoid PRIVATE
+        -Wall -Wextra -Werror -Wconversion
         -fanalyzer -Wno-analyzer-possible-null-dereference
     )
-elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+elseif(CMAKE_C_COMPILER_ID MATCHES ".*Clang.*")
     target_compile_options(
-        arkanoid PRIVATE 
+        arkanoid PRIVATE
         -Wall -Wextra -Werror -Wconversion
         -Wno-c2x-extensions
     )

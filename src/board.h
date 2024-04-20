@@ -8,6 +8,8 @@
 
 #include "defines.h"
 
+typedef struct RenderingData RenderingData;
+
 typedef struct GameObjects
 {
     Block paddle;
@@ -16,16 +18,18 @@ typedef struct GameObjects
     Ball ball;
 } GameObjects;
 
+typedef enum Axis
+{
+    AXIS_VERTICAL,
+    AXIS_HORIZONTAL,
+} Axis;
+
 static inline float normalizeCoordinate(float coord) { return coord / (float)COORDINATE_SPACE * 2.0f - 1.0f; }
 static inline float normalizeLength(float length) { return length / (float)COORDINATE_SPACE * 2.0f; }
 
-Block createPaddle(float startPosX, float startPosY, float width, float height);
-Ball createBall(float startPosX, float startPosY, float radius, float translationX, float translationY);
-Block* createBlocks(unsigned int level, size_t* blockCount);
-
 GameObjects createGameObjects();
-void freeGameObjects(const GameObjects* objects);
 
 void moveGameObjects(GameObjects* objects);
+void collideGameObjects(GameObjects* objects, RenderingData* renderingData);
 
-void removeBlock(Block* blocks, size_t* blockCount, size_t index);
+void freeGameObjects(const GameObjects* objects);

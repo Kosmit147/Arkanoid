@@ -43,11 +43,6 @@ int main()
     RenderingData renderingData;
     initRenderingData(&renderingData, &objects);
 
-    removeBlock(objects.blocks, &objects.blockCount, 1);
-    removeBlock(objects.blocks, &objects.blockCount, 2);
-    removeBlock(objects.blocks, &objects.blockCount, 3);
-    updateBlocksVBOnBlocksDestroyed(renderingData.blocksBuffers.VB, 1, 3, objects.blockCount);
-
     float prevTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
@@ -59,6 +54,7 @@ int main()
 
         processInput(&state, &objects, window);
         moveGameObjects(&objects);
+        collideGameObjects(&objects, &renderingData);
         updateRenderingData(&renderingData, &objects);
         render(&renderingData, &objects);
 

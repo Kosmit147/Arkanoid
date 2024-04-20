@@ -5,17 +5,19 @@
 #define INCBIN_PREFIX
 #include <incbin.h>
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdbool.h>
 
 #include "log.h"
+#include "helpers.h"
+#include "vector.h"
+#include "rendering.h"
 
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
 
 extern float deltaTime;
 
-Block createPaddle(float startPosX, float startPosY, float width, float height)
+static Block createPaddle(float startPosX, float startPosY, float width, float height)
 {
     Vec2 paddlePosition = { startPosX, startPosY };
     Block paddle = {
@@ -27,13 +29,14 @@ Block createPaddle(float startPosX, float startPosY, float width, float height)
     return paddle;
 }
 
-Ball createBall(float startPosX, float startPosY, float radius, float translationX, float translationY)
+static Ball createBall(float startPosX, float startPosY, float radius, float directionX, float directionY, float speed)
 {
     Vec2 ballPosition = { startPosX, startPosY };
-    Vec2 ballTranslation = { translationX, translationY };
+    Vec2 ballDirection = { directionX, directionY };
     Ball ball = {
         .position = ballPosition,
-        .translation = ballTranslation,
+        .direction = ballDirection,
+        .speed = speed,
         .radius = radius,
     };
 
@@ -69,24 +72,33 @@ static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, siz
         (*lineCount)++;
 }
 
-Block* createBlocks(unsigned int level, size_t* blockCount)
+static const char* getLevelData(unsigned int level)
 {
-    const char* levelData;
-
     switch (level)
     {
     case 0:
-        levelData = level0Data;
-        break;
+        return level0Data;
     case 1:
-        levelData = level1Data;
-        break;
+        return level1Data;
     default:
-        logError("Error: Tried to load level %u, which doesn't exist!", level);
-        *blockCount = 0;
         return NULL;
-        break;
     }
+}
+
+static Block* createBlocks(unsigned int level, size_t* blockCount)
+{
+    *blockCount = 0;
+
+    const char* levelData = getLevelData(level);
+
+    if (!levelData)
+    {
+        logError("Error: Tried to load level %u, which doesn't exist!", level);
+        return NULL;
+    }
+
+    Vector blocksVector = vectorCreate();
+    vectorReserve(&blocksVector, 30, Block);
 
     size_t maxLineLength;
     size_t lineCount;
@@ -97,10 +109,6 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
     float blockWidth = gridCellWidth - BLOCK_HORIZONTAL_PADDING * 2.0f;
     float blockHeight = gridCellHeight - BLOCK_VERTICAL_PADDING * 2.0f;
 
-    *blockCount = 0;
-    size_t reservedBlocksCount = 30;
-    Block* blocks = malloc(sizeof(Block) * reservedBlocksCount);
-
     size_t row = 0;
     size_t col = 0;
 
@@ -108,21 +116,18 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
     {
         if (*currChar == BLOCK_CHAR)
         {
-            if (reservedBlocksCount <= *blockCount)
-            {
-                reservedBlocksCount *= 2;
-                blocks = realloc(blocks, sizeof(Block) * reservedBlocksCount);
-            }
-
             Vec2 position = {
                 (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
                 (float)(lineCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
             };
 
-            blocks[*blockCount].width = blockWidth;
-            blocks[*blockCount].height = blockHeight;
-            blocks[*blockCount].position = position;
+            Block newBlock = {
+                .position = position,
+                .width = blockWidth,
+                .height = blockHeight,
+            };
 
+            vectorPushBack(&blocksVector, &newBlock, Block);
             (*blockCount)++;
         }
 
@@ -137,7 +142,7 @@ Block* createBlocks(unsigned int level, size_t* blockCount)
         }
     }
 
-    return blocks;
+    return blocksVector.data;
 }
 
 GameObjects createGameObjects()
@@ -146,20 +151,16 @@ GameObjects createGameObjects()
 
     gameObjects.paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
     gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
-    gameObjects.ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS, 0.0f, 0.0f);
+    gameObjects.ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS,
+        BALL_LAUNCH_DIRECTION_X, BALL_LAUNCH_DIRECTION_Y, 0.0f);
 
     return gameObjects;
 }
 
-void freeGameObjects(const GameObjects* objects)
-{
-    free(objects->blocks);
-}
-
 static void moveBall(Ball* ball)
 {
-    ball->position.x += ball->translation.x * deltaTime;
-    ball->position.y += ball->translation.y * deltaTime;
+    ball->position.x += ball->direction.x * ball->speed * deltaTime;
+    ball->position.y += ball->direction.y * ball->speed * deltaTime;
 }
 
 void moveGameObjects(GameObjects* objects)
@@ -167,14 +168,83 @@ void moveGameObjects(GameObjects* objects)
     moveBall(&objects->ball);
 }
 
-void removeBlock(Block* blocks, size_t* blockCount, size_t index)
+static void flipBallDirectionOnAxis(Axis axis, Ball* ball)
 {
-    size_t blocksToMove = *blockCount - index - 1;
-    Block* dst = &blocks[index];
-    Block* src = &blocks[index + 1];
-    size_t dataSize = sizeof(Block) * blocksToMove;
+    switch (axis)
+    {
+    case AXIS_VERTICAL:
+        ball->direction.y = -ball->direction.y;
+        break;
+    case AXIS_HORIZONTAL:
+        ball->direction.x = -ball->direction.x;
+        break;
+    }
+}
 
-    memmove(dst, src, dataSize);
+static void collideBallWithWalls(Ball* ball)
+{
+    if (ball->position.y + ball->radius > COORDINATE_SPACE)
+        flipBallDirectionOnAxis(AXIS_VERTICAL, ball);
+    else if (ball->position.x - ball->radius < 0.0f)
+        flipBallDirectionOnAxis(AXIS_HORIZONTAL, ball);
+    else if (ball->position.x + ball->radius > COORDINATE_SPACE)
+        flipBallDirectionOnAxis(AXIS_HORIZONTAL, ball);
+}
 
-    (*blockCount)--;
+// returns true if there was a collision
+static bool collideBallWithBlock(Ball* ball, const Block* block)
+{
+    Vec2 closestPoint = getClosestPointOnBlock(ball, block);
+    Vec2 difference = subVecs(ball->position, closestPoint);
+    float distSquared = dot(difference, difference);
+
+    if (distSquared < powf(ball->radius, 2.0f))
+    {
+        // fail-safe in case both x and y are 0.0 (in that case we can't normalize)
+        if (difference.x != 0.0f || difference.y != 0.0f)
+        {
+            Vec2 normal = normalize(difference);
+            reflectBall(ball, normal);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static void collideBallWithPaddle(Ball* ball, const Block* paddle)
+{
+    collideBallWithBlock(ball, paddle);
+    // TODO
+}
+
+static void removeBlockAndUpdateVB(Block* blocks, size_t blockCount, size_t index, unsigned int blocksVB)
+{
+    eraseFromArr(blocks, index, blockCount, sizeof(Block));
+    eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, blocksVB, index, blockCount, BLOCK_VERTICES_SIZE);
+}
+
+static void collideBall(GameObjects* gameObjects, RenderingData* renderingData)
+{
+    collideBallWithWalls(&gameObjects->ball);
+    collideBallWithPaddle(&gameObjects->ball, &gameObjects->paddle);
+
+    for (size_t i = 0; i < gameObjects->blockCount; i++)
+    {
+        if (collideBallWithBlock(&gameObjects->ball, &gameObjects->blocks[i]))
+        {
+            removeBlockAndUpdateVB(gameObjects->blocks, gameObjects->blockCount--,
+                i--, renderingData->blocksBuffers.VB);
+        }
+    }
+}
+
+void collideGameObjects(GameObjects* objects, RenderingData* renderingData)
+{
+    collideBall(objects, renderingData);
+}
+
+void freeGameObjects(const GameObjects* objects)
+{
+    free(objects->blocks);
 }
