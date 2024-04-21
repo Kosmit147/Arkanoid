@@ -34,12 +34,14 @@ if (CMAKE_C_COMPILER_ID MATCHES ".*GNU.*")
         -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches
         -fanalyzer
         -Wno-analyzer-possible-null-dereference
+        -ffast-math
     )
 elseif(CMAKE_C_COMPILER_ID MATCHES ".*Clang.*")
     target_compile_options(
         arkanoid PRIVATE
         -Wall -Wextra -Werror -Wconversion -Wpedantic
         -Wdouble-promotion -Wsign-conversion
+        -ffast-math
     )
 endif()
 
