@@ -15,7 +15,7 @@
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
 
-extern float deltaTime;
+extern float subStepDeltaTime;
 
 static Block createPaddle(float startPosX, float startPosY, float width, float height)
 {
@@ -159,8 +159,8 @@ GameObjects createGameObjects()
 
 static void moveBall(Ball* ball)
 {
-    ball->position.x += ball->direction.x * ball->speed * deltaTime;
-    ball->position.y += ball->direction.y * ball->speed * deltaTime;
+    ball->position.x += ball->direction.x * ball->speed * subStepDeltaTime;
+    ball->position.y += ball->direction.y * ball->speed * subStepDeltaTime;
 }
 
 void moveGameObjects(GameObjects* objects)

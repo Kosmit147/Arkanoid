@@ -3,15 +3,15 @@
 #include "input.h"
 #include "defines.h"
 
-extern float deltaTime;
+extern float subStepDeltaTime;
 
 static void movePaddle(Block* paddle, GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        paddle->position.x += PADDLE_SPEED * deltaTime;
+        paddle->position.x += PADDLE_SPEED * subStepDeltaTime;
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        paddle->position.x -= PADDLE_SPEED * deltaTime;
+        paddle->position.x -= PADDLE_SPEED * subStepDeltaTime;
 
     if (paddle->position.x < 0.0f)
         paddle->position.x = 0.0f;
