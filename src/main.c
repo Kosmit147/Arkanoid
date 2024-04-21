@@ -60,7 +60,7 @@ int main()
             moveGameObjects(&objects);
             collideGameObjects(&objects, &renderingData);
         }
-        
+
         updateRenderingData(&renderingData, &objects);
         render(&renderingData, &objects);
 
