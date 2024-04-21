@@ -130,7 +130,7 @@ void freeGLBuffers(const GLBuffers* buffers)
 
 static void getBlockVertices(float* vertices, const Block* block)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
 
     float x1 = block->position.x;
     float x2 = block->position.x + block->width;
@@ -145,7 +145,7 @@ static void getBlockVertices(float* vertices, const Block* block)
 
 static unsigned int createBlockVB(const Block* block, GLenum usage)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
 
     unsigned int VB = genVB();
 
@@ -159,7 +159,7 @@ static unsigned int createBlockVB(const Block* block, GLenum usage)
 
 static void getNormalizedBlockVertices(float* vertices, const Block* block)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
 
     float normalizedX1 = normalizeCoordinate(block->position.x);
     float normalizedY1 = normalizeCoordinate(block->position.y);
@@ -174,7 +174,7 @@ static void getNormalizedBlockVertices(float* vertices, const Block* block)
 
 static unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum usage)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
 
     unsigned int VB = genVB();
 
@@ -192,7 +192,7 @@ static unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, 
 
 static void getBallVertices(float* vertices, const Ball* ball)
 {
-    static_assert(FLOATS_PER_BALL_VERTEX == 2);
+    static_assert(FLOATS_PER_BALL_VERTEX == 2, "Expected FLOATS_PER_BALL_VERTEX == 2");
 
     float x1 = ball->position.x - ball->radius;
     float x2 = ball->position.x + ball->radius;
@@ -207,7 +207,7 @@ static void getBallVertices(float* vertices, const Ball* ball)
 
 static unsigned int createBallVB(const Ball* ball, GLenum usage)
 {
-    static_assert(FLOATS_PER_BALL_VERTEX == 2);
+    static_assert(FLOATS_PER_BALL_VERTEX == 2, "Expected FLOATS_PER_BALL_VERTEX == 2");
 
     unsigned int VB = genVB();
 
@@ -261,7 +261,7 @@ static unsigned int createBlockIB(GLenum usage)
 
 static void setBlockVertexAttributes()
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
 
     glVertexAttribPointer(0, FLOATS_PER_BLOCK_VERTEX, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_VERTEX, NULL);
     glEnableVertexAttribArray(0);
@@ -326,7 +326,7 @@ static GLBuffers createNormalizedBlocksGLBuffers(const Block* blocks, size_t blo
 
 static void setBallVertexAttributes()
 {
-    static_assert(FLOATS_PER_BALL_VERTEX == 2);
+    static_assert(FLOATS_PER_BALL_VERTEX == 2, "Expected FLOATS_PER_BALL_VERTEX == 2");
 
     glVertexAttribPointer(0, FLOATS_PER_BALL_VERTEX, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BALL_VERTEX, NULL);
     glEnableVertexAttribArray(0);
@@ -356,7 +356,7 @@ void initRenderingData(RenderingData* data, const GameObjects* gameObjects)
 
 static void updateBlockVB(const Block* block, unsigned int blockVB)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2);
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
 
     float vertices[FLOATS_PER_BLOCK_VERTEX * 4];
     getBlockVertices(vertices, block);
@@ -367,7 +367,7 @@ static void updateBlockVB(const Block* block, unsigned int blockVB)
 
 static void updateBallVB(const Ball* ball, unsigned int ballVB)
 {
-    static_assert(FLOATS_PER_BALL_VERTEX == 2);
+    static_assert(FLOATS_PER_BALL_VERTEX == 2, "Expected FLOATS_PER_BALL_VERTEX == 2");
 
     float vertices[FLOATS_PER_BALL_VERTEX * 4];
     getBallVertices(vertices, ball);
