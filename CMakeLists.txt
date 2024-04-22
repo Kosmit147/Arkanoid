@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(arkanoid)
+project(arkanoid VERSION 0.1 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)
+set(CMAKE_C_EXTENSIONS Off)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
 set(CMAKE_COMPILE_WARNING_AS_ERROR On)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE On)
@@ -28,14 +29,19 @@ add_executable(
 if (CMAKE_C_COMPILER_ID MATCHES ".*GNU.*")
     target_compile_options(
         arkanoid PRIVATE
-        -Wall -Wextra -Werror -Wconversion
-        -fanalyzer -Wno-analyzer-possible-null-dereference
+        -Wall -Wextra -Werror -Wconversion -Wpedantic
+        -Wdouble-promotion -Wsign-conversion
+        -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches
+        -fanalyzer
+        -Wno-analyzer-possible-null-dereference
+        -ffast-math
     )
 elseif(CMAKE_C_COMPILER_ID MATCHES ".*Clang.*")
     target_compile_options(
         arkanoid PRIVATE
-        -Wall -Wextra -Werror -Wconversion
-        -Wno-c2x-extensions
+        -Wall -Wextra -Werror -Wconversion -Wpedantic
+        -Wdouble-promotion -Wsign-conversion
+        -ffast-math
     )
 endif()
 

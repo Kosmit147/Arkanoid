@@ -13,6 +13,7 @@
 
 float time;
 float deltaTime;
+float subStepDeltaTime;
 
 int main()
 {
@@ -49,12 +50,17 @@ int main()
     {
         time = (float)glfwGetTime();
         deltaTime = min(time - prevTime, DELTA_TIME_LIMIT);
+        subStepDeltaTime = deltaTime / SIMULATION_SUB_STEPS;
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        processInput(&state, &objects, window);
-        moveGameObjects(&objects);
-        collideGameObjects(&objects, &renderingData);
+        for (size_t i = 0; i < SIMULATION_SUB_STEPS; i++)
+        {
+            processInput(&state, &objects, window);
+            moveGameObjects(&objects);
+            collideGameObjects(&objects, &renderingData);
+        }
+
         updateRenderingData(&renderingData, &objects);
         render(&renderingData, &objects);
 

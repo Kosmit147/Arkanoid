@@ -14,7 +14,7 @@ typedef struct Vector
     size_t allocatedSize; // in bytes
 } Vector;
 
-inline static Vector vectorCreate()
+static inline Vector vectorCreate()
 {
     Vector vector = {
         .data = NULL,

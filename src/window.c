@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+#include "helpers.h"
 #include "log.h"
 
 GLFWwindow* setUpWindow(const char* title, int width, int height)
@@ -54,7 +55,7 @@ bool loadGlad()
     return true;
 }
 
-void onWindowResize(GLFWwindow* /*window*/, int width, int height)
+void onWindowResize(GLFWwindow* unused(window), int width, int height)
 {
     int xOffset = 0;
     int yOffset = 0;
