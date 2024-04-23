@@ -234,7 +234,7 @@ static void collideBall(GameObjects* gameObjects, RenderingData* renderingData)
         if (collideBallWithBlock(&gameObjects->ball, &gameObjects->blocks[i]))
         {
             removeBlockAndUpdateVB(gameObjects->blocks, gameObjects->blockCount--,
-                i--, renderingData->blocksBuffers.VB);
+                i--, renderingData->blocksQuad.VB);
         }
     }
 }

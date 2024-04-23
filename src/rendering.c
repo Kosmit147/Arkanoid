@@ -23,7 +23,7 @@ INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
 INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
 
 #ifdef _DEBUG
-void GLDebugCallback(GLenum unused(source), GLenum unused(type), GLuint unused(id), GLenum severity, 
+void rendererGLDebugCallback(GLenum unused(source), GLenum unused(type), GLuint unused(id), GLenum severity, 
     GLsizei unused(length), const GLchar* message, const void* unused(userParam))
 {
     if (ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY != GL_DEBUG_SEVERITY_NOTIFICATION &&
@@ -121,11 +121,41 @@ void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer, size_t inde
     moveObjectsWithinGLBuffer(bufferType, buffer, index, index + 1, objectsToMove, objSize);
 }
 
-void freeGLBuffers(const GLBuffers* buffers)
+unsigned int createQuadIB(size_t count, GLenum usage)
 {
-    glDeleteVertexArrays(1, &buffers->VA);
-    glDeleteBuffers(1, &buffers->VB);
-    glDeleteBuffers(1, &buffers->IB);
+    unsigned int IB = genIB();
+
+    size_t dataSize = sizeof(unsigned short) * 2 * 3 * count;
+    unsigned short* indices = malloc(dataSize);
+
+    unsigned short vertexOffset = 0;
+
+    for (unsigned short i = 0; i < count * 6; i += 6)
+    {
+        // first triangle
+        indices[i + 0] = vertexOffset + 0;
+        indices[i + 1] = vertexOffset + 1;
+        indices[i + 2] = vertexOffset + 2;
+
+        // second triangle
+        indices[i + 3] = vertexOffset + 0;
+        indices[i + 4] = vertexOffset + 2;
+        indices[i + 5] = vertexOffset + 3;
+
+        vertexOffset += 4;
+    }
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)dataSize, indices, usage);
+
+    free(indices);
+
+    return IB;
+}
+
+void freeGLQuad(const GLQuad* quad)
+{
+    glDeleteVertexArrays(1, &quad->VA);
+    glDeleteBuffers(1, &quad->VB);
 }
 
 static void getBlockVertices(float* vertices, const Block* block)
@@ -245,20 +275,6 @@ static BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
     return unifs;
 }
 
-static unsigned int createBlockIB(GLenum usage)
-{
-    unsigned int IB = genIB();
-
-    static const unsigned short indices[] = {
-        0, 1, 2,
-        0, 2, 3,
-    };
-
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * 3 * 2, indices, usage);
-
-    return IB;
-}
-
 static void setBlockVertexAttributes()
 {
     static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
@@ -267,58 +283,27 @@ static void setBlockVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
-static GLBuffers createBlockGLBuffers(const Block* block)
+static GLQuad createBlockGLQuad(const Block* block, unsigned int quadIB)
 {
-    GLBuffers buffers = {
+    GLQuad buffers = {
         .VA = genVA(),
         .VB = createBlockVB(block, GL_DYNAMIC_DRAW),
-        .IB = createBlockIB(GL_STATIC_DRAW),
     };
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
     setBlockVertexAttributes();
 
     return buffers;
 }
 
-static unsigned int createBlocksIB(size_t count, GLenum usage)
+static GLQuad createNormalizedBlocksGLQuad(const Block* blocks, size_t blockCount, unsigned int quadIB)
 {
-    unsigned int IB = genIB();
-
-    size_t dataSize = sizeof(unsigned short) * 2 * 3 * count;
-    unsigned short* indices = malloc(dataSize);
-
-    unsigned short vertexOffset = 0;
-
-    for (unsigned short i = 0; i < count * 6; i += 6)
-    {
-        // first triangle
-        indices[i + 0] = vertexOffset + 0;
-        indices[i + 1] = vertexOffset + 1;
-        indices[i + 2] = vertexOffset + 2;
-
-        // second triangle
-        indices[i + 3] = vertexOffset + 0;
-        indices[i + 4] = vertexOffset + 2;
-        indices[i + 5] = vertexOffset + 3;
-
-        vertexOffset += 4;
-    }
-
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)dataSize, indices, usage);
-
-    free(indices);
-
-    return IB;
-}
-
-static GLBuffers createNormalizedBlocksGLBuffers(const Block* blocks, size_t blockCount)
-{
-    GLBuffers buffers = {
+    GLQuad buffers = {
         .VA = genVA(),
         .VB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW),
-        .IB = createBlocksIB(blockCount, GL_STATIC_DRAW),
     };
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
     setBlockVertexAttributes();
 
     return buffers;
@@ -332,14 +317,14 @@ static void setBallVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
-static GLBuffers createBallGLBuffers(const Ball* ball)
+static GLQuad createBallGLQuad(const Ball* ball, unsigned int quadIB)
 {
-    GLBuffers buffers = {
+    GLQuad buffers = {
         .VA = genVA(),
         .VB = createBallVB(ball, GL_DYNAMIC_DRAW),
-        .IB = createBlockIB(GL_STATIC_DRAW),
     };
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
     setBallVertexAttributes();
 
     return buffers;
@@ -349,9 +334,10 @@ void initRenderingData(RenderingData* data, const GameObjects* gameObjects)
 {
     data->shaders = createGameShaders();
     data->ballShaderUnifs = retrieveBallShaderUnifs(data->shaders.ballShader);
-    data->paddleBuffers = createBlockGLBuffers(&gameObjects->paddle);
-    data->blocksBuffers = createNormalizedBlocksGLBuffers(gameObjects->blocks, gameObjects->blockCount);
-    data->ballBuffers = createBallGLBuffers(&gameObjects->ball);
+    data->quadIB = createQuadIB(MAX_QUADS, GL_STATIC_DRAW);
+    data->paddleQuad = createBlockGLQuad(&gameObjects->paddle, data->quadIB);
+    data->blocksQuad = createNormalizedBlocksGLQuad(gameObjects->blocks, gameObjects->blockCount, data->quadIB);
+    data->ballQuad = createBallGLQuad(&gameObjects->ball, data->quadIB);
 }
 
 static void updateBlockVB(const Block* block, unsigned int blockVB)
@@ -378,8 +364,8 @@ static void updateBallVB(const Ball* ball, unsigned int ballVB)
 
 void updateRenderingData(RenderingData* renderingData, const GameObjects* gameObjects)
 {
-    updateBlockVB(&gameObjects->paddle, renderingData->paddleBuffers.VB);
-    updateBallVB(&gameObjects->ball, renderingData->ballBuffers.VB);
+    updateBlockVB(&gameObjects->paddle, renderingData->paddleQuad.VB);
+    updateBallVB(&gameObjects->ball, renderingData->ballQuad.VB);
 }
 
 static void freeGameShaders(const GameShaders* shaders)
@@ -393,9 +379,11 @@ void freeRenderingData(const RenderingData* renderingData)
 {
     freeGameShaders(&renderingData->shaders);
 
-    freeGLBuffers(&renderingData->paddleBuffers);
-    freeGLBuffers(&renderingData->blocksBuffers);
-    freeGLBuffers(&renderingData->ballBuffers);
+    freeGLQuad(&renderingData->paddleQuad);
+    freeGLQuad(&renderingData->blocksQuad);
+    freeGLQuad(&renderingData->ballQuad);
+
+    glDeleteBuffers(1, &renderingData->quadIB);
 }
 
 static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
@@ -425,8 +413,9 @@ static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int bloc
 
 void render(const RenderingData* renderingData, const GameObjects* gameObjects)
 {
-    drawPaddle(renderingData->shaders.paddleShader, renderingData->paddleBuffers.VA);
-    drawBlocks(gameObjects->blockCount, renderingData->shaders.blockShader, renderingData->blocksBuffers.VA);
+    drawPaddle(renderingData->shaders.paddleShader, renderingData->paddleQuad.VA);
+    drawBlocks(gameObjects->blockCount, renderingData->shaders.blockShader, 
+        renderingData->blocksQuad.VA);
     drawBall(&gameObjects->ball, renderingData->shaders.ballShader,
-        &renderingData->ballShaderUnifs, renderingData->ballBuffers.VA);
+        &renderingData->ballShaderUnifs, renderingData->ballQuad.VA);
 }
