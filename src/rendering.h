@@ -9,11 +9,11 @@
 
 #include "defines.h"
 
-typedef struct GLBuffers
+typedef struct GLQuad
 {
-    // after adding new buffers update freeGLBuffers()
-    unsigned int VA, VB, IB;
-} GLBuffers;
+    // after adding new buffers update freeGLQuad()
+    unsigned int VA, VB;
+} GLQuad;
 
 typedef struct BallShaderUnifs
 {
@@ -34,13 +34,14 @@ typedef struct RenderingData
     // after adding new data update freeRenderingData()
     GameShaders shaders;
     BallShaderUnifs ballShaderUnifs;
-    GLBuffers paddleBuffers;
-    GLBuffers blocksBuffers;
-    GLBuffers ballBuffers;
+    unsigned int quadIB;
+    GLQuad paddleQuad;
+    GLQuad blocksQuad;
+    GLQuad ballQuad;
 } RenderingData;
 
 #ifdef _DEBUG
-void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+void rendererGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
     GLsizei length, const GLchar* message, const void* userParam);
 #endif
 
@@ -58,7 +59,9 @@ void moveObjectsWithinGLBuffer(GLenum bufferType, unsigned int buffer, size_t ds
 void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer, size_t index,
     size_t objectCount, size_t objSize);
 
-void freeGLBuffers(const GLBuffers* buffers);
+unsigned int createQuadIB(size_t count, GLenum usage);
+
+void freeGLQuad(const GLQuad* quad);
 
 void initRenderingData(RenderingData* data, const GameObjects* gameObjects);
 void updateRenderingData(RenderingData* renderingData, const GameObjects* gameObjects);

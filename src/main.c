@@ -29,7 +29,7 @@ int main()
     resetWindowViewport(window);
 
 #ifdef _DEBUG
-    glDebugMessageCallback(GLDebugCallback, NULL);
+    glDebugMessageCallback(rendererGLDebugCallback, NULL);
     logNotification("%s\n", glGetString(GL_VERSION));
 #endif
 

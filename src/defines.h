@@ -38,6 +38,8 @@
 #define STARTING_LEVEL 1
 #endif
 
+#define MAX_QUADS 1000
+
 #define FLOATS_PER_BLOCK_VERTEX 2
 #define BLOCK_VERTICES_SIZE (sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4)
 #define FLOATS_PER_BALL_VERTEX 2
