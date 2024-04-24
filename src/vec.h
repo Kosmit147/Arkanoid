@@ -13,7 +13,7 @@ static inline Vec2 subVecs(Vec2 a, Vec2 b)
 }
 
 static inline Vec2 addVecs(Vec2 a, Vec2 b)
-{   
+{
     return (Vec2){ .x = a.x + b.x, .y = a.y + b.y };
 }
 
