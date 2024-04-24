@@ -16,13 +16,11 @@ typedef struct Vector
 
 static inline Vector vectorCreate()
 {
-    Vector vector = {
+    return (Vector) {
         .data = NULL,
         .size = 0,
         .allocatedSize = 0,
     };
-
-    return vector;
 }
 
 static inline void vectorRealloc(Vector* vector, size_t newSize)

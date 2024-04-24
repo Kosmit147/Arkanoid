@@ -253,7 +253,7 @@ static GameShaders createGameShaders()
 {
     setCommonShaderSrc(commonShaderSrcData);
 
-    GameShaders gameShaders = {
+    return (GameShaders) {
         .paddleShader = createShader(paddleVertexShaderSrcData,
             paddleFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
         .blockShader = createShader(blockVertexShaderSrcData,
@@ -261,18 +261,14 @@ static GameShaders createGameShaders()
         .ballShader = createShader(ballVertexShaderSrcData,
             ballFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
     };
-
-    return gameShaders;
 }
 
 static BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
 {
-    BallShaderUnifs unifs = {
+    return (BallShaderUnifs) {
         .normalBallCenter = retrieveUniformLocation(ballShader, "normalBallCenter"),
         .normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalBallRadiusSquared"),
     };
-
-    return unifs;
 }
 
 static void setBlockVertexAttributes()
@@ -285,7 +281,7 @@ static void setBlockVertexAttributes()
 
 static GLQuad createBlockGLQuad(const Block* block, unsigned int quadIB)
 {
-    GLQuad buffers = {
+    GLQuad quad = {
         .VA = genVA(),
         .VB = createBlockVB(block, GL_DYNAMIC_DRAW),
     };
@@ -293,12 +289,12 @@ static GLQuad createBlockGLQuad(const Block* block, unsigned int quadIB)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
     setBlockVertexAttributes();
 
-    return buffers;
+    return quad;
 }
 
 static GLQuad createNormalizedBlocksGLQuad(const Block* blocks, size_t blockCount, unsigned int quadIB)
 {
-    GLQuad buffers = {
+    GLQuad quad = {
         .VA = genVA(),
         .VB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW),
     };
@@ -306,7 +302,7 @@ static GLQuad createNormalizedBlocksGLQuad(const Block* blocks, size_t blockCoun
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
     setBlockVertexAttributes();
 
-    return buffers;
+    return quad;
 }
 
 static void setBallVertexAttributes()
@@ -319,7 +315,7 @@ static void setBallVertexAttributes()
 
 static GLQuad createBallGLQuad(const Ball* ball, unsigned int quadIB)
 {
-    GLQuad buffers = {
+    GLQuad quad = {
         .VA = genVA(),
         .VB = createBallVB(ball, GL_DYNAMIC_DRAW),
     };
@@ -327,7 +323,7 @@ static GLQuad createBallGLQuad(const Ball* ball, unsigned int quadIB)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
     setBallVertexAttributes();
 
-    return buffers;
+    return quad;
 }
 
 void initRenderingData(RenderingData* data, const GameObjects* gameObjects)

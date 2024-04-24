@@ -17,30 +17,23 @@ INCTXT(level1, "../levels/level1.txt");
 
 extern float subStepDeltaTime;
 
-static Block createPaddle(float startPosX, float startPosY, float width, float height)
+static Block createPaddle(Vec2 position, float width, float height)
 {
-    Vec2 paddlePosition = { startPosX, startPosY };
-    Block paddle = {
-        .position = paddlePosition,
+    return (Block) {
+        .position = position,
         .width = width,
         .height = height,
     };
-
-    return paddle;
 }
 
-static Ball createBall(float startPosX, float startPosY, float radius, float directionX, float directionY, float speed)
+static Ball createBall(Vec2 position, float radius, Vec2 direction, float speed)
 {
-    Vec2 ballPosition = { startPosX, startPosY };
-    Vec2 ballDirection = { directionX, directionY };
-    Ball ball = {
-        .position = ballPosition,
-        .direction = ballDirection,
-        .speed = speed,
+    return (Ball) {
+        .position = position,
         .radius = radius,
+        .direction = direction,
+        .speed = speed,
     };
-
-    return ball;
 }
 
 static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, size_t* maxLineLength)
@@ -149,10 +142,11 @@ GameObjects createGameObjects()
 {
     GameObjects gameObjects;
 
-    gameObjects.paddle = createPaddle(PADDLE_START_POS_X, PADDLE_START_POS_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
+    gameObjects.paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
+        PADDLE_WIDTH, PADDLE_HEIGHT);
     gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
-    gameObjects.ball = createBall(BALL_START_POS_X, BALL_START_POS_Y, BALL_RADIUS,
-        BALL_LAUNCH_DIRECTION_X, BALL_LAUNCH_DIRECTION_Y, 0.0f);
+    gameObjects.ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
+        (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
 
     return gameObjects;
 }
