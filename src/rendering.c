@@ -326,7 +326,7 @@ static GLQuad createBallGLQuad(const Ball* ball, unsigned int quadIB)
     return quad;
 }
 
-void initRenderingData(RenderingData* data, const GameObjects* gameObjects)
+void initRenderingData(GameRenderingData* data, const GameObjects* gameObjects)
 {
     data->shaders = createGameShaders();
     data->ballShaderUnifs = retrieveBallShaderUnifs(data->shaders.ballShader);
@@ -358,7 +358,7 @@ static void updateBallVB(const Ball* ball, unsigned int ballVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, BALL_VERTICES_SIZE, vertices);
 }
 
-void updateRenderingData(RenderingData* renderingData, const GameObjects* gameObjects)
+void updateRenderingData(GameRenderingData* renderingData, const GameObjects* gameObjects)
 {
     updateBlockVB(&gameObjects->paddle, renderingData->paddleQuad.VB);
     updateBallVB(&gameObjects->ball, renderingData->ballQuad.VB);
@@ -371,7 +371,7 @@ static void freeGameShaders(const GameShaders* shaders)
     glDeleteProgram(shaders->ballShader);
 }
 
-void freeRenderingData(const RenderingData* renderingData)
+void freeRenderingData(const GameRenderingData* renderingData)
 {
     freeGameShaders(&renderingData->shaders);
 
@@ -407,7 +407,7 @@ static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int bloc
     drawVertices(blocksVA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
 }
 
-void render(const RenderingData* renderingData, const GameObjects* gameObjects)
+void render(const GameRenderingData* renderingData, const GameObjects* gameObjects)
 {
     drawPaddle(renderingData->shaders.paddleShader, renderingData->paddleQuad.VA);
     drawBlocks(gameObjects->blockCount, renderingData->shaders.blockShader, 
