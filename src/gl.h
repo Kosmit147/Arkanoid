@@ -6,7 +6,6 @@
 
 typedef struct GLQuad
 {
-    // after adding new buffers update freeGLQuad()
     unsigned int VA, VB;
 } GLQuad;
 
