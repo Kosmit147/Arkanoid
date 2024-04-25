@@ -6,7 +6,8 @@
 
 typedef struct GLQuad
 {
-    unsigned int VA, VB;
+    unsigned int VA;
+    unsigned int VB;
 } GLQuad;
 
 #ifdef _DEBUG
