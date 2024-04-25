@@ -1,15 +1,14 @@
 #include "rendering.h"
 
+#include <glad/glad.h>
+
 #define INCBIN_PREFIX
 #include <incbin.h>
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <math.h>
 
-#include "helpers.h"
-#include "log.h"
-#include "board.h"
 #include "shader.h"
 
 #include "defines.h"
@@ -21,142 +20,6 @@ INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
 INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
 INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
 INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
-
-#ifdef _DEBUG
-void rendererGLDebugCallback(GLenum unused(source), GLenum unused(type), GLuint unused(id), GLenum severity, 
-    GLsizei unused(length), const GLchar* message, const void* unused(userParam))
-{
-    if (ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY != GL_DEBUG_SEVERITY_NOTIFICATION &&
-        severity > ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY)
-    {
-        return;
-    }
-
-    switch (severity)
-    {
-    case GL_DEBUG_SEVERITY_NOTIFICATION:
-        logNotification("[OpenGL Notification]: %s.\n", message);
-        break;
-    case GL_DEBUG_SEVERITY_LOW:
-    case GL_DEBUG_SEVERITY_MEDIUM:
-        logWarning("[OpenGL Warning]: %s.\n", message);
-        break;
-    case GL_DEBUG_SEVERITY_HIGH:
-        logError("[OpenGL Error]: %s.\n", message);
-        break;
-    }
-}
-#endif
-
-unsigned int genVA()
-{
-    unsigned int VA;
-    glGenVertexArrays(1, &VA);
-    glBindVertexArray(VA);
-
-    return VA;
-}
-
-unsigned int genVB()
-{
-    unsigned int VB;
-    glGenBuffers(1, &VB);
-    glBindBuffer(GL_ARRAY_BUFFER, VB);
-
-    return VB;
-}
-
-unsigned int genIB()
-{
-    unsigned int IB;
-    glGenBuffers(1, &IB);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
-
-    return IB;
-}
-
-int retrieveUniformLocation(unsigned int shader, const char* name)
-{
-    int location = glGetUniformLocation(shader, name);
-
-#ifdef _DEBUG
-    if (location == -1)
-        logWarning("[OpenGL Warning]: Uniform %s in shader %d does not exist!\n", name, shader);
-#endif
-
-    return location;
-}
-
-void drawVertices(unsigned int VA, int count, GLenum IBType)
-{
-    glBindVertexArray(VA);
-    glDrawElements(GL_TRIANGLES, count, IBType, NULL);
-}
-
-void moveDataWithinGLBuffer(GLenum bufferType, unsigned int buffer, GLintptr dstOffset,
-    GLintptr srcOffset, GLsizeiptr size)
-{
-    void* tmpData = malloc((size_t)size);
-
-    glBindBuffer(bufferType, buffer);
-    glGetBufferSubData(bufferType, srcOffset, size, tmpData);
-    glBufferSubData(bufferType, dstOffset, size, tmpData);
-
-    free(tmpData);
-}
-
-void moveObjectsWithinGLBuffer(GLenum bufferType, unsigned int buffer, size_t dstIndex,
-    size_t srcIndex, size_t count, size_t objSize)
-{
-    GLintptr srcOffset = (GLintptr)(objSize * srcIndex);
-    GLintptr dstOffset = (GLintptr)(objSize * dstIndex);
-    GLsizeiptr dataSize = (GLsizeiptr)(objSize * count);
-
-    moveDataWithinGLBuffer(bufferType, buffer, dstOffset, srcOffset, dataSize);
-}
-
-void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer, size_t index, size_t objectCount, size_t objSize)
-{
-    size_t objectsToMove = objectCount - index - 1;
-    moveObjectsWithinGLBuffer(bufferType, buffer, index, index + 1, objectsToMove, objSize);
-}
-
-unsigned int createQuadIB(size_t count, GLenum usage)
-{
-    unsigned int IB = genIB();
-
-    size_t dataSize = sizeof(unsigned short) * 2 * 3 * count;
-    unsigned short* indices = malloc(dataSize);
-
-    unsigned short vertexOffset = 0;
-
-    for (unsigned short i = 0; i < count * 6; i += 6)
-    {
-        // first triangle
-        indices[i + 0] = vertexOffset + 0;
-        indices[i + 1] = vertexOffset + 1;
-        indices[i + 2] = vertexOffset + 2;
-
-        // second triangle
-        indices[i + 3] = vertexOffset + 0;
-        indices[i + 4] = vertexOffset + 2;
-        indices[i + 5] = vertexOffset + 3;
-
-        vertexOffset += 4;
-    }
-
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)dataSize, indices, usage);
-
-    free(indices);
-
-    return IB;
-}
-
-void freeGLQuad(const GLQuad* quad)
-{
-    glDeleteVertexArrays(1, &quad->VA);
-    glDeleteBuffers(1, &quad->VB);
-}
 
 static void getBlockVertices(float* vertices, const Block* block)
 {
@@ -326,7 +189,7 @@ static GLQuad createBallGLQuad(const Ball* ball, unsigned int quadIB)
     return quad;
 }
 
-void initRenderingData(RenderingData* data, const GameObjects* gameObjects)
+void initRenderingData(GameRenderingData* data, const GameObjects* gameObjects)
 {
     data->shaders = createGameShaders();
     data->ballShaderUnifs = retrieveBallShaderUnifs(data->shaders.ballShader);
@@ -358,7 +221,7 @@ static void updateBallVB(const Ball* ball, unsigned int ballVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, BALL_VERTICES_SIZE, vertices);
 }
 
-void updateRenderingData(RenderingData* renderingData, const GameObjects* gameObjects)
+void updateRenderingData(GameRenderingData* renderingData, const GameObjects* gameObjects)
 {
     updateBlockVB(&gameObjects->paddle, renderingData->paddleQuad.VB);
     updateBallVB(&gameObjects->ball, renderingData->ballQuad.VB);
@@ -371,7 +234,7 @@ static void freeGameShaders(const GameShaders* shaders)
     glDeleteProgram(shaders->ballShader);
 }
 
-void freeRenderingData(const RenderingData* renderingData)
+void freeRenderingData(const GameRenderingData* renderingData)
 {
     freeGameShaders(&renderingData->shaders);
 
@@ -384,7 +247,8 @@ void freeRenderingData(const RenderingData* renderingData)
 
 static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
 {
-    glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x), normalizeCoordinate(ball->position.y));
+    glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x),
+        normalizeCoordinate(ball->position.y));
     glUniform1f(unifs->normalBallRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
 }
 
@@ -407,10 +271,10 @@ static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int bloc
     drawVertices(blocksVA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
 }
 
-void render(const RenderingData* renderingData, const GameObjects* gameObjects)
+void render(const GameRenderingData* renderingData, const GameObjects* gameObjects)
 {
     drawPaddle(renderingData->shaders.paddleShader, renderingData->paddleQuad.VA);
-    drawBlocks(gameObjects->blockCount, renderingData->shaders.blockShader, 
+    drawBlocks(gameObjects->blockCount, renderingData->shaders.blockShader,
         renderingData->blocksQuad.VA);
     drawBall(&gameObjects->ball, renderingData->shaders.ballShader,
         &renderingData->ballShaderUnifs, renderingData->ballQuad.VA);

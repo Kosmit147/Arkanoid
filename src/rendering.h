@@ -1,19 +1,7 @@
 #pragma once
 
-#include <glad/glad.h>
-
-#include <stddef.h>
-
-#include "entities.h"
+#include "gl.h"
 #include "board.h"
-
-#include "defines.h"
-
-typedef struct GLQuad
-{
-    // after adding new buffers update freeGLQuad()
-    unsigned int VA, VB;
-} GLQuad;
 
 typedef struct BallShaderUnifs
 {
@@ -29,7 +17,7 @@ typedef struct GameShaders
     unsigned int ballShader;
 } GameShaders;
 
-typedef struct RenderingData
+typedef struct GameRenderingData
 {
     // after adding new data update freeRenderingData()
     GameShaders shaders;
@@ -38,32 +26,9 @@ typedef struct RenderingData
     GLQuad paddleQuad;
     GLQuad blocksQuad;
     GLQuad ballQuad;
-} RenderingData;
+} GameRenderingData;
 
-#ifdef _DEBUG
-void rendererGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
-    GLsizei length, const GLchar* message, const void* userParam);
-#endif
-
-unsigned int genVA();
-unsigned int genVB();
-unsigned int genIB();
-
-int retrieveUniformLocation(unsigned int shader, const char* name);
-void drawVertices(unsigned int VA, int count, GLenum IBType);
-
-void moveDataWithinGLBuffer(GLenum bufferType, unsigned int buffer, GLintptr dstOffset,
-    GLintptr srcOffset, GLsizeiptr size);
-void moveObjectsWithinGLBuffer(GLenum bufferType, unsigned int buffer, size_t dstIndex,
-    size_t srcIndex, size_t count, size_t objSize);
-void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer, size_t index,
-    size_t objectCount, size_t objSize);
-
-unsigned int createQuadIB(size_t count, GLenum usage);
-
-void freeGLQuad(const GLQuad* quad);
-
-void initRenderingData(RenderingData* data, const GameObjects* gameObjects);
-void updateRenderingData(RenderingData* renderingData, const GameObjects* gameObjects);
-void freeRenderingData(const RenderingData* renderingData);
-void render(const RenderingData* renderingData, const GameObjects* gameObjects);
+void initRenderingData(GameRenderingData* data, const GameObjects* gameObjects);
+void updateRenderingData(GameRenderingData* renderingData, const GameObjects* gameObjects);
+void freeRenderingData(const GameRenderingData* renderingData);
+void render(const GameRenderingData* renderingData, const GameObjects* gameObjects);

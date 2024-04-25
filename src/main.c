@@ -41,7 +41,7 @@ int main()
     };
 
     GameObjects objects = createGameObjects();
-    RenderingData renderingData;
+    GameRenderingData renderingData;
     initRenderingData(&renderingData, &objects);
 
     float prevTime = (float)glfwGetTime();
