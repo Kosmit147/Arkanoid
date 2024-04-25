@@ -23,11 +23,9 @@ int retrieveUniformLocation(unsigned int shader, const char* name);
 void drawVertices(unsigned int VA, int count, GLenum IBType);
 
 void moveDataWithinGLBuffer(GLenum bufferType, unsigned int buffer,
-    GLintptr dstOffset, GLintptr srcOffset,
-    GLsizeiptr size);
+    GLintptr dstOffset, GLintptr srcOffset, GLsizeiptr size);
 void moveObjectsWithinGLBuffer(GLenum bufferType, unsigned int buffer,
-    size_t dstIndex, size_t srcIndex, size_t count,
-    size_t objSize);
+    size_t dstIndex, size_t srcIndex, size_t count, size_t objSize);
 void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer,
     size_t index, size_t objectCount, size_t objSize);
 
