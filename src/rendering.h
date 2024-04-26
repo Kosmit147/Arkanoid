@@ -24,7 +24,7 @@ typedef struct GameRenderingData
     BallShaderUnifs ballShaderUnifs;
     unsigned int quadIB;
     GLQuad paddleQuad;
-    GLQuad blocksQuad;
+    GLInstancedQuad blocksQuad;
     GLQuad ballQuad;
 } GameRenderingData;
 
