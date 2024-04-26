@@ -110,8 +110,8 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
         if (*currChar == BLOCK_CHAR)
         {
             Vec2 position = {
-                (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
-                (float)(lineCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
+                .x = (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
+                .y = (float)(lineCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
             };
 
             Block newBlock = {
