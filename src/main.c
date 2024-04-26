@@ -1,6 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <time.h>
+
 #include "helpers.h"
 #include "log.h"
 #include "window.h"
@@ -11,12 +13,14 @@
 
 #include "defines.h"
 
-float time;
+float currTime;
 float deltaTime;
 float subStepDeltaTime;
 
 int main()
 {
+    srand((unsigned int)time(NULL));
+
     GLFWwindow* window = setUpWindow("Arkanoid", WINDOW_WIDTH, WINDOW_HEIGHT);
 
     if (!window)
@@ -48,8 +52,8 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
-        time = (float)glfwGetTime();
-        deltaTime = min(time - prevTime, DELTA_TIME_LIMIT);
+        currTime = (float)glfwGetTime();
+        deltaTime = min(currTime - prevTime, DELTA_TIME_LIMIT);
         subStepDeltaTime = deltaTime / SIMULATION_SUB_STEPS;
 
         glClear(GL_COLOR_BUFFER_BIT);
@@ -67,7 +71,7 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        prevTime = time;
+        prevTime = currTime;
     }
 
     freeRenderingData(&renderingData);

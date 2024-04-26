@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdlib.h>
 #include <string.h>
 
 #if defined(__GNUC__) || defined(__clang__) 
@@ -24,3 +25,5 @@ static inline void eraseFromArr(void* arr, size_t index, size_t arrElemCount, si
 
     memmove(dst, src, dataSize);
 }
+
+static inline float randomNormalizedFloat() { return (float)rand() / (float)RAND_MAX; }
