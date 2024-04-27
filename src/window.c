@@ -74,17 +74,18 @@ void onWindowResize(GLFWwindow* unused(window), int width, int height)
     glViewport(xOffset, yOffset, width, height);
 }
 
-void resetWindowViewport(GLFWwindow* window)
+void initGLViewport(GLFWwindow* window)
 {
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
-    // multiplaying by scale is needed on linux with wayland
+#ifdef _GLFW_WAYLAND
     float xScale, yScale;
     glfwGetWindowContentScale(window, &xScale, &yScale);
 
-    int scaledWidth = (int)((float)width * xScale);
-    int scaledHeight = (int)((float)height * yScale);
+    width = (int)((float)width * xScale);
+    height = (int)((float)height * yScale);    
+#endif
 
-    onWindowResize(window, scaledWidth, scaledHeight);
+    onWindowResize(window, width, height);
 }

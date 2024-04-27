@@ -29,8 +29,8 @@ int main()
     if (!loadGlad())
         return -1;
 
+    initGLViewport(window);
     glfwSetFramebufferSizeCallback(window, onWindowResize);
-    resetWindowViewport(window);
 
 #ifdef _DEBUG
     glDebugMessageCallback(rendererGLDebugCallback, NULL);
