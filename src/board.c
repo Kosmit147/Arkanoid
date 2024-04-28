@@ -9,9 +9,10 @@
 
 #include "log.h"
 #include "helpers.h"
-#include "defines.h"
 #include "vector.h"
 #include "rendering.h"
+
+#include "defines.h"
 
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
@@ -20,8 +21,7 @@ extern float subStepDeltaTime;
 
 static Block createPaddle(Vec2 position, float width, float height)
 {
-    return (Block)
-    {
+    return (Block) {
         .position = position,
         .width = width,
         .height = height,
@@ -30,8 +30,7 @@ static Block createPaddle(Vec2 position, float width, float height)
 
 static Ball createBall(Vec2 position, float radius, Vec2 direction, float speed)
 {
-    return (Ball)
-    {
+    return (Ball) {
         .position = position,
         .radius = radius,
         .direction = direction,
@@ -145,14 +144,11 @@ GameObjects createGameObjects()
 {
     GameObjects gameObjects;
 
-    gameObjects.paddle = createPaddle((Vec2) { .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
+    gameObjects.paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
         PADDLE_WIDTH, PADDLE_HEIGHT);
     gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
-    gameObjects.ball = createBall((Vec2) { .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
-        (Vec2)
-    {
-        .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y
-    }, 0.0f);
+    gameObjects.ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
+        (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
 
     return gameObjects;
 }
@@ -194,13 +190,14 @@ static void collideBallWithWalls(Ball* ball)
 // returns true if there was a collision
 static bool collideBallWithBlock(Ball* ball, const Block* block)
 {
-    Vec2 closestPoint = getClosestPointOnBlock(ball, block);
-    Vec2 difference = subVecs(ball->position, closestPoint);
+    Vec2 collisionPoint = getClosestPointOnBlock(ball, block);
+    Vec2 difference = subVecs(ball->position, collisionPoint);
     float distSquared = dot(difference, difference);
 
     if (distSquared < powf(ball->radius, 2.0f))
     {
         // fail-safe in case both x and y are 0.0 (in that case we can't normalize)
+        // TODO: remove once collisions work properly
         if (difference.x != 0.0f || difference.y != 0.0f)
         {
             Vec2 normal = normalize(difference);
@@ -212,25 +209,32 @@ static bool collideBallWithBlock(Ball* ball, const Block* block)
     return false;
 }
 
+static float getPaddleBounceAngle(const Block* paddle, Vec2 collisionPoint)
+{
+    // divide the angle based on where the collision happened
+    // for example divide by half if the ball collided with the paddle on a point
+    // 3/4 of the way through from the starting to the ending edge of the paddle
+    // (because it's 1/2 of the way through from the middle of the paddle to the end)
+    float multiplier = (paddle->position.x + paddle->width - collisionPoint.x) / paddle->width;
+    return (float)MATH_PI * multiplier;
+}
+
 static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 {
-    Vec2 closestPoint = getClosestPointOnBlock(ball, paddle);
-    Vec2 difference = subVecs(ball->position, closestPoint);
-    float multiplier = (paddle->position.x + paddle->width - closestPoint.x) / paddle->width;
+    Vec2 collisionPoint = getClosestPointOnBlock(ball, paddle);
+    Vec2 difference = subVecs(ball->position, collisionPoint);
     float distSquared = dot(difference, difference);
+
     if (distSquared < powf(ball->radius, 2.0f))
     {
         // fail-safe in case both x and y are 0.0 (in that case we can't normalize)
+        // TODO: remove once collisions work properly
         if (difference.x != 0.0f || difference.y != 0.0f)
         {
-
-            float angle = (float)M_PI * multiplier;
-            ball->direction.x = cosf(angle);
-            ball->direction.y = sinf(angle);
-
+            float angle = getPaddleBounceAngle(paddle, collisionPoint);
+            ball->direction = vecFromAngle(angle);
         }
     }
-
 }
 
 static void removeBlockAndUpdateInstanceBuffer(Block* blocks, size_t blockCount, size_t removedIndex, unsigned int instanceBuffer)
