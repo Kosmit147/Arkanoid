@@ -45,17 +45,17 @@ static inline float vecLength(Vec2 vec)
 
 static inline Vec2 scalar(Vec2 vec, float val)
 {
-    return (Vec2){ .x = vec.x * val, .y = vec.y * val, };
+    return (Vec2){ .x = vec.x * val, .y = vec.y * val };
 }
 
 static inline Vec2 scalarDiv(Vec2 vec, float val)
 {
-    return (Vec2){ .x = vec.x / val, .y = vec.y / val, };
+    return (Vec2){ .x = vec.x / val, .y = vec.y / val };
 }
 
 static inline Vec2 negate(Vec2 vec)
 {
-    return (Vec2){ .x = -vec.x, .y = -vec.y, };
+    return (Vec2){ .x = -vec.x, .y = -vec.y };
 }
 
 static inline Vec2 reflect(Vec2 vec, Vec2 normal)
@@ -67,6 +67,11 @@ static inline Vec2 reflect(Vec2 vec, Vec2 normal)
 static inline Vec2 normalize(Vec2 vec)
 {
     return scalarDiv(vec, vecLength(vec));
+}
+
+static inline Vec2 vecFromAngle(float angle)
+{
+    return (Vec2) { .x = cosf(angle), .y = sinf(angle) };
 }
 
 static inline Vec4 saturateColor(Vec4 color)
