@@ -1,6 +1,3 @@
-#define _USE_MATH_DEFINES
-#include <math.h>
-
 #include "board.h"
 
 #include <glad/glad.h>
@@ -10,10 +7,9 @@
 
 #include <stdbool.h>
 
-
-
 #include "log.h"
 #include "helpers.h"
+#include "defines.h"
 #include "vector.h"
 #include "rendering.h"
 
@@ -27,8 +23,8 @@ static Block createPaddle(Vec2 position, float width, float height)
     return (Block)
     {
         .position = position,
-            .width = width,
-            .height = height,
+        .width = width,
+        .height = height,
     };
 }
 
@@ -37,9 +33,9 @@ static Ball createBall(Vec2 position, float radius, Vec2 direction, float speed)
     return (Ball)
     {
         .position = position,
-            .radius = radius,
-            .direction = direction,
-            .speed = speed,
+        .radius = radius,
+        .direction = direction,
+        .speed = speed,
     };
 }
 
