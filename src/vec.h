@@ -4,8 +4,24 @@
 
 typedef struct Vec2
 {
-    float x, y;
+    union { float x; float r; };
+    union { float y; float g; };
 } Vec2;
+
+typedef struct Vec3
+{
+    union { float x; float r; };
+    union { float y; float g; };
+    union { float z; float b; };
+} Vec3;
+
+typedef struct Vec4
+{
+    union { float x; float r; };
+    union { float y; float g; };
+    union { float z; float b; };
+    union { float w; float a; };
+} Vec4;
 
 static inline Vec2 subVecs(Vec2 a, Vec2 b)
 {
@@ -51,4 +67,21 @@ static inline Vec2 reflect(Vec2 vec, Vec2 normal)
 static inline Vec2 normalize(Vec2 vec)
 {
     return scalarDiv(vec, vecLength(vec));
+}
+
+static inline Vec4 saturateColor(Vec4 color)
+{
+    float max = max(max(color.r, color.g), color.b);
+
+    if (max == 0.0f)
+        return color;
+
+    float multiplier = 1.0f / max;
+
+    return (Vec4) {
+        .r = color.r * multiplier,
+        .g = color.g * multiplier,
+        .b = color.b * multiplier,
+        .a = color.a,
+    };
 }

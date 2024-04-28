@@ -8,7 +8,7 @@
 
 #include "defines.h"
 
-typedef struct GameRenderingData GameRenderingData;
+typedef struct GameRenderData GameRenderData;
 
 typedef struct GameObjects
 {
@@ -30,6 +30,6 @@ static inline float normalizeLength(float length) { return length / (float)COORD
 GameObjects createGameObjects();
 
 void moveGameObjects(GameObjects* objects);
-void collideGameObjects(GameObjects* objects, GameRenderingData* renderingData);
+void collideGameObjects(GameObjects* objects, GameRenderData* renderData);
 
 void freeGameObjects(const GameObjects* objects);

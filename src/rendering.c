@@ -21,14 +21,14 @@ INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
 INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
 INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
 
-static void getBlockVertices(float* vertices, const Block* block)
+static void getPaddleVertices(float* vertices, const Block* paddle)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
+    static_assert(FLOATS_PER_PADDLE_VERTEX == 2, "Expected FLOATS_PER_PADDLE_VERTEX == 2");
 
-    float x1 = block->position.x;
-    float x2 = block->position.x + block->width;
-    float y1 = block->position.y;
-    float y2 = block->position.y - block->height;
+    float x1 = paddle->position.x;
+    float x2 = paddle->position.x + paddle->width;
+    float y1 = paddle->position.y;
+    float y2 = paddle->position.y - paddle->height;
 
     vertices[0] = x1; vertices[1] = y1;
     vertices[2] = x2; vertices[3] = y1;
@@ -36,26 +36,24 @@ static void getBlockVertices(float* vertices, const Block* block)
     vertices[6] = x1; vertices[7] = y2;
 }
 
-static unsigned int createBlockVB(const Block* block, GLenum usage)
+static unsigned int createPaddleVB(const Block* paddle)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
-
     unsigned int VB = genVB();
 
-    float vertices[FLOATS_PER_BLOCK_VERTEX * 4];
-    getBlockVertices(vertices, block);
+    float vertices[FLOATS_PER_PADDLE_VERTEX * 4];
+    getPaddleVertices(vertices, paddle);
 
-    glBufferData(GL_ARRAY_BUFFER, BLOCK_VERTICES_SIZE, vertices, usage);
+    glBufferData(GL_ARRAY_BUFFER, PADDLE_VERTICES_SIZE, vertices, GL_DYNAMIC_DRAW);
 
     return VB;
 }
 
-static void getNormalizedBlockVertices(float* vertices, const Block* block)
+static void getBlockVertices(float* vertices, const Block* block)
 {
     static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
 
-    float normalizedX1 = normalizeCoordinate(block->position.x);
-    float normalizedY1 = normalizeCoordinate(block->position.y);
+    float normalizedX1 = block->position.x;
+    float normalizedY1 = block->position.y;
     float normalizedX2 = normalizedX1 + normalizeLength(block->width);
     float normalizedY2 = normalizedY1 - normalizeLength(block->height);
 
@@ -65,22 +63,45 @@ static void getNormalizedBlockVertices(float* vertices, const Block* block)
     vertices[6] = normalizedX1; vertices[7] = normalizedY2;
 }
 
-static unsigned int createNormalizedBlocksVB(const Block* blocks, size_t count, GLenum usage)
+static unsigned int createBlockVB(const Block* block)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
-
     unsigned int VB = genVB();
 
-    float* vertices = malloc(BLOCK_VERTICES_SIZE * count);
+    float vertices[FLOATS_PER_BLOCK_VERTEX * 4];
+    getBlockVertices(vertices, block);
 
-    for (size_t i = 0; i < count; i++)
-        getNormalizedBlockVertices(vertices + 4 * FLOATS_PER_BLOCK_VERTEX * i, &blocks[i]);
+    glBufferData(GL_ARRAY_BUFFER, BLOCK_VERTICES_SIZE, vertices, GL_STATIC_DRAW);
 
-    glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_VERTICES_SIZE * (GLsizei)count, vertices, usage);
+    return VB;
+}
+
+static void getBlockInstanceVertices(float* vertices, const Block* block)
+{
+    Vec2 translation = { .x = normalizeLength(block->position.x), .y = normalizeLength(block->position.y) };
+    vertices[0] = translation.x;
+    vertices[1] = translation.y;
+
+    Vec4 color = getRandomBlockColor();
+    vertices[2] = color.r;
+    vertices[3] = color.g;
+    vertices[4] = color.b;
+    vertices[5] = color.a;
+}
+
+static unsigned int createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
+{
+    unsigned int instBuff = genVB();
+
+    float* vertices = malloc(BLOCK_INSTANCE_VERTICES_SIZE * blockCount);
+    
+    for (size_t i = 0; i < blockCount; i++)
+        getBlockInstanceVertices(vertices + i * FLOATS_PER_BLOCK_INSTANCE_VERTEX, &blocks[i]);
+
+    glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_INSTANCE_VERTICES_SIZE * (GLsizei)blockCount, vertices, GL_DYNAMIC_DRAW);
 
     free(vertices);
 
-    return VB;
+    return instBuff;
 }
 
 static void getBallVertices(float* vertices, const Ball* ball)
@@ -98,16 +119,14 @@ static void getBallVertices(float* vertices, const Ball* ball)
     vertices[6] = x1; vertices[7] = y2;
 }
 
-static unsigned int createBallVB(const Ball* ball, GLenum usage)
+static unsigned int createBallVB(const Ball* ball)
 {
-    static_assert(FLOATS_PER_BALL_VERTEX == 2, "Expected FLOATS_PER_BALL_VERTEX == 2");
-
     unsigned int VB = genVB();
 
     float vertices[FLOATS_PER_BALL_VERTEX * 4];
     getBallVertices(vertices, ball);
 
-    glBufferData(GL_ARRAY_BUFFER, BALL_VERTICES_SIZE, vertices, usage);
+    glBufferData(GL_ARRAY_BUFFER, BALL_VERTICES_SIZE, vertices, GL_DYNAMIC_DRAW);
 
     return VB;
 }
@@ -134,36 +153,73 @@ static BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
     };
 }
 
-static void setBlockVertexAttributes()
+static void setPaddleVertexAttributes()
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
+    static_assert(FLOATS_PER_PADDLE_VERTEX == 2, "Expected FLOATS_PER_PADDLE_VERTEX == 2");
 
-    glVertexAttribPointer(0, FLOATS_PER_BLOCK_VERTEX, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_VERTEX, NULL);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_PADDLE_VERTEX, NULL);
     glEnableVertexAttribArray(0);
 }
 
-static GLQuad createBlockGLQuad(const Block* block, unsigned int quadIB)
+static GLQuad createPaddleGLQuad(const Block* paddle, unsigned int quadIB)
 {
     GLQuad quad = {
         .VA = genVA(),
-        .VB = createBlockVB(block, GL_DYNAMIC_DRAW),
+        .VB = createPaddleVB(paddle),
     };
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
-    setBlockVertexAttributes();
+    setPaddleVertexAttributes();
 
     return quad;
 }
 
-static GLQuad createNormalizedBlocksGLQuad(const Block* blocks, size_t blockCount, unsigned int quadIB)
+static void setBlockVertexAttributes(unsigned int VB, unsigned int instanceBuffer)
 {
-    GLQuad quad = {
+    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
+    static_assert(FLOATS_PER_BLOCK_INSTANCE_VERTEX == 6, "Expected FLOATS_PER_BLOCK_INSTANCE_DATA == 6");
+
+    // vertex buffer
+    glBindBuffer(GL_ARRAY_BUFFER, VB);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_VERTEX, NULL);
+    glEnableVertexAttribArray(0);
+
+    // instance buffer
+    glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
+
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_INSTANCE_VERTEX, NULL);
+    glVertexAttribDivisor(1, 1);
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_INSTANCE_VERTEX, (void*)(sizeof(float) * 2));
+    glVertexAttribDivisor(2, 1);
+    glEnableVertexAttribArray(2);
+}
+
+static GLInstancedQuad createBlocksGLQuad(const Block* blocks, size_t blockCount, unsigned int quadIB)
+{
+    Block baseBlock = {
+        // start at (-1.0, -1.0), use a translation vector in the shader
+        .position = (Vec2){ .x = -1.0f, .y = -1.0f },
+        .width = 0.0f,
+        .height = 0.0f,
+    };
+
+    // assumes all blocks have the same width and height
+    if (blockCount > 0)
+    {
+        baseBlock.width = blocks[0].width;
+        baseBlock.height = blocks[0].height;
+    }
+
+    GLInstancedQuad quad = {
         .VA = genVA(),
-        .VB = createNormalizedBlocksVB(blocks, blockCount, GL_DYNAMIC_DRAW),
+        .VB = createBlockVB(&baseBlock),
+        .instanceBuffer = createBlocksInstanceBuffer(blocks, blockCount),
     };
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
-    setBlockVertexAttributes();
+    setBlockVertexAttributes(quad.VB, quad.instanceBuffer);
 
     return quad;
 }
@@ -172,7 +228,7 @@ static void setBallVertexAttributes()
 {
     static_assert(FLOATS_PER_BALL_VERTEX == 2, "Expected FLOATS_PER_BALL_VERTEX == 2");
 
-    glVertexAttribPointer(0, FLOATS_PER_BALL_VERTEX, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BALL_VERTEX, NULL);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BALL_VERTEX, NULL);
     glEnableVertexAttribArray(0);
 }
 
@@ -180,7 +236,7 @@ static GLQuad createBallGLQuad(const Ball* ball, unsigned int quadIB)
 {
     GLQuad quad = {
         .VA = genVA(),
-        .VB = createBallVB(ball, GL_DYNAMIC_DRAW),
+        .VB = createBallVB(ball),
     };
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
@@ -189,25 +245,25 @@ static GLQuad createBallGLQuad(const Ball* ball, unsigned int quadIB)
     return quad;
 }
 
-void initRenderingData(GameRenderingData* data, const GameObjects* gameObjects)
+void initRenderData(GameRenderData* data, const GameObjects* gameObjects)
 {
     data->shaders = createGameShaders();
     data->ballShaderUnifs = retrieveBallShaderUnifs(data->shaders.ballShader);
     data->quadIB = createQuadIB(MAX_QUADS, GL_STATIC_DRAW);
-    data->paddleQuad = createBlockGLQuad(&gameObjects->paddle, data->quadIB);
-    data->blocksQuad = createNormalizedBlocksGLQuad(gameObjects->blocks, gameObjects->blockCount, data->quadIB);
+    data->paddleQuad = createPaddleGLQuad(&gameObjects->paddle, data->quadIB);
+    data->blocksQuad = createBlocksGLQuad(gameObjects->blocks, gameObjects->blockCount, data->quadIB);
     data->ballQuad = createBallGLQuad(&gameObjects->ball, data->quadIB);
 }
 
-static void updateBlockVB(const Block* block, unsigned int blockVB)
+static void updatePaddleVB(const Block* paddle, unsigned int paddleVB)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
+    static_assert(FLOATS_PER_PADDLE_VERTEX == 2, "Expected FLOATS_PER_PADDLE_VERTEX == 2");
 
-    float vertices[FLOATS_PER_BLOCK_VERTEX * 4];
-    getBlockVertices(vertices, block);
+    float vertices[FLOATS_PER_PADDLE_VERTEX * 4];
+    getPaddleVertices(vertices, paddle);
 
-    glBindBuffer(GL_ARRAY_BUFFER, blockVB);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, BLOCK_VERTICES_SIZE, vertices);
+    glBindBuffer(GL_ARRAY_BUFFER, paddleVB);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, PADDLE_VERTICES_SIZE, vertices);
 }
 
 static void updateBallVB(const Ball* ball, unsigned int ballVB)
@@ -221,10 +277,10 @@ static void updateBallVB(const Ball* ball, unsigned int ballVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, BALL_VERTICES_SIZE, vertices);
 }
 
-void updateRenderingData(GameRenderingData* renderingData, const GameObjects* gameObjects)
+void updateRenderData(GameRenderData* renderData, const GameObjects* gameObjects)
 {
-    updateBlockVB(&gameObjects->paddle, renderingData->paddleQuad.VB);
-    updateBallVB(&gameObjects->ball, renderingData->ballQuad.VB);
+    updatePaddleVB(&gameObjects->paddle, renderData->paddleQuad.VB);
+    updateBallVB(&gameObjects->ball, renderData->ballQuad.VB);
 }
 
 static void freeGameShaders(const GameShaders* shaders)
@@ -234,15 +290,15 @@ static void freeGameShaders(const GameShaders* shaders)
     glDeleteProgram(shaders->ballShader);
 }
 
-void freeRenderingData(const GameRenderingData* renderingData)
+void freeRenderData(const GameRenderData* renderData)
 {
-    freeGameShaders(&renderingData->shaders);
+    freeGameShaders(&renderData->shaders);
 
-    freeGLQuad(&renderingData->paddleQuad);
-    freeGLQuad(&renderingData->blocksQuad);
-    freeGLQuad(&renderingData->ballQuad);
+    freeGLQuad(&renderData->paddleQuad);
+    freeGLInstancedQuad(&renderData->blocksQuad);
+    freeGLQuad(&renderData->ballQuad);
 
-    glDeleteBuffers(1, &renderingData->quadIB);
+    glDeleteBuffers(1, &renderData->quadIB);
 }
 
 static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
@@ -256,26 +312,25 @@ static void drawBall(const Ball* ball, unsigned int ballShader, const BallShader
 {
     glUseProgram(ballShader);
     updateBallShaderUnifs(unifs, ball);
-    drawVertices(ballVA, 6, GL_UNSIGNED_SHORT);
+    drawElements(ballVA, 6, GL_UNSIGNED_SHORT);
 }
 
 static void drawPaddle(unsigned int shader, unsigned int paddleVA)
 {
     glUseProgram(shader);
-    drawVertices(paddleVA, 6, GL_UNSIGNED_SHORT);
+    drawElements(paddleVA, 6, GL_UNSIGNED_SHORT);
 }
 
 static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA)
 {
     glUseProgram(shader);
-    drawVertices(blocksVA, (int)blockCount * 6, GL_UNSIGNED_SHORT);
+    drawInstances(blocksVA, 6, (GLsizei)blockCount, GL_UNSIGNED_SHORT);
 }
 
-void render(const GameRenderingData* renderingData, const GameObjects* gameObjects)
+void render(const GameRenderData* renderData, const GameObjects* gameObjects)
 {
-    drawPaddle(renderingData->shaders.paddleShader, renderingData->paddleQuad.VA);
-    drawBlocks(gameObjects->blockCount, renderingData->shaders.blockShader,
-        renderingData->blocksQuad.VA);
-    drawBall(&gameObjects->ball, renderingData->shaders.ballShader,
-        &renderingData->ballShaderUnifs, renderingData->ballQuad.VA);
+    drawPaddle(renderData->shaders.paddleShader, renderData->paddleQuad.VA);
+    drawBlocks(gameObjects->blockCount, renderData->shaders.blockShader, renderData->blocksQuad.VA);
+    drawBall(&gameObjects->ball, renderData->shaders.ballShader, &renderData->ballShaderUnifs,
+        renderData->ballQuad.VA);
 }

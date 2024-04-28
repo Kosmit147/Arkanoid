@@ -1,6 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <time.h>
+
 #include "helpers.h"
 #include "log.h"
 #include "window.h"
@@ -11,12 +13,14 @@
 
 #include "defines.h"
 
-float time;
+float currTime;
 float deltaTime;
 float subStepDeltaTime;
 
 int main()
 {
+    srand((unsigned int)time(NULL));
+
     GLFWwindow* window = setUpWindow("Arkanoid", WINDOW_WIDTH, WINDOW_HEIGHT);
 
     if (!window)
@@ -25,8 +29,8 @@ int main()
     if (!loadGlad())
         return -1;
 
+    initGLViewport(window);
     glfwSetFramebufferSizeCallback(window, onWindowResize);
-    resetWindowViewport(window);
 
 #ifdef _DEBUG
     glDebugMessageCallback(rendererGLDebugCallback, NULL);
@@ -41,15 +45,15 @@ int main()
     };
 
     GameObjects objects = createGameObjects();
-    GameRenderingData renderingData;
-    initRenderingData(&renderingData, &objects);
+    GameRenderData renderData;
+    initRenderData(&renderData, &objects);
 
     float prevTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
-        time = (float)glfwGetTime();
-        deltaTime = min(time - prevTime, DELTA_TIME_LIMIT);
+        currTime = (float)glfwGetTime();
+        deltaTime = min(currTime - prevTime, DELTA_TIME_LIMIT);
         subStepDeltaTime = deltaTime / SIMULATION_SUB_STEPS;
 
         glClear(GL_COLOR_BUFFER_BIT);
@@ -58,19 +62,19 @@ int main()
         {
             processInput(&state, &objects, window);
             moveGameObjects(&objects);
-            collideGameObjects(&objects, &renderingData);
+            collideGameObjects(&objects, &renderData);
         }
 
-        updateRenderingData(&renderingData, &objects);
-        render(&renderingData, &objects);
+        updateRenderData(&renderData, &objects);
+        render(&renderData, &objects);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        prevTime = time;
+        prevTime = currTime;
     }
 
-    freeRenderingData(&renderingData);
+    freeRenderData(&renderData);
     freeGameObjects(&objects);
 
     glfwTerminate();

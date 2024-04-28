@@ -8,4 +8,4 @@
 GLFWwindow* setUpWindow(const char* title, int width, int height);
 bool loadGlad();
 void onWindowResize(GLFWwindow* window, int width, int height);
-void resetWindowViewport(GLFWwindow* window);
+void initGLViewport(GLFWwindow* window);

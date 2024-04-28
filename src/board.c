@@ -113,8 +113,8 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
         if (*currChar == BLOCK_CHAR)
         {
             Vec2 position = {
-                (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
-                (float)(lineCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
+                .x = (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
+                .y = (float)(lineCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
             };
 
             Block newBlock = {
@@ -233,13 +233,13 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 
 }
 
-static void removeBlockAndUpdateVB(Block* blocks, size_t blockCount, size_t index, unsigned int blocksVB)
+static void removeBlockAndUpdateInstanceBuffer(Block* blocks, size_t blockCount, size_t removedIndex, unsigned int instanceBuffer)
 {
-    eraseFromArr(blocks, index, blockCount, sizeof(Block));
-    eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, blocksVB, index, blockCount, BLOCK_VERTICES_SIZE);
+    eraseFromArr(blocks, removedIndex, blockCount, sizeof(Block));
+    eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, instanceBuffer, removedIndex, blockCount, BLOCK_INSTANCE_VERTICES_SIZE);
 }
 
-static void collideBall(GameObjects* gameObjects, GameRenderingData* renderingData)
+static void collideBall(GameObjects* gameObjects, GameRenderData* renderData)
 {
     collideBallWithWalls(&gameObjects->ball);
     collideBallWithPaddle(&gameObjects->ball, &gameObjects->paddle);
@@ -248,15 +248,15 @@ static void collideBall(GameObjects* gameObjects, GameRenderingData* renderingDa
     {
         if (collideBallWithBlock(&gameObjects->ball, &gameObjects->blocks[i]))
         {
-            removeBlockAndUpdateVB(gameObjects->blocks, gameObjects->blockCount--,
-                i--, renderingData->blocksQuad.VB);
+            removeBlockAndUpdateInstanceBuffer(gameObjects->blocks, gameObjects->blockCount--,
+                i--, renderData->blocksQuad.instanceBuffer);
         }
     }
 }
 
-void collideGameObjects(GameObjects* objects, GameRenderingData* renderingData)
+void collideGameObjects(GameObjects* objects, GameRenderData* renderData)
 {
-    collideBall(objects, renderingData);
+    collideBall(objects, renderData);
 }
 
 void freeGameObjects(const GameObjects* objects)
