@@ -325,8 +325,7 @@ static void drawPaddle(unsigned int shader, unsigned int paddleVA)
 static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA)
 {
     glUseProgram(shader);
-    glBindVertexArray(blocksVA);
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL, (GLsizei)blockCount);
+    drawInstances(blocksVA, 6, (GLsizei)blockCount, GL_UNSIGNED_SHORT);
 }
 
 void render(const GameRenderData* renderData, const GameObjects* gameObjects)

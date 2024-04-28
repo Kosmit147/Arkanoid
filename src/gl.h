@@ -27,7 +27,9 @@ unsigned int genVB();
 unsigned int genIB();
 
 int retrieveUniformLocation(unsigned int shader, const char* name);
-void drawElements(unsigned int VA, int count, GLenum IBType);
+
+void drawElements(unsigned int VA, GLsizei count, GLenum IBType);
+void drawInstances(unsigned int VA, GLsizei vertexCount, GLsizei instanceCount, GLenum IBType);
 
 void moveDataWithinGLBuffer(GLenum bufferType, unsigned int buffer,
     GLintptr dstOffset, GLintptr srcOffset, GLsizeiptr size);

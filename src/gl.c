@@ -72,10 +72,16 @@ int retrieveUniformLocation(unsigned int shader, const char* name)
     return location;
 }
 
-void drawElements(unsigned int VA, int count, GLenum IBType)
+void drawElements(unsigned int VA, GLsizei count, GLenum IBType)
 {
     glBindVertexArray(VA);
     glDrawElements(GL_TRIANGLES, count, IBType, NULL);
+}
+
+void drawInstances(unsigned int VA, GLsizei vertexCount, GLsizei instanceCount, GLenum IBType)
+{
+    glBindVertexArray(VA);
+    glDrawElementsInstanced(GL_TRIANGLES, vertexCount, IBType, NULL, instanceCount);
 }
 
 void moveDataWithinGLBuffer(GLenum bufferType, unsigned int buffer, GLintptr dstOffset,
