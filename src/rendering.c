@@ -48,14 +48,14 @@ static unsigned int createPaddleVB(const Block* paddle)
     return VB;
 }
 
-static void getBlockVertices(float* vertices, const Block* block)
+static void getBlockVertices(float* vertices, Vec2 position, float blockWidth, float blockHeight)
 {
     static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
 
-    float normalizedX1 = normalizeCoordinate(block->position.x);
-    float normalizedY1 = normalizeCoordinate(block->position.y);
-    float normalizedX2 = normalizedX1 + normalizeLength(block->width);
-    float normalizedY2 = normalizedY1 - normalizeLength(block->height);
+    float normalizedX1 = position.x;
+    float normalizedY1 = position.y;
+    float normalizedX2 = normalizedX1 + normalizeLength(blockWidth);
+    float normalizedY2 = normalizedY1 - normalizeLength(blockHeight);
 
     vertices[0] = normalizedX1; vertices[1] = normalizedY1;
     vertices[2] = normalizedX2; vertices[3] = normalizedY1;
@@ -63,42 +63,47 @@ static void getBlockVertices(float* vertices, const Block* block)
     vertices[6] = normalizedX1; vertices[7] = normalizedY2;
 }
 
-static unsigned int createBlocksVB(const Block* blocks, size_t count)
+static unsigned int createBlockVB(float blockWidth, float blockHeight)
 {
     unsigned int VB = genVB();
 
-    float* vertices = malloc(BLOCK_VERTICES_SIZE * count);
+    float* vertices = malloc(BLOCK_VERTICES_SIZE);
 
-    for (size_t i = 0; i < count; i++)
-        getBlockVertices(vertices + 4 * FLOATS_PER_BLOCK_VERTEX * i, &blocks[i]);
+    // start at (-1.0, -1.0), use a translation vector in the shader
+    getBlockVertices(vertices, (Vec2){ .x = -1.0f, .y = -1.0f }, blockWidth, blockHeight);
 
-    glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_VERTICES_SIZE * (GLsizei)count, vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_VERTICES_SIZE, vertices, GL_STATIC_DRAW);
 
     free(vertices);
 
     return VB;
 }
 
-// fills the instance buffer with random block colors
-static unsigned int createBlocksInstanceBuffer(size_t count)
+static void getBlockInstanceVertices(float* vertices, const Block* block)
+{
+    Vec2 translation = { .x = normalizeLength(block->position.x), .y = normalizeLength(block->position.y) };
+    vertices[0] = translation.x;
+    vertices[1] = translation.y;
+
+    Vec4 color = getRandomBlockColor();
+    vertices[2] = color.r;
+    vertices[3] = color.g;
+    vertices[4] = color.b;
+    vertices[5] = color.a;
+}
+
+static unsigned int createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
 {
     unsigned int instBuff = genVB();
 
-    float* colors = malloc(BLOCK_INSTANCE_DATA_SIZE * count);
+    float* vertices = malloc(BLOCK_INSTANCE_VERTICES_SIZE * blockCount);
     
-    for (size_t i = 0; i < count * 4; i += 4)
-    {
-        Vec4 randomColor = getRandomBlockColor();
+    for (size_t i = 0; i < blockCount; i++)
+        getBlockInstanceVertices(vertices + i * FLOATS_PER_BLOCK_INSTANCE_VERTEX, &blocks[i]);
 
-        colors[i] = randomColor.r;
-        colors[i + 1] = randomColor.g;
-        colors[i + 2] = randomColor.b;
-        colors[i + 3] = randomColor.a;
-    }
+    glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_INSTANCE_VERTICES_SIZE * (GLsizei)blockCount, vertices, GL_DYNAMIC_DRAW);
 
-    glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_INSTANCE_DATA_SIZE * (GLsizei)count, colors, GL_DYNAMIC_DRAW);
-
-    free(colors);
+    free(vertices);
 
     return instBuff;
 }
@@ -156,7 +161,7 @@ static void setPaddleVertexAttributes()
 {
     static_assert(FLOATS_PER_PADDLE_VERTEX == 2, "Expected FLOATS_PER_PADDLE_VERTEX == 2");
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_PADDLE_VERTEX, NULL);
     glEnableVertexAttribArray(0);
 }
 
@@ -176,29 +181,46 @@ static GLQuad createPaddleGLQuad(const Block* paddle, unsigned int quadIB)
 static void setBlockVertexAttributes(unsigned int VB, unsigned int instanceBuffer)
 {
     static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
-    static_assert(FLOATS_PER_BLOCK_INSTANCE_DATA == 4, "Expected FLOATS_PER_BLOCK_INSTANCE_DATA == 4");
+    static_assert(FLOATS_PER_BLOCK_INSTANCE_VERTEX == 6, "Expected FLOATS_PER_BLOCK_INSTANCE_DATA == 6");
 
     // vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, VB);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_VERTEX, NULL);
     glEnableVertexAttribArray(0);
 
     // instance buffer
     glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 4, NULL);
+
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_INSTANCE_VERTEX, NULL);
     glVertexAttribDivisor(1, 1);
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_INSTANCE_VERTEX, (void*)(sizeof(float) * 2));
+    glVertexAttribDivisor(2, 1);
+    glEnableVertexAttribArray(2);
 }
 
 static GLInstancedQuad createBlocksGLQuad(const Block* blocks, size_t blockCount, unsigned int quadIB)
 {
+    float blockWidth = 0.0f;
+    float blockHeight = 0.0f;
+
+    // assumes all blocks have the same width and height
+    if (blockCount > 0)
+    {
+        const Block* exampleBlock = &blocks[0];
+        blockWidth = exampleBlock->width;
+        blockHeight = exampleBlock->height;
+    }
+
     GLInstancedQuad quad = {
         .VA = genVA(),
-        .VB = createBlocksVB(blocks, blockCount),
-        .instanceBuffer = createBlocksInstanceBuffer(blockCount),
+        .VB = createBlockVB(blockWidth, blockHeight),
+        .instanceBuffer = createBlocksInstanceBuffer(blocks, blockCount),
     };
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
-    setBlockVertexAttributes(quad.VA, quad.instanceBuffer);
+    setBlockVertexAttributes(quad.VB, quad.instanceBuffer);
 
     return quad;
 }
@@ -207,7 +229,7 @@ static void setBallVertexAttributes()
 {
     static_assert(FLOATS_PER_BALL_VERTEX == 2, "Expected FLOATS_PER_BALL_VERTEX == 2");
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BALL_VERTEX, NULL);
     glEnableVertexAttribArray(0);
 }
 
@@ -224,7 +246,7 @@ static GLQuad createBallGLQuad(const Ball* ball, unsigned int quadIB)
     return quad;
 }
 
-void initRenderingData(GameRenderingData* data, const GameObjects* gameObjects)
+void initRenderData(GameRenderData* data, const GameObjects* gameObjects)
 {
     data->shaders = createGameShaders();
     data->ballShaderUnifs = retrieveBallShaderUnifs(data->shaders.ballShader);
@@ -256,10 +278,10 @@ static void updateBallVB(const Ball* ball, unsigned int ballVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, BALL_VERTICES_SIZE, vertices);
 }
 
-void updateRenderingData(GameRenderingData* renderingData, const GameObjects* gameObjects)
+void updateRenderData(GameRenderData* renderData, const GameObjects* gameObjects)
 {
-    updateBlockVB(&gameObjects->paddle, renderingData->paddleQuad.VB);
-    updateBallVB(&gameObjects->ball, renderingData->ballQuad.VB);
+    updateBlockVB(&gameObjects->paddle, renderData->paddleQuad.VB);
+    updateBallVB(&gameObjects->ball, renderData->ballQuad.VB);
 }
 
 static void freeGameShaders(const GameShaders* shaders)
@@ -269,15 +291,15 @@ static void freeGameShaders(const GameShaders* shaders)
     glDeleteProgram(shaders->ballShader);
 }
 
-void freeRenderingData(const GameRenderingData* renderingData)
+void freeRenderData(const GameRenderData* renderData)
 {
-    freeGameShaders(&renderingData->shaders);
+    freeGameShaders(&renderData->shaders);
 
-    freeGLQuad(&renderingData->paddleQuad);
-    freeGLInstancedQuad(&renderingData->blocksQuad);
-    freeGLQuad(&renderingData->ballQuad);
+    freeGLQuad(&renderData->paddleQuad);
+    freeGLInstancedQuad(&renderData->blocksQuad);
+    freeGLQuad(&renderData->ballQuad);
 
-    glDeleteBuffers(1, &renderingData->quadIB);
+    glDeleteBuffers(1, &renderData->quadIB);
 }
 
 static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
@@ -304,14 +326,13 @@ static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int bloc
 {
     glUseProgram(shader);
     glBindVertexArray(blocksVA);
-    glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)blockCount * 6, GL_UNSIGNED_SHORT, NULL, (GLsizei)blockCount);
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL, (GLsizei)blockCount);
 }
 
-void render(const GameRenderingData* renderingData, const GameObjects* gameObjects)
+void render(const GameRenderData* renderData, const GameObjects* gameObjects)
 {
-    drawPaddle(renderingData->shaders.paddleShader, renderingData->paddleQuad.VA);
-    drawBlocks(gameObjects->blockCount, renderingData->shaders.blockShader,
-        renderingData->blocksQuad.VA);
-    drawBall(&gameObjects->ball, renderingData->shaders.ballShader,
-        &renderingData->ballShaderUnifs, renderingData->ballQuad.VA);
+    drawPaddle(renderData->shaders.paddleShader, renderData->paddleQuad.VA);
+    drawBlocks(gameObjects->blockCount, renderData->shaders.blockShader, renderData->blocksQuad.VA);
+    drawBall(&gameObjects->ball, renderData->shaders.ballShader, &renderData->ballShaderUnifs,
+        renderData->ballQuad.VA);
 }

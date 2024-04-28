@@ -45,8 +45,8 @@ int main()
     };
 
     GameObjects objects = createGameObjects();
-    GameRenderingData renderingData;
-    initRenderingData(&renderingData, &objects);
+    GameRenderData renderData;
+    initRenderData(&renderData, &objects);
 
     float prevTime = (float)glfwGetTime();
 
@@ -62,11 +62,11 @@ int main()
         {
             processInput(&state, &objects, window);
             moveGameObjects(&objects);
-            collideGameObjects(&objects, &renderingData);
+            collideGameObjects(&objects, &renderData);
         }
 
-        updateRenderingData(&renderingData, &objects);
-        render(&renderingData, &objects);
+        updateRenderData(&renderData, &objects);
+        render(&renderData, &objects);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -74,7 +74,7 @@ int main()
         prevTime = currTime;
     }
 
-    freeRenderingData(&renderingData);
+    freeRenderData(&renderData);
     freeGameObjects(&objects);
 
     glfwTerminate();

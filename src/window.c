@@ -84,7 +84,7 @@ void initGLViewport(GLFWwindow* window)
     glfwGetWindowContentScale(window, &xScale, &yScale);
 
     width = (int)((float)width * xScale);
-    height = (int)((float)height * yScale);    
+    height = (int)((float)height * yScale);
 #endif
 
     onWindowResize(window, width, height);

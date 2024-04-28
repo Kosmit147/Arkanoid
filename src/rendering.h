@@ -17,7 +17,7 @@ typedef struct GameShaders
     unsigned int ballShader;
 } GameShaders;
 
-typedef struct GameRenderingData
+typedef struct GameRenderData
 {
     // after adding new data update freeRenderingData()
     GameShaders shaders;
@@ -26,9 +26,9 @@ typedef struct GameRenderingData
     GLQuad paddleQuad;
     GLInstancedQuad blocksQuad;
     GLQuad ballQuad;
-} GameRenderingData;
+} GameRenderData;
 
-void initRenderingData(GameRenderingData* data, const GameObjects* gameObjects);
-void updateRenderingData(GameRenderingData* renderingData, const GameObjects* gameObjects);
-void freeRenderingData(const GameRenderingData* renderingData);
-void render(const GameRenderingData* renderingData, const GameObjects* gameObjects);
+void initRenderData(GameRenderData* data, const GameObjects* gameObjects);
+void updateRenderData(GameRenderData* renderData, const GameObjects* gameObjects);
+void freeRenderData(const GameRenderData* renderData);
+void render(const GameRenderData* renderData, const GameObjects* gameObjects);
