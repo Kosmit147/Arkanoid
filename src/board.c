@@ -1,3 +1,6 @@
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "board.h"
 
 #include <glad/glad.h>
@@ -6,6 +9,8 @@
 #include <incbin.h>
 
 #include <stdbool.h>
+
+
 
 #include "log.h"
 #include "helpers.h"
@@ -19,20 +24,22 @@ extern float subStepDeltaTime;
 
 static Block createPaddle(Vec2 position, float width, float height)
 {
-    return (Block) {
+    return (Block)
+    {
         .position = position,
-        .width = width,
-        .height = height,
+            .width = width,
+            .height = height,
     };
 }
 
 static Ball createBall(Vec2 position, float radius, Vec2 direction, float speed)
 {
-    return (Ball) {
+    return (Ball)
+    {
         .position = position,
-        .radius = radius,
-        .direction = direction,
-        .speed = speed,
+            .radius = radius,
+            .direction = direction,
+            .speed = speed,
     };
 }
 
@@ -142,11 +149,14 @@ GameObjects createGameObjects()
 {
     GameObjects gameObjects;
 
-    gameObjects.paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
+    gameObjects.paddle = createPaddle((Vec2) { .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
         PADDLE_WIDTH, PADDLE_HEIGHT);
     gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
-    gameObjects.ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
-        (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
+    gameObjects.ball = createBall((Vec2) { .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
+        (Vec2)
+    {
+        .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y
+    }, 0.0f);
 
     return gameObjects;
 }
@@ -208,8 +218,23 @@ static bool collideBallWithBlock(Ball* ball, const Block* block)
 
 static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 {
-    collideBallWithBlock(ball, paddle);
-    // TODO
+    Vec2 closestPoint = getClosestPointOnBlock(ball, paddle);
+    Vec2 difference = subVecs(ball->position, closestPoint);
+    float multiplier = (paddle->position.x + paddle->width - closestPoint.x) / paddle->width;
+    float distSquared = dot(difference, difference);
+    if (distSquared < powf(ball->radius, 2.0f))
+    {
+        // fail-safe in case both x and y are 0.0 (in that case we can't normalize)
+        if (difference.x != 0.0f || difference.y != 0.0f)
+        {
+
+            float angle = (float)M_PI * multiplier;
+            ball->direction.x = (float)cos(angle);
+            ball->direction.y = (float)sin(angle);
+
+        }
+    }
+
 }
 
 static void removeBlockAndUpdateVB(Block* blocks, size_t blockCount, size_t index, unsigned int blocksVB)
