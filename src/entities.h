@@ -18,6 +18,18 @@ typedef struct Ball
     float speed;
 } Ball;
 
+static inline Vec4 getRandomBlockColor()
+{
+    Vec4 randomColor = {
+        .r = randomNormalizedFloat(),
+        .g = randomNormalizedFloat(),
+        .b = randomNormalizedFloat(),
+        .a = 1.0f,
+    };
+    
+    return saturateColor(randomColor);
+}
+
 static inline Vec2 getClosestPointOnBlock(const Ball* ball, const Block* block)
 {
     return (Vec2) {
