@@ -225,8 +225,8 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
         {
 
             float angle = (float)M_PI * multiplier;
-            ball->direction.x = (float)cos(angle);
-            ball->direction.y = (float)sin(angle);
+            ball->direction.x = cosf(angle);
+            ball->direction.y = sinf(angle);
 
         }
     }
