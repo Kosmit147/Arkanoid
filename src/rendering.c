@@ -48,14 +48,14 @@ static unsigned int createPaddleVB(const Block* paddle)
     return VB;
 }
 
-static void getBlockVertices(float* vertices, Vec2 position, float blockWidth, float blockHeight)
+static void getBlockVertices(float* vertices, const Block* block)
 {
     static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
 
-    float normalizedX1 = position.x;
-    float normalizedY1 = position.y;
-    float normalizedX2 = normalizedX1 + normalizeLength(blockWidth);
-    float normalizedY2 = normalizedY1 - normalizeLength(blockHeight);
+    float normalizedX1 = block->position.x;
+    float normalizedY1 = block->position.y;
+    float normalizedX2 = normalizedX1 + normalizeLength(block->width);
+    float normalizedY2 = normalizedY1 - normalizeLength(block->height);
 
     vertices[0] = normalizedX1; vertices[1] = normalizedY1;
     vertices[2] = normalizedX2; vertices[3] = normalizedY1;
@@ -63,18 +63,14 @@ static void getBlockVertices(float* vertices, Vec2 position, float blockWidth, f
     vertices[6] = normalizedX1; vertices[7] = normalizedY2;
 }
 
-static unsigned int createBlockVB(float blockWidth, float blockHeight)
+static unsigned int createBlockVB(const Block* block)
 {
     unsigned int VB = genVB();
 
-    float* vertices = malloc(BLOCK_VERTICES_SIZE);
+    float vertices[FLOATS_PER_BLOCK_VERTEX * 4];
+    getBlockVertices(vertices, block);
 
-    // start at (-1.0, -1.0), use a translation vector in the shader
-    getBlockVertices(vertices, (Vec2){ .x = -1.0f, .y = -1.0f }, blockWidth, blockHeight);
-
-    glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_VERTICES_SIZE, vertices, GL_STATIC_DRAW);
-
-    free(vertices);
+    glBufferData(GL_ARRAY_BUFFER, BLOCK_VERTICES_SIZE, vertices, GL_STATIC_DRAW);
 
     return VB;
 }
@@ -202,20 +198,23 @@ static void setBlockVertexAttributes(unsigned int VB, unsigned int instanceBuffe
 
 static GLInstancedQuad createBlocksGLQuad(const Block* blocks, size_t blockCount, unsigned int quadIB)
 {
-    float blockWidth = 0.0f;
-    float blockHeight = 0.0f;
+    Block baseBlock = {
+        // start at (-1.0, -1.0), use a translation vector in the shader
+        .position = (Vec2){ .x = -1.0f, .y = -1.0f },
+        .width = 0.0f,
+        .height = 0.0f,
+    };
 
     // assumes all blocks have the same width and height
     if (blockCount > 0)
     {
-        const Block* exampleBlock = &blocks[0];
-        blockWidth = exampleBlock->width;
-        blockHeight = exampleBlock->height;
+        baseBlock.width = blocks[0].width;
+        baseBlock.height = blocks[0].height;
     }
 
     GLInstancedQuad quad = {
         .VA = genVA(),
-        .VB = createBlockVB(blockWidth, blockHeight),
+        .VB = createBlockVB(&baseBlock),
         .instanceBuffer = createBlocksInstanceBuffer(blocks, blockCount),
     };
 
@@ -256,15 +255,15 @@ void initRenderData(GameRenderData* data, const GameObjects* gameObjects)
     data->ballQuad = createBallGLQuad(&gameObjects->ball, data->quadIB);
 }
 
-static void updateBlockVB(const Block* block, unsigned int blockVB)
+static void updatePaddleVB(const Block* paddle, unsigned int paddleVB)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
+    static_assert(FLOATS_PER_PADDLE_VERTEX == 2, "Expected FLOATS_PER_PADDLE_VERTEX == 2");
 
-    float vertices[FLOATS_PER_BLOCK_VERTEX * 4];
-    getPaddleVertices(vertices, block);
+    float vertices[FLOATS_PER_PADDLE_VERTEX * 4];
+    getPaddleVertices(vertices, paddle);
 
-    glBindBuffer(GL_ARRAY_BUFFER, blockVB);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, BLOCK_VERTICES_SIZE, vertices);
+    glBindBuffer(GL_ARRAY_BUFFER, paddleVB);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, PADDLE_VERTICES_SIZE, vertices);
 }
 
 static void updateBallVB(const Ball* ball, unsigned int ballVB)
@@ -280,7 +279,7 @@ static void updateBallVB(const Ball* ball, unsigned int ballVB)
 
 void updateRenderData(GameRenderData* renderData, const GameObjects* gameObjects)
 {
-    updateBlockVB(&gameObjects->paddle, renderData->paddleQuad.VB);
+    updatePaddleVB(&gameObjects->paddle, renderData->paddleQuad.VB);
     updateBallVB(&gameObjects->ball, renderData->ballQuad.VB);
 }
 
