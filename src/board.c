@@ -216,7 +216,9 @@ static float getPaddleBounceAngle(const Block* paddle, Vec2 collisionPoint)
     // 3/4 of the way through from the starting to the ending edge of the paddle
     // (because it's 1/2 of the way through from the middle of the paddle to the end)
     float multiplier = (paddle->position.x + paddle->width - collisionPoint.x) / paddle->width;
-    return (float)MATH_PI * multiplier;
+    float minAngle = (float)MIN_BALL_BOUNCE_ANGLE_OFF_PADDLE;
+    float maxAngle = (float)MATH_PI - (float)MIN_BALL_BOUNCE_ANGLE_OFF_PADDLE;
+    return clamp(minAngle, maxAngle, (float)MATH_PI * multiplier);
 }
 
 static void collideBallWithPaddle(Ball* ball, const Block* paddle)
