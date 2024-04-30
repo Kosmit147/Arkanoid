@@ -42,6 +42,8 @@ int main()
 
     GameState state = {
         .ballLaunched = false,
+        .isGameOver = false,
+        .points = 0.
     };
 
     GameObjects objects = createGameObjects();
@@ -52,6 +54,12 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
+        if (state.isGameOver && glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+        {
+            resetState(&state);
+            resetBoard(&objects);
+            initRenderData(&renderData, &objects);
+        }
         currTime = (float)glfwGetTime();
         deltaTime = min(currTime - prevTime, DELTA_TIME_LIMIT);
         subStepDeltaTime = deltaTime / SIMULATION_SUB_STEPS;
@@ -60,9 +68,14 @@ int main()
 
         for (size_t i = 0; i < SIMULATION_SUB_STEPS; i++)
         {
+            if (state.isGameOver)
+            {
+                break;
+            }
             processInput(&state, &objects, window);
             moveGameObjects(&objects);
-            collideGameObjects(&objects, &renderData);
+            collideGameObjects(&objects, &renderData, &state);
+            isGameOver(&objects.ball, &state);
         }
 
         updateRenderData(&renderData, &objects);

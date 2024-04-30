@@ -11,8 +11,10 @@
 #include "helpers.h"
 #include "vector.h"
 #include "rendering.h"
+#include "game_state.h"
 
 #include "defines.h"
+#include "entities.h"
 
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
@@ -21,20 +23,22 @@ extern float subStepDeltaTime;
 
 static Block createPaddle(Vec2 position, float width, float height)
 {
-    return (Block) {
+    return (Block)
+    {
         .position = position,
-        .width = width,
-        .height = height,
+            .width = width,
+            .height = height,
     };
 }
 
 static Ball createBall(Vec2 position, float radius, Vec2 direction, float speed)
 {
-    return (Ball) {
+    return (Ball)
+    {
         .position = position,
-        .radius = radius,
-        .direction = direction,
-        .speed = speed,
+            .radius = radius,
+            .direction = direction,
+            .speed = speed,
     };
 }
 
@@ -144,11 +148,14 @@ GameObjects createGameObjects()
 {
     GameObjects gameObjects;
 
-    gameObjects.paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
+    gameObjects.paddle = createPaddle((Vec2) { .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
         PADDLE_WIDTH, PADDLE_HEIGHT);
     gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
-    gameObjects.ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
-        (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
+    gameObjects.ball = createBall((Vec2) { .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
+        (Vec2)
+    {
+        .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y
+    }, 0.0f);
 
     return gameObjects;
 }
@@ -188,7 +195,7 @@ static void collideBallWithWalls(Ball* ball)
 }
 
 // returns true if there was a collision
-static bool collideBallWithBlock(Ball* ball, const Block* block)
+static bool collideBallWithBlock(Ball* ball, const Block* block, GameState* state)
 {
     Vec2 collisionPoint = getClosestPointOnBlock(ball, block);
     Vec2 difference = subVecs(ball->position, collisionPoint);
@@ -201,6 +208,8 @@ static bool collideBallWithBlock(Ball* ball, const Block* block)
         if (difference.x != 0.0f || difference.y != 0.0f)
         {
             Vec2 normal = normalize(difference);
+            state->points += 10;
+            printf("%d", state->points);
             reflectBall(ball, normal);
             return true;
         }
@@ -243,14 +252,14 @@ static void removeBlockAndUpdateInstanceBuffer(Block* blocks, size_t blockCount,
     eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, instanceBuffer, removedIndex, blockCount, BLOCK_INSTANCE_VERTICES_SIZE);
 }
 
-static void collideBall(GameObjects* gameObjects, GameRenderData* renderData)
+static void collideBall(GameObjects* gameObjects, GameRenderData* renderData, GameState* state)
 {
     collideBallWithWalls(&gameObjects->ball);
     collideBallWithPaddle(&gameObjects->ball, &gameObjects->paddle);
 
     for (size_t i = 0; i < gameObjects->blockCount; i++)
     {
-        if (collideBallWithBlock(&gameObjects->ball, &gameObjects->blocks[i]))
+        if (collideBallWithBlock(&gameObjects->ball, &gameObjects->blocks[i], state))
         {
             removeBlockAndUpdateInstanceBuffer(gameObjects->blocks, gameObjects->blockCount--,
                 i--, renderData->blocksQuad.instanceBuffer);
@@ -258,12 +267,17 @@ static void collideBall(GameObjects* gameObjects, GameRenderData* renderData)
     }
 }
 
-void collideGameObjects(GameObjects* objects, GameRenderData* renderData)
+void collideGameObjects(GameObjects* objects, GameRenderData* renderData, GameState* state)
 {
-    collideBall(objects, renderData);
+    collideBall(objects, renderData, state);
 }
 
 void freeGameObjects(const GameObjects* objects)
 {
     free(objects->blocks);
+}
+
+void resetBoard(GameObjects* objects)
+{
+    *objects = createGameObjects();
 }

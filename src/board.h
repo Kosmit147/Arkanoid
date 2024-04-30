@@ -6,6 +6,8 @@
 
 #include "entities.h"
 
+#include "game_state.h"
+
 #include "defines.h"
 
 typedef struct GameRenderData GameRenderData;
@@ -30,6 +32,7 @@ static inline float normalizeLength(float length) { return length / (float)COORD
 GameObjects createGameObjects();
 
 void moveGameObjects(GameObjects* objects);
-void collideGameObjects(GameObjects* objects, GameRenderData* renderData);
+void collideGameObjects(GameObjects* objects, GameRenderData* renderData, GameState* state);
+void resetBoard(GameObjects* objects);
 
 void freeGameObjects(const GameObjects* objects);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #include "helpers.h"
 #include "vec.h"
 
@@ -26,15 +28,16 @@ static inline Vec4 getRandomBlockColor()
         .b = randomNormalizedFloat(),
         .a = 1.0f,
     };
-    
+
     return saturateColor(randomColor);
 }
 
 static inline Vec2 getClosestPointOnBlock(const Ball* ball, const Block* block)
 {
-    return (Vec2) {
+    return (Vec2)
+    {
         .x = clamp(block->position.x, block->position.x + block->width, ball->position.x),
-        .y = clamp(block->position.y - block->height, block->position.y, ball->position.y),
+            .y = clamp(block->position.y - block->height, block->position.y, ball->position.y),
     };
 }
 
