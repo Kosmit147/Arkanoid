@@ -52,3 +52,5 @@
 
 #define FLOATS_PER_BALL_VERTEX 2
 #define BALL_VERTICES_SIZE (sizeof(float) * FLOATS_PER_BALL_VERTEX * 4)
+
+#define MAX_NUM_OF_LEVELS 2

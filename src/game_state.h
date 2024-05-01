@@ -11,6 +11,7 @@ typedef struct GameState
     bool ballLaunched;
     unsigned int points;
     bool isGameOver;
+    unsigned int currentLevel;
 } GameState;
 
 

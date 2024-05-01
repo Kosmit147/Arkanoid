@@ -43,10 +43,11 @@ int main()
     GameState state = {
         .ballLaunched = false,
         .isGameOver = false,
-        .points = 0.
+        .points = 0,
+        .currentLevel = 0,
     };
 
-    GameObjects objects = createGameObjects();
+    GameObjects objects = createGameObjects(STARTING_LEVEL);
     GameRenderData renderData;
     initRenderData(&renderData, &objects);
 
@@ -82,6 +83,19 @@ int main()
         glfwPollEvents();
 
         prevTime = currTime;
+
+        if (objects.blockCount == 0)
+        {
+            if (state.currentLevel == MAX_NUM_OF_LEVELS)
+                state.currentLevel = 0;
+
+            state.currentLevel++;
+            freeGameObjects(&objects);
+            objects = createGameObjects(state.currentLevel);
+            initRenderData(&renderData, &objects);
+            state.ballLaunched = false;
+        }
+
         gameOver(&objects.ball, &state);
     }
 

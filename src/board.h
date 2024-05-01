@@ -29,10 +29,11 @@ typedef enum Axis
 static inline float normalizeCoordinate(float coord) { return coord / (float)COORDINATE_SPACE * 2.0f - 1.0f; }
 static inline float normalizeLength(float length) { return length / (float)COORDINATE_SPACE * 2.0f; }
 
-GameObjects createGameObjects();
+GameObjects createGameObjects(unsigned int currentLevel);
 
 void moveGameObjects(GameObjects* objects);
 void collideGameObjects(GameObjects* objects, GameRenderData* renderData, GameState* state);
 void resetBoard(GameObjects* objects);
 
 void freeGameObjects(const GameObjects* objects);
+

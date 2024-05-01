@@ -80,7 +80,7 @@ static const char* getLevelData(unsigned int level)
     case 1:
         return level1Data;
     default:
-        return NULL;
+        return level0Data;
     }
 }
 
@@ -144,13 +144,13 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
     return blocksVector.data;
 }
 
-GameObjects createGameObjects()
+GameObjects createGameObjects(unsigned int currentLevel)
 {
     GameObjects gameObjects;
 
     gameObjects.paddle = createPaddle((Vec2) { .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
         PADDLE_WIDTH, PADDLE_HEIGHT);
-    gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
+    gameObjects.blocks = createBlocks(currentLevel, &gameObjects.blockCount);
     gameObjects.ball = createBall((Vec2) { .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
         (Vec2)
     {
@@ -280,5 +280,5 @@ void freeGameObjects(const GameObjects* objects)
 void resetBoard(GameObjects* objects)
 {
     freeGameObjects(objects);
-    *objects = createGameObjects();
+    *objects = createGameObjects(STARTING_LEVEL);
 }
