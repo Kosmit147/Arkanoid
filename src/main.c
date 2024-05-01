@@ -41,10 +41,10 @@ int main()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     GameState state = {
-        .ballLaunched = false,
-        .isGameOver = false,
-        .points = 0,
         .currentLevel = 0,
+        .ballLaunched = false,
+        .points = 0,
+        .gameOver = false,
     };
 
     GameObjects objects = createGameObjects(STARTING_LEVEL);
@@ -55,13 +55,13 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
-        if (state.isGameOver && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        if (state.gameOver && glfwGetKey(window, GAME_OVER_START_NEW_GAME_KEY) == GLFW_PRESS)
         {
-
             resetState(&state);
             resetBoard(&objects);
             initRenderData(&renderData, &objects);
         }
+
         currTime = (float)glfwGetTime();
         deltaTime = min(currTime - prevTime, DELTA_TIME_LIMIT);
         subStepDeltaTime = deltaTime / SIMULATION_SUB_STEPS;
@@ -70,10 +70,9 @@ int main()
 
         for (size_t i = 0; i < SIMULATION_SUB_STEPS; i++)
         {
-
             processInput(&state, &objects, window);
             moveGameObjects(&objects);
-            collideGameObjects(&objects, &renderData, &state);
+            collideGameObjects(&state, &objects, &renderData);
         }
 
         updateRenderData(&renderData, &objects);
@@ -86,7 +85,7 @@ int main()
 
         if (objects.blockCount == 0)
         {
-            if (state.currentLevel == MAX_NUM_OF_LEVELS)
+            if (state.currentLevel == MAX_LEVELS)
                 state.currentLevel = 0;
 
             state.currentLevel++;
@@ -96,7 +95,7 @@ int main()
             state.ballLaunched = false;
         }
 
-        gameOver(&objects.ball, &state);
+        state.gameOver = isGameOver(&objects.ball);
     }
 
     freeRenderData(&renderData);

@@ -4,9 +4,8 @@
 
 #include <stddef.h>
 
-#include "entities.h"
-
 #include "game_state.h"
+#include "entities.h"
 
 #include "defines.h"
 
@@ -29,11 +28,10 @@ typedef enum Axis
 static inline float normalizeCoordinate(float coord) { return coord / (float)COORDINATE_SPACE * 2.0f - 1.0f; }
 static inline float normalizeLength(float length) { return length / (float)COORDINATE_SPACE * 2.0f; }
 
-GameObjects createGameObjects(unsigned int currentLevel);
+GameObjects createGameObjects(unsigned int level);
 
 void moveGameObjects(GameObjects* objects);
-void collideGameObjects(GameObjects* objects, GameRenderData* renderData, GameState* state);
+void collideGameObjects(GameState* state, GameObjects* objects, GameRenderData* renderData);
 void resetBoard(GameObjects* objects);
 
 void freeGameObjects(const GameObjects* objects);
-

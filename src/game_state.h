@@ -8,25 +8,22 @@
 
 typedef struct GameState
 {
+    // after adding new fields update resetState()
+    unsigned int currentLevel;
     bool ballLaunched;
     unsigned int points;
-    bool isGameOver;
-    unsigned int currentLevel;
+    bool gameOver;
 } GameState;
 
-
-static inline void gameOver(Ball* ball, GameState* state)
+static inline bool isGameOver(const Ball* ball)
 {
-    if (ball->position.y + ball->radius < 0)
-    {
-        state->isGameOver = true;
-    }
+    return ball->position.y + ball->radius < 0.0f;
 }
 
 static inline void resetState(GameState* state)
 {
-    state->points = 0;
-    state->isGameOver = false;
+    state->currentLevel = STARTING_LEVEL;
     state->ballLaunched = false;
-    state->currentLevel = 0;
+    state->points = 0;
+    state->gameOver = false;
 }

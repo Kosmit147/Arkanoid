@@ -1,7 +1,6 @@
 #include <stdbool.h>
 
 #include "input.h"
-#include "game_state.h"
 #include "defines.h"
 
 extern float subStepDeltaTime;
