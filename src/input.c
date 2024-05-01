@@ -5,13 +5,25 @@
 
 extern float subStepDeltaTime;
 
+static inline bool movePaddleLeftKeyPressed(GLFWwindow* window)
+{
+    return glfwGetKey(window, MOVE_PADDLE_LEFT_KEY) == GLFW_PRESS
+        || glfwGetKey(window, MOVE_PADDLE_LEFT_KEY_ALT) == GLFW_PRESS;
+}
+
+static inline bool movePaddleRightKeyPressed(GLFWwindow* window)
+{
+    return glfwGetKey(window, MOVE_PADDLE_RIGHT_KEY) == GLFW_PRESS
+        || glfwGetKey(window, MOVE_PADDLE_RIGHT_KEY_ALT) == GLFW_PRESS;
+}
+
 static void movePaddle(Block* paddle, GLFWwindow* window)
 {
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        paddle->position.x += PADDLE_SPEED * subStepDeltaTime;
-
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    if (movePaddleLeftKeyPressed(window))
         paddle->position.x -= PADDLE_SPEED * subStepDeltaTime;
+
+    if (movePaddleRightKeyPressed(window))
+        paddle->position.x += PADDLE_SPEED * subStepDeltaTime;
 
     if (paddle->position.x < 0.0f)
         paddle->position.x = 0.0f;
@@ -23,7 +35,7 @@ static void moveBall(GameState* state, Ball* ball, const Block* paddle, GLFWwind
 {
     if (!state->ballLaunched)
     {
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        if (glfwGetKey(window, LAUNCH_BALL_KEY) == GLFW_PRESS)
         {
             ball->speed = BALL_LAUNCH_SPEED;
             state->ballLaunched = true;
