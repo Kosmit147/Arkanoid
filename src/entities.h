@@ -30,6 +30,11 @@ static inline Vec4 getRandomBlockColor()
     return saturateColor(randomColor);
 }
 
+static inline Vec4 getRandomPaddleColor()
+{
+    return getRandomBlockColor();
+}
+
 static inline Vec2 getClosestPointOnBlock(const Ball* ball, const Block* block)
 {
     return (Vec2) {

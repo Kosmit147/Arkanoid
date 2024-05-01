@@ -131,17 +131,10 @@ static unsigned int createBallVB(const Ball* ball)
     return VB;
 }
 
-static GameShaders createGameShaders()
+static PaddleShaderUnifs retrievePaddleShaderUnifs(unsigned int paddleShader)
 {
-    setCommonShaderSrc(commonShaderSrcData);
-
-    return (GameShaders) {
-        .paddleShader = createShader(paddleVertexShaderSrcData,
-            paddleFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
-        .blockShader = createShader(blockVertexShaderSrcData,
-            blockFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
-        .ballShader = createShader(ballVertexShaderSrcData,
-            ballFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
+    return (PaddleShaderUnifs) {
+        .color = retrieveUniformLocation(paddleShader, "color"),
     };
 }
 
@@ -151,6 +144,24 @@ static BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
         .normalBallCenter = retrieveUniformLocation(ballShader, "normalBallCenter"),
         .normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalBallRadiusSquared"),
     };
+}
+
+static GameShaders createGameShaders()
+{
+    GameShaders shaders;
+    setCommonShaderSrc(commonShaderSrcData);
+
+    shaders.paddleShader = createShader(paddleVertexShaderSrcData,
+        paddleFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
+    shaders.blockShader = createShader(blockVertexShaderSrcData,
+        blockFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
+    shaders.ballShader = createShader(ballVertexShaderSrcData,
+        ballFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
+
+    shaders.paddleShaderUnifs = retrievePaddleShaderUnifs(shaders.paddleShader);
+    shaders.ballShaderUnifs = retrieveBallShaderUnifs(shaders.ballShader);
+
+    return shaders;
 }
 
 static void setPaddleVertexAttributes()
@@ -245,10 +256,19 @@ static GLQuad createBallGLQuad(const Ball* ball, unsigned int quadIB)
     return quad;
 }
 
+static void initPaddleUnifs(const PaddleShaderUnifs* unifs)
+{
+    Vec4 paddleColor = getRandomPaddleColor();
+    glUniform4f(unifs->color, paddleColor.r, paddleColor.g, paddleColor.b, paddleColor.a);
+}
+
 void initRenderData(GameRenderData* data, const GameObjects* gameObjects)
 {
     data->shaders = createGameShaders();
-    data->ballShaderUnifs = retrieveBallShaderUnifs(data->shaders.ballShader);
+
+    glUseProgram(data->shaders.paddleShader);
+    initPaddleUnifs(&data->shaders.paddleShaderUnifs);
+
     data->quadIB = createQuadIB(MAX_QUADS, GL_STATIC_DRAW);
     data->paddleQuad = createPaddleGLQuad(&gameObjects->paddle, data->quadIB);
     data->blocksQuad = createBlocksGLQuad(gameObjects->blocks, gameObjects->blockCount, data->quadIB);
@@ -331,6 +351,6 @@ void render(const GameRenderData* renderData, const GameObjects* gameObjects)
 {
     drawPaddle(renderData->shaders.paddleShader, renderData->paddleQuad.VA);
     drawBlocks(gameObjects->blockCount, renderData->shaders.blockShader, renderData->blocksQuad.VA);
-    drawBall(&gameObjects->ball, renderData->shaders.ballShader, &renderData->ballShaderUnifs,
+    drawBall(&gameObjects->ball, renderData->shaders.ballShader, &renderData->shaders.ballShaderUnifs,
         renderData->ballQuad.VA);
 }
