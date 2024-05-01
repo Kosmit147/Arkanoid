@@ -28,4 +28,5 @@ static inline void resetState(GameState* state)
     state->points = 0;
     state->isGameOver = false;
     state->ballLaunched = false;
+    state->currentLevel = 0;
 }
