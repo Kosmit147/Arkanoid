@@ -14,11 +14,10 @@ typedef struct GameState
 } GameState;
 
 
-static inline void isGameOver(Ball* ball, GameState* state)
+static inline void gameOver(Ball* ball, GameState* state)
 {
     if (ball->position.y + ball->radius < 0)
     {
-        printf("Game Over \n Points: %d", state->points);
         state->isGameOver = true;
     }
 }

@@ -279,5 +279,6 @@ void freeGameObjects(const GameObjects* objects)
 
 void resetBoard(GameObjects* objects)
 {
+    freeGameObjects(objects);
     *objects = createGameObjects();
 }
