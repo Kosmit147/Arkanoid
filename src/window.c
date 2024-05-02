@@ -1,7 +1,5 @@
 #include "window.h"
 
-#include <stdio.h>
-
 #include "helpers.h"
 #include "log.h"
 

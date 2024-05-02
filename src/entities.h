@@ -26,7 +26,7 @@ static inline Vec4 getRandomBlockColor()
         .b = randomNormalizedFloat(),
         .a = 1.0f,
     };
-    
+
     return saturateColor(randomColor);
 }
 

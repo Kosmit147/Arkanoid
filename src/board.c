@@ -6,18 +6,20 @@
 #include <incbin.h>
 
 #include <stdbool.h>
+#include <assert.h>
 
+#include "game_time.h"
 #include "log.h"
 #include "helpers.h"
 #include "vector.h"
 #include "rendering.h"
+#include "game_state.h"
+#include "entities.h"
 
 #include "defines.h"
 
 INCTXT(level0, "../levels/level0.txt");
 INCTXT(level1, "../levels/level1.txt");
-
-extern float subStepDeltaTime;
 
 static Block createPaddle(Vec2 position, float width, float height)
 {
@@ -69,6 +71,8 @@ static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, siz
 
 static const char* getLevelData(unsigned int level)
 {
+    static_assert(STARTING_LEVEL == 0 || STARTING_LEVEL == 1, "Expected STARTING_LEVEL == 0 || STARTING_LEVEL == 1");
+
     switch (level)
     {
     case 0:
@@ -76,7 +80,8 @@ static const char* getLevelData(unsigned int level)
     case 1:
         return level1Data;
     default:
-        return NULL;
+        // TODO: generate a level randomly
+        return getLevelData(STARTING_LEVEL);
     }
 }
 
@@ -85,12 +90,6 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
     *blockCount = 0;
 
     const char* levelData = getLevelData(level);
-
-    if (!levelData)
-    {
-        logError("Error: Tried to load level %u, which doesn't exist!", level);
-        return NULL;
-    }
 
     Vector blocksVector = vectorCreate();
     vectorReserve(&blocksVector, 30, Block);
@@ -140,13 +139,13 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
     return blocksVector.data;
 }
 
-GameObjects createGameObjects()
+GameObjects createGameObjects(unsigned int level)
 {
     GameObjects gameObjects;
 
     gameObjects.paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
         PADDLE_WIDTH, PADDLE_HEIGHT);
-    gameObjects.blocks = createBlocks(STARTING_LEVEL, &gameObjects.blockCount);
+    gameObjects.blocks = createBlocks(level, &gameObjects.blockCount);
     gameObjects.ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
         (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
 
@@ -218,7 +217,8 @@ static float getPaddleBounceAngle(const Block* paddle, Vec2 collisionPoint)
     float multiplier = (paddle->position.x + paddle->width - collisionPoint.x) / paddle->width;
     float minAngle = (float)MIN_BALL_BOUNCE_ANGLE_OFF_PADDLE;
     float maxAngle = (float)MATH_PI - (float)MIN_BALL_BOUNCE_ANGLE_OFF_PADDLE;
-    return clamp(minAngle, maxAngle, (float)MATH_PI * multiplier);
+    float angle = (float)MATH_PI * multiplier;
+    return clamp(minAngle, maxAngle, angle);
 }
 
 static void collideBallWithPaddle(Ball* ball, const Block* paddle)
@@ -245,7 +245,7 @@ static void removeBlockAndUpdateInstanceBuffer(Block* blocks, size_t blockCount,
     eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, instanceBuffer, removedIndex, blockCount, BLOCK_INSTANCE_VERTICES_SIZE);
 }
 
-static void collideBall(GameObjects* gameObjects, GameRenderData* renderData)
+static void collideBall(GameState* state, GameObjects* gameObjects, GameRenderData* renderData)
 {
     collideBallWithWalls(&gameObjects->ball);
     collideBallWithPaddle(&gameObjects->ball, &gameObjects->paddle);
@@ -256,13 +256,16 @@ static void collideBall(GameObjects* gameObjects, GameRenderData* renderData)
         {
             removeBlockAndUpdateInstanceBuffer(gameObjects->blocks, gameObjects->blockCount--,
                 i--, renderData->blocksQuad.instanceBuffer);
+
+            state->points += POINTS_PER_BLOCK_DESTROYED;
+            logNotification("Points: %u\n", state->points); // TODO: change once text rendering works
         }
     }
 }
 
-void collideGameObjects(GameObjects* objects, GameRenderData* renderData)
+void collideGameObjects(GameState* state, GameObjects* objects, GameRenderData* renderData)
 {
-    collideBall(objects, renderData);
+    collideBall(state, objects, renderData);
 }
 
 void freeGameObjects(const GameObjects* objects)
