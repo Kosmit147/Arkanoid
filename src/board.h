@@ -34,7 +34,7 @@ GameObjects createGameObjects(unsigned int level);
 void moveGameObjects(GameObjects* objects);
 void collideGameObjects(GameState* state, GameObjects* objects, GameRenderData* renderData);
 
-static inline bool ballOutOfBounds(const Ball* ball) { ball->position.y + ball->radius < 0.0f; }
+static inline bool ballOutOfBounds(const Ball* ball) { return ball->position.y + ball->radius < 0.0f; }
 static inline bool boardCleared(const GameObjects* objects) { return objects->blockCount == 0; }
 
 void freeGameObjects(const GameObjects* objects);
