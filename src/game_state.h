@@ -4,7 +4,6 @@
 
 typedef struct GameState
 {
-    // after adding new fields update resetState()
     unsigned int level;
     bool ballLaunched;
     unsigned int points;
