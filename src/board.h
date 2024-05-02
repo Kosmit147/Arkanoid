@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #include "game_state.h"
 #include "entities.h"
@@ -32,6 +33,8 @@ GameObjects createGameObjects(unsigned int level);
 
 void moveGameObjects(GameObjects* objects);
 void collideGameObjects(GameState* state, GameObjects* objects, GameRenderData* renderData);
-void resetBoard(GameObjects* objects);
+
+static inline bool ballOutOfBounds(const Ball* ball) { ball->position.y + ball->radius < 0.0f; }
+static inline bool boardCleared(const GameObjects* objects) { return objects->blockCount == 0; }
 
 void freeGameObjects(const GameObjects* objects);

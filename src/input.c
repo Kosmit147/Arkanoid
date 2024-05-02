@@ -1,9 +1,8 @@
 #include <stdbool.h>
 
+#include "game_time.h"
 #include "input.h"
 #include "defines.h"
-
-extern float subStepDeltaTime;
 
 static inline bool movePaddleLeftKeyPressed(GLFWwindow* window)
 {

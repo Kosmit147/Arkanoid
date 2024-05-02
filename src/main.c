@@ -3,19 +3,16 @@
 
 #include <time.h>
 
+#include "window.h"
+#include "game.h"
+#include "game_time.h"
 #include "helpers.h"
 #include "log.h"
-#include "window.h"
-#include "game_state.h"
 #include "board.h"
 #include "input.h"
 #include "rendering.h"
 
 #include "defines.h"
-
-float currTime;
-float deltaTime;
-float subStepDeltaTime;
 
 int main()
 {
@@ -40,66 +37,42 @@ int main()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    GameState state = {
-        .currentLevel = 0,
-        .ballLaunched = false,
-        .points = 0,
-        .gameOver = false,
-    };
+    Game game;
+    initGame(&game, STARTING_LEVEL);
 
-    GameObjects objects = createGameObjects(STARTING_LEVEL);
-    GameRenderData renderData;
-    initRenderData(&renderData, &objects);
-
-    float prevTime = (float)glfwGetTime();
+    initTime();
 
     while (!glfwWindowShouldClose(window))
     {
-        if (state.gameOver && glfwGetKey(window, GAME_OVER_START_NEW_GAME_KEY) == GLFW_PRESS)
-        {
-            resetState(&state);
-            resetBoard(&objects);
-            initRenderData(&renderData, &objects);
-        }
-
-        currTime = (float)glfwGetTime();
-        deltaTime = min(currTime - prevTime, DELTA_TIME_LIMIT);
-        subStepDeltaTime = deltaTime / SIMULATION_SUB_STEPS;
-
+        updateTime();
         glClear(GL_COLOR_BUFFER_BIT);
 
         for (size_t i = 0; i < SIMULATION_SUB_STEPS; i++)
         {
-            processInput(&state, &objects, window);
-            moveGameObjects(&objects);
-            collideGameObjects(&state, &objects, &renderData);
+            processInput(&game.state, &game.objects, window);
+            moveGameObjects(&game.objects);
+            collideGameObjects(&game.state, &game.objects, &game.renderData);
         }
 
-        updateRenderData(&renderData, &objects);
-        render(&renderData, &objects);
+        updateRenderData(&game.renderData, &game.objects);
+        render(&game.renderData, &game.objects);
+
+        if (boardCleared(&game.objects))
+            advanceLevel(&game);
+
+        if (gameOver(&game) && glfwGetKey(window, GAME_OVER_START_NEW_GAME_KEY) == GLFW_PRESS)
+        {
+            // TODO: write high score to file
+
+            freeGame(&game);
+            initGame(&game, STARTING_LEVEL);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-
-        prevTime = currTime;
-
-        if (objects.blockCount == 0)
-        {
-            if (state.currentLevel == MAX_LEVELS)
-                state.currentLevel = 0;
-
-            state.currentLevel++;
-            freeGameObjects(&objects);
-            objects = createGameObjects(state.currentLevel);
-            initRenderData(&renderData, &objects);
-            state.ballLaunched = false;
-        }
-
-        state.gameOver = isGameOver(&objects.ball);
     }
 
-    freeRenderData(&renderData);
-    freeGameObjects(&objects);
+    freeGame(&game);
 
     glfwTerminate();
     return 0;
