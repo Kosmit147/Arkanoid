@@ -143,6 +143,7 @@ static BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
     return (BallShaderUnifs) {
         .normalBallCenter = retrieveUniformLocation(ballShader, "normalizedBallCenter"),
         .normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalizedBallRadiusSquared"),
+        .color = retrieveUniformLocation(ballShader, "color"),
     };
 }
 
@@ -256,10 +257,16 @@ static QuadRenderer createBallRenderer(const Ball* ball, unsigned int quadIB)
     return quad;
 }
 
-static void initPaddleUnifs(const PaddleShaderUnifs* unifs)
+static void initPaddleShaderUnifs(const PaddleShaderUnifs* unifs)
 {
     Vec4 paddleColor = getRandomPaddleColor();
     glUniform4f(unifs->color, paddleColor.r, paddleColor.g, paddleColor.b, paddleColor.a);
+}
+
+static void initBallShaderUnifs(const BallShaderUnifs* unifs)
+{
+    Vec4 ballColor = getRandomBallColor();
+    glUniform4f(unifs->color, ballColor.r, ballColor.g, ballColor.b, ballColor.a);
 }
 
 void initRenderData(GameRenderData* data, const GameObjects* gameObjects)
@@ -267,7 +274,10 @@ void initRenderData(GameRenderData* data, const GameObjects* gameObjects)
     data->shaders = createGameShaders();
 
     glUseProgram(data->shaders.paddleShader);
-    initPaddleUnifs(&data->shaders.paddleShaderUnifs);
+    initPaddleShaderUnifs(&data->shaders.paddleShaderUnifs);
+
+    glUseProgram(data->shaders.ballShader);
+    initBallShaderUnifs(&data->shaders.ballShaderUnifs);
 
     data->quadIB = createQuadIB(MAX_QUADS, GL_STATIC_DRAW);
     data->paddleRenderer = createPaddleRenderer(&gameObjects->paddle, data->quadIB);

@@ -2,6 +2,7 @@ in vec2 Position;
 
 uniform vec2 normalizedBallCenter;
 uniform float normalizedBallRadiusSquared;
+uniform vec4 color;
 
 out vec4 outColor;
 
@@ -18,5 +19,5 @@ void main()
     float alpha = 1.0 - smoothstep(normalizedBallRadiusSquared - aaLevel,
         normalizedBallRadiusSquared, distSquared);
 
-    outColor = vec4(1.0, 1.0, 1.0, alpha);
+    outColor = vec4(color.rgb, alpha * color.a);
 }
