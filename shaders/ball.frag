@@ -1,21 +1,22 @@
 in vec2 Position;
 
-uniform vec2 normalBallCenter;
-uniform float normalBallRadiusSquared;
+uniform vec2 normalizedBallCenter;
+uniform float normalizedBallRadiusSquared;
 
 out vec4 outColor;
 
 void main()
 {
-    float aaLevel = 0.0001;
+    const float aaLevel = 0.0001;
 
-    vec2 distVec = Position - normalBallCenter;
+    vec2 distVec = Position - normalizedBallCenter;
     float distSquared = dot(distVec, distVec);
     
-    if (distSquared > normalBallRadiusSquared) 
+    if (distSquared > normalizedBallRadiusSquared) 
         discard;
     
-    float alpha = 1.0 - smoothstep(normalBallRadiusSquared - aaLevel, normalBallRadiusSquared, distSquared);
+    float alpha = 1.0 - smoothstep(normalizedBallRadiusSquared - aaLevel,
+        normalizedBallRadiusSquared, distSquared);
 
     outColor = vec4(1.0, 1.0, 1.0, alpha);
 }

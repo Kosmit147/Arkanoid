@@ -141,8 +141,8 @@ static PaddleShaderUnifs retrievePaddleShaderUnifs(unsigned int paddleShader)
 static BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
 {
     return (BallShaderUnifs) {
-        .normalBallCenter = retrieveUniformLocation(ballShader, "normalBallCenter"),
-        .normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalBallRadiusSquared"),
+        .normalBallCenter = retrieveUniformLocation(ballShader, "normalizedBallCenter"),
+        .normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalizedBallRadiusSquared"),
     };
 }
 
@@ -172,9 +172,9 @@ static void setPaddleVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
-static GLQuad createPaddleGLQuad(const Block* paddle, unsigned int quadIB)
+static GLQuadRenderer createPaddleRenderer(const Block* paddle, unsigned int quadIB)
 {
-    GLQuad quad = {
+    GLQuadRenderer quad = {
         .VA = genVA(),
         .VB = createPaddleVB(paddle),
     };
@@ -207,7 +207,7 @@ static void setBlockVertexAttributes(unsigned int VB, unsigned int instanceBuffe
     glEnableVertexAttribArray(2);
 }
 
-static GLInstancedQuad createBlocksGLQuad(const Block* blocks, size_t blockCount, unsigned int quadIB)
+static GLInstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount, unsigned int quadIB)
 {
     Block baseBlock = {
         // start at (-1.0, -1.0), use a translation vector in the shader
@@ -223,7 +223,7 @@ static GLInstancedQuad createBlocksGLQuad(const Block* blocks, size_t blockCount
         baseBlock.height = blocks[0].height;
     }
 
-    GLInstancedQuad quad = {
+    GLInstancedQuadRenderer quad = {
         .VA = genVA(),
         .VB = createBlockVB(&baseBlock),
         .instanceBuffer = createBlocksInstanceBuffer(blocks, blockCount),
@@ -243,9 +243,9 @@ static void setBallVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
-static GLQuad createBallGLQuad(const Ball* ball, unsigned int quadIB)
+static GLQuadRenderer createBallRenderer(const Ball* ball, unsigned int quadIB)
 {
-    GLQuad quad = {
+    GLQuadRenderer quad = {
         .VA = genVA(),
         .VB = createBallVB(ball),
     };
@@ -270,9 +270,9 @@ void initRenderData(GameRenderData* data, const GameObjects* gameObjects)
     initPaddleUnifs(&data->shaders.paddleShaderUnifs);
 
     data->quadIB = createQuadIB(MAX_QUADS, GL_STATIC_DRAW);
-    data->paddleQuad = createPaddleGLQuad(&gameObjects->paddle, data->quadIB);
-    data->blocksQuad = createBlocksGLQuad(gameObjects->blocks, gameObjects->blockCount, data->quadIB);
-    data->ballQuad = createBallGLQuad(&gameObjects->ball, data->quadIB);
+    data->paddleRenderer = createPaddleRenderer(&gameObjects->paddle, data->quadIB);
+    data->blocksRenderer = createBlocksRenderer(gameObjects->blocks, gameObjects->blockCount, data->quadIB);
+    data->ballRenderer = createBallRenderer(&gameObjects->ball, data->quadIB);
 }
 
 static void updatePaddleVB(const Block* paddle, unsigned int paddleVB)
@@ -299,8 +299,8 @@ static void updateBallVB(const Ball* ball, unsigned int ballVB)
 
 void updateRenderData(GameRenderData* renderData, const GameObjects* gameObjects)
 {
-    updatePaddleVB(&gameObjects->paddle, renderData->paddleQuad.VB);
-    updateBallVB(&gameObjects->ball, renderData->ballQuad.VB);
+    updatePaddleVB(&gameObjects->paddle, renderData->paddleRenderer.VB);
+    updateBallVB(&gameObjects->ball, renderData->ballRenderer.VB);
 }
 
 static void freeGameShaders(const GameShaders* shaders)
@@ -314,9 +314,9 @@ void freeRenderData(const GameRenderData* renderData)
 {
     freeGameShaders(&renderData->shaders);
 
-    freeGLQuad(&renderData->paddleQuad);
-    freeGLInstancedQuad(&renderData->blocksQuad);
-    freeGLQuad(&renderData->ballQuad);
+    freeGLQuadRenderer(&renderData->paddleRenderer);
+    freeGLInstancedQuadRenderer(&renderData->blocksRenderer);
+    freeGLQuadRenderer(&renderData->ballRenderer);
 
     glDeleteBuffers(1, &renderData->quadIB);
 }
@@ -349,8 +349,8 @@ static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int bloc
 
 void render(const GameRenderData* renderData, const GameObjects* gameObjects)
 {
-    drawPaddle(renderData->shaders.paddleShader, renderData->paddleQuad.VA);
-    drawBlocks(gameObjects->blockCount, renderData->shaders.blockShader, renderData->blocksQuad.VA);
+    drawPaddle(renderData->shaders.paddleShader, renderData->paddleRenderer.VA);
+    drawBlocks(gameObjects->blockCount, renderData->shaders.blockShader, renderData->blocksRenderer.VA);
     drawBall(&gameObjects->ball, renderData->shaders.ballShader, &renderData->shaders.ballShaderUnifs,
-        renderData->ballQuad.VA);
+        renderData->ballRenderer.VA);
 }
