@@ -314,9 +314,9 @@ void freeRenderData(const GameRenderData* renderData)
 {
     freeGameShaders(&renderData->shaders);
 
-    freeGLQuadRenderer(&renderData->paddleRenderer);
-    freeGLInstancedQuadRenderer(&renderData->blocksRenderer);
-    freeGLQuadRenderer(&renderData->ballRenderer);
+    freeQuadRenderer(&renderData->paddleRenderer);
+    freeInstancedQuadRenderer(&renderData->blocksRenderer);
+    freeQuadRenderer(&renderData->ballRenderer);
 
     glDeleteBuffers(1, &renderData->quadIB);
 }
