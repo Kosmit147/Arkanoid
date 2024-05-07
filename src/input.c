@@ -1,7 +1,9 @@
+#include "input.h"
+
 #include <stdbool.h>
 
 #include "game_time.h"
-#include "input.h"
+
 #include "defines.h"
 
 static inline bool movePaddleLeftKeyPressed(GLFWwindow* window)
@@ -16,7 +18,7 @@ static inline bool movePaddleRightKeyPressed(GLFWwindow* window)
         || glfwGetKey(window, MOVE_PADDLE_RIGHT_KEY_ALT) == GLFW_PRESS;
 }
 
-static void movePaddle(Block* paddle, GLFWwindow* window)
+void processPaddleMovementInput(Block* paddle, GLFWwindow* window)
 {
     if (movePaddleLeftKeyPressed(window))
         paddle->position.x -= PADDLE_SPEED * subStepDeltaTime;
@@ -30,7 +32,7 @@ static void movePaddle(Block* paddle, GLFWwindow* window)
         paddle->position.x = COORDINATE_SPACE - paddle->width;
 }
 
-static void moveBall(GameState* state, Ball* ball, const Block* paddle, GLFWwindow* window)
+void processBallLaunchInput(GameState* state, Ball* ball, const Block* paddle, GLFWwindow* window)
 {
     if (!state->ballLaunched)
     {
@@ -42,10 +44,4 @@ static void moveBall(GameState* state, Ball* ball, const Block* paddle, GLFWwind
 
         ball->position.x = paddle->position.x + paddle->width / 2.0f;
     }
-}
-
-void processInput(GameState* state, GameObjects* gameObjects, GLFWwindow* window)
-{
-    movePaddle(&gameObjects->paddle, window);
-    moveBall(state, &gameObjects->ball, &gameObjects->paddle, window);
 }

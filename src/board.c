@@ -152,15 +152,10 @@ GameObjects createGameObjects(unsigned int level)
     return gameObjects;
 }
 
-static void moveBall(Ball* ball)
+void moveBall(Ball* ball)
 {
     ball->position.x += ball->direction.x * ball->speed * subStepDeltaTime;
     ball->position.y += ball->direction.y * ball->speed * subStepDeltaTime;
-}
-
-void moveGameObjects(GameObjects* objects)
-{
-    moveBall(&objects->ball);
 }
 
 static void flipBallDirectionOnAxis(Axis axis, Ball* ball)
@@ -245,7 +240,7 @@ static void removeBlockAndUpdateInstanceBuffer(Block* blocks, size_t blockCount,
     eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, instanceBuffer, removedIndex, blockCount, BLOCK_INSTANCE_VERTICES_SIZE);
 }
 
-static void collideBall(GameState* state, GameObjects* gameObjects, GameRenderData* renderData)
+void collideBall(GameState* state, GameObjects* gameObjects, GameRenderData* renderData)
 {
     collideBallWithWalls(&gameObjects->ball);
     collideBallWithPaddle(&gameObjects->ball, &gameObjects->paddle);
@@ -255,17 +250,12 @@ static void collideBall(GameState* state, GameObjects* gameObjects, GameRenderDa
         if (collideBallWithBlock(&gameObjects->ball, &gameObjects->blocks[i]))
         {
             removeBlockAndUpdateInstanceBuffer(gameObjects->blocks, gameObjects->blockCount--,
-                i--, renderData->blocksQuad.instanceBuffer);
+                i--, renderData->blocksRenderer.instanceBuffer);
 
             state->points += POINTS_PER_BLOCK_DESTROYED;
             logNotification("Points: %u\n", state->points); // TODO: change once text rendering works
         }
     }
-}
-
-void collideGameObjects(GameState* state, GameObjects* objects, GameRenderData* renderData)
-{
-    collideBall(state, objects, renderData);
 }
 
 void freeGameObjects(const GameObjects* objects)
