@@ -143,13 +143,13 @@ unsigned int createQuadIB(size_t count, GLenum usage)
     return IB;
 }
 
-void freeGLQuad(const GLQuad* quad)
+void freeQuadRenderer(const QuadRenderer* quad)
 {
     glDeleteVertexArrays(1, &quad->VA);
     glDeleteBuffers(1, &quad->VB);
 }
 
-void freeGLInstancedQuad(const GLInstancedQuad* quad)
+void freeInstancedQuadRenderer(const InstancedQuadRenderer* quad)
 {
     glDeleteVertexArrays(1, &quad->VA);
     glDeleteBuffers(1, &quad->VB);

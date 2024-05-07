@@ -49,9 +49,9 @@ int main()
 
         for (size_t i = 0; i < SIMULATION_SUB_STEPS; i++)
         {
-            processInput(&game.state, &game.objects, window);
-            moveGameObjects(&game.objects);
-            collideGameObjects(&game.state, &game.objects, &game.renderData);
+            processGameInput(&game, window);
+            moveGameObjects(&game);
+            collideGameObjects(&game);
         }
 
         updateRenderData(&game.renderData, &game.objects);
@@ -60,8 +60,14 @@ int main()
         if (boardCleared(&game.objects))
             advanceLevel(&game);
 
-        if (gameOver(&game) && glfwGetKey(window, GAME_OVER_START_NEW_GAME_KEY) == GLFW_PRESS)
+        if (gameOver(&game) && glfwGetKey(window, RESTART_GAME_KEY) == GLFW_PRESS)
         {
+            // if GAME_OVER_START_NEW_GAME_KEY is the same as LAUNCH_BALL_KEY then 
+            // the ball would launch instantly after restarting the game
+            // this is a hacky solution
+            while (glfwGetKey(window, RESTART_GAME_KEY) == GLFW_PRESS)
+                glfwPollEvents();
+
             // TODO: write high score to file
 
             freeGame(&game);

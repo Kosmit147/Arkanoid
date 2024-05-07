@@ -53,6 +53,14 @@ target_include_directories(arkanoid PUBLIC dependencies/INCBIN/include)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW lib only")
 set(GLFW_INSTALL OFF CACHE BOOL "GLFW lib only")
+option(GLFW_BUILD_X11 OFF)
+option(GLFW_BUILD_WAYLAND OFF)
+
+if(GLFW_BUILD_WAYLAND)
+    target_compile_definitions(arkanoid PRIVATE _GLFW_WAYLAND)
+elseif(GLFW_BUILD_X11)
+    target_compile_definitions(arkanoid PRIVATE _GLFW_X11)
+endif()
 
 add_subdirectory(dependencies/GLAD)
 add_subdirectory(dependencies/GLFW)
