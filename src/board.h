@@ -10,7 +10,6 @@
 #include "defines.h"
 
 typedef struct GameState GameState;
-typedef struct GameObjects GameObjects;
 typedef struct GameRenderData GameRenderData;
 
 typedef struct GameObjects
