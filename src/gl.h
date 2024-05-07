@@ -4,18 +4,18 @@
 
 #include <stddef.h>
 
-typedef struct GLQuadRenderer
+typedef struct QuadRenderer
 {
     unsigned int VA;
     unsigned int VB;
-} GLQuadRenderer;
+} QuadRenderer;
 
-typedef struct GLInstancedQuadRenderer
+typedef struct InstancedQuadRenderer
 {
     unsigned int VA;
     unsigned int VB;
     unsigned int instanceBuffer;
-} GLInstancedQuadRenderer;
+} InstancedQuadRenderer;
 
 #ifdef _DEBUG
 void rendererGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
@@ -40,5 +40,5 @@ void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer,
 
 unsigned int createQuadIB(size_t count, GLenum usage);
 
-void freeGLQuadRenderer(const GLQuadRenderer* quad);
-void freeGLInstancedQuadRenderer(const GLInstancedQuadRenderer* quad);
+void freeQuadRenderer(const QuadRenderer* quad);
+void freeInstancedQuadRenderer(const InstancedQuadRenderer* quad);

@@ -57,15 +57,15 @@ int main()
         updateRenderData(&game.renderData, &game.objects);
         render(&game.renderData, &game.objects);
 
-        if (gameBoardCleared(&game.objects))
+        if (boardCleared(&game.objects))
             advanceLevel(&game);
 
-        if (gameOver(&game) && glfwGetKey(window, GAME_OVER_START_NEW_GAME_KEY) == GLFW_PRESS)
+        if (gameOver(&game) && glfwGetKey(window, RESTART_GAME_KEY) == GLFW_PRESS)
         {
             // if GAME_OVER_START_NEW_GAME_KEY is the same as LAUNCH_BALL_KEY then 
             // the ball would launch instantly after restarting the game
             // this is a hacky solution
-            while (glfwGetKey(window, GAME_OVER_START_NEW_GAME_KEY) == GLFW_PRESS)
+            while (glfwGetKey(window, RESTART_GAME_KEY) == GLFW_PRESS)
                 glfwPollEvents();
 
             // TODO: write high score to file

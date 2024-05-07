@@ -29,9 +29,9 @@ typedef struct GameRenderData
     // after adding new data update freeRenderingData()
     GameShaders shaders;
     unsigned int quadIB;
-    GLQuadRenderer paddleRenderer;
-    GLInstancedQuadRenderer blocksRenderer;
-    GLQuadRenderer ballRenderer;
+    QuadRenderer paddleRenderer;
+    InstancedQuadRenderer blocksRenderer;
+    QuadRenderer ballRenderer;
 } GameRenderData;
 
 void initRenderData(GameRenderData* data, const GameObjects* gameObjects);

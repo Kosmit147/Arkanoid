@@ -172,9 +172,9 @@ static void setPaddleVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
-static GLQuadRenderer createPaddleRenderer(const Block* paddle, unsigned int quadIB)
+static QuadRenderer createPaddleRenderer(const Block* paddle, unsigned int quadIB)
 {
-    GLQuadRenderer quad = {
+    QuadRenderer quad = {
         .VA = genVA(),
         .VB = createPaddleVB(paddle),
     };
@@ -207,7 +207,7 @@ static void setBlockVertexAttributes(unsigned int VB, unsigned int instanceBuffe
     glEnableVertexAttribArray(2);
 }
 
-static GLInstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount, unsigned int quadIB)
+static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount, unsigned int quadIB)
 {
     Block baseBlock = {
         // start at (-1.0, -1.0), use a translation vector in the shader
@@ -223,7 +223,7 @@ static GLInstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t 
         baseBlock.height = blocks[0].height;
     }
 
-    GLInstancedQuadRenderer quad = {
+    InstancedQuadRenderer quad = {
         .VA = genVA(),
         .VB = createBlockVB(&baseBlock),
         .instanceBuffer = createBlocksInstanceBuffer(blocks, blockCount),
@@ -243,9 +243,9 @@ static void setBallVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
-static GLQuadRenderer createBallRenderer(const Ball* ball, unsigned int quadIB)
+static QuadRenderer createBallRenderer(const Ball* ball, unsigned int quadIB)
 {
-    GLQuadRenderer quad = {
+    QuadRenderer quad = {
         .VA = genVA(),
         .VB = createBallVB(ball),
     };
