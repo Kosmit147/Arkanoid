@@ -67,3 +67,6 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 /build
+
+# Clangd Language Server
+.cache
