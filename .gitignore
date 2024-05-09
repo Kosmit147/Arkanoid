@@ -70,3 +70,4 @@ _deps
 
 # Clangd Language Server
 .cache
+.clangd
