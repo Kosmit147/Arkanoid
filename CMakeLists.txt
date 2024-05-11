@@ -29,7 +29,7 @@ add_executable(
 if (CMAKE_C_COMPILER_ID MATCHES ".*GNU.*")
     target_compile_options(
         arkanoid PRIVATE
-        -Wall -Wextra -Werror -Wconversion -Wpedantic
+        -Wall -Wextra -Werror -Wconversion -Wpedantic -Wshadow
         -Wdouble-promotion -Wsign-conversion
         -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches
         -fanalyzer
@@ -41,7 +41,7 @@ if (CMAKE_C_COMPILER_ID MATCHES ".*GNU.*")
 elseif(CMAKE_C_COMPILER_ID MATCHES ".*Clang.*")
     target_compile_options(
         arkanoid PRIVATE
-        -Wall -Wextra -Werror -Wconversion -Wpedantic
+        -Wall -Wextra -Werror -Wconversion -Wpedantic -Wshadow
         -Wdouble-promotion -Wsign-conversion
         -ffast-math
     )
