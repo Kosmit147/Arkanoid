@@ -3,3 +3,5 @@
 
 // (0, 0) is in the bottom-left corner
 #define COORDINATE_SPACE 1024
+
+#define BLOCK_BORDER_COLOR_SATURATION 0.8

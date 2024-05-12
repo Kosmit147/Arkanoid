@@ -2,6 +2,8 @@
 
 #include <math.h>
 
+#include "helpers.h"
+
 typedef struct Vec2
 {
     union { float x; float r; };
