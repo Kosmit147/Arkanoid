@@ -20,12 +20,6 @@ typedef struct Ball
     float speed;
 } Ball;
 
-typedef struct Rect
-{
-    Vec2 topLeft;
-    Vec2 bottomRight;
-} Rect;
-
 static inline Rect getBlockBorderRect(const Block* block)
 {
     return (Rect) {

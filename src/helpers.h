@@ -14,6 +14,12 @@
 #define clamp(low, high, x) (max((low), min((x), (high))))
 #define withinRange(low, high, x) ((x) >= (low) && (x) <= (high))
 
+typedef struct Rect
+{
+    Vec2 topLeft;
+    Vec2 bottomRight;
+} Rect;
+
 static inline void eraseFromArr(void* arr, size_t index, size_t arrElemCount, size_t elemSize)
 {
     char* bytePtr = (char*)arr;
