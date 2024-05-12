@@ -21,13 +21,13 @@ bool pointInsideRect(vec2 point, Rect rect)
         && point.y <= rect.topLeft.y && point.y >= rect.bottomRight.y;
 }
 
-vec4 desaturateColor(vec4 color, float percentage)
+vec4 saturateColor(vec4 color, float percentage)
 {
-    vec4 desaturated = color;
+    vec4 saturated = color;
 
-    desaturated.r *= percentage;
-    desaturated.g *= percentage;
-    desaturated.b *= percentage;
+    saturated.r *= percentage;
+    saturated.g *= percentage;
+    saturated.b *= percentage;
 
-    return desaturated;
+    return saturated;
 }

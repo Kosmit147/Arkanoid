@@ -9,5 +9,5 @@ void main()
     outColor = Color;
 
     if (!pointInsideRect(Position, BorderRect))
-        outColor = desaturateColor(outColor, 0.8);
+        outColor = saturateColor(outColor, BLOCK_BORDER_COLOR_SATURATION);
 }
