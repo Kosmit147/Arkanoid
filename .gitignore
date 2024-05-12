@@ -71,3 +71,6 @@ _deps
 # Clangd Language Server
 .cache
 .clangd
+
+# VIM
+Session.vim
