@@ -12,6 +12,7 @@ typedef struct BallShaderUnifs
 {
     int normalBallCenter;
     int normalBallRadiusSquared;
+    int color;
 } BallShaderUnifs;
 
 typedef struct GameShaders
