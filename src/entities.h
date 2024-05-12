@@ -35,7 +35,7 @@ static inline Rect getBlockBorderRect(const Block* block)
         },
         .bottomRight = (Vec2) {
             .x = block->position.x + block->width - BLOCK_BORDER_WIDTH,
-            .y = block->position.y - block->width + BLOCK_BORDER_WIDTH,
+            .y = block->position.y - block->height + BLOCK_BORDER_WIDTH,
         },
     };
 }
