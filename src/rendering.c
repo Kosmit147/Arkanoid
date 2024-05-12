@@ -183,7 +183,7 @@ static void setPaddleRendererVertexAttributes()
 
 static QuadRenderer createPaddleRenderer(const Block* paddle, unsigned int quadIB)
 {
-    QuadRenderer quad = {
+    QuadRenderer renderer = {
         .VA = genVA(),
         .VB = createPaddleVB(paddle),
     };
@@ -191,7 +191,7 @@ static QuadRenderer createPaddleRenderer(const Block* paddle, unsigned int quadI
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
     setPaddleRendererVertexAttributes();
 
-    return quad;
+    return renderer;
 }
 
 static void setBlockRendererVertexAttributes(unsigned int VB, unsigned int instanceBuffer)
@@ -266,7 +266,7 @@ static void setBallRendererVertexAttributes()
 
 static QuadRenderer createBallRenderer(const Ball* ball, unsigned int quadIB)
 {
-    QuadRenderer quad = {
+    QuadRenderer renderer = {
         .VA = genVA(),
         .VB = createBallVB(ball),
     };
@@ -274,7 +274,7 @@ static QuadRenderer createBallRenderer(const Ball* ball, unsigned int quadIB)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
     setBallRendererVertexAttributes();
 
-    return quad;
+    return renderer;
 }
 
 static void initPaddleUnifs(const PaddleShaderUnifs* unifs)
