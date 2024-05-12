@@ -3,6 +3,8 @@
 #include "helpers.h"
 #include "vec.h"
 
+#include "defines.h"
+
 typedef struct Block
 {
     Vec2 position; // top-left corner
@@ -17,6 +19,26 @@ typedef struct Ball
     Vec2 direction;
     float speed;
 } Ball;
+
+typedef struct Rect
+{
+    Vec2 topLeft;
+    Vec2 bottomRight;
+} Rect;
+
+static inline Rect getBlockBorderRect(const Block* block)
+{
+    return (Rect) {
+        .topLeft = (Vec2) {
+            .x = block->position.x + BLOCK_BORDER_WIDTH,
+            .y = block->position.y - BLOCK_BORDER_WIDTH,
+        },
+        .bottomRight = (Vec2) {
+            .x = block->position.x + block->width - BLOCK_BORDER_WIDTH,
+            .y = block->position.y - block->width + BLOCK_BORDER_WIDTH,
+        },
+    };
+}
 
 static inline Vec4 getRandomBlockColor()
 {

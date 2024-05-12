@@ -83,24 +83,11 @@ static void getBlockInstanceVertices(float* vertices, const Block* block)
     vertices[0] = translation.x;
     vertices[1] = translation.y;
 
-    float normalizedBlockWidth = normalizeLength(block->width);
-    float normalizedBlockHeight = normalizeLength(block->height);
-    float normalizedBorderWidth = normalizeLength(BLOCK_BORDER_WIDTH);
-
-    Vec2 borderRectTopLeft = {
-        .x = translation.x + normalizedBorderWidth - 1.0f,
-        .y = translation.y - normalizedBorderWidth - 1.0f,
-    };
-
-    Vec2 borderRectBottomRight = {
-        .x = translation.x + normalizedBlockWidth - normalizedBorderWidth - 1.0f,
-        .y = translation.y - normalizedBlockHeight + normalizedBorderWidth - 1.0f,
-    };
-
-    vertices[2] = borderRectTopLeft.x;
-    vertices[3] = borderRectTopLeft.y;
-    vertices[4] = borderRectBottomRight.x;
-    vertices[5] = borderRectBottomRight.y;
+    Rect borderRect = getBlockBorderRect(block);
+    vertices[2] = normalizeCoordinate(borderRect.topLeft.x);
+    vertices[3] = normalizeCoordinate(borderRect.topLeft.y);
+    vertices[4] = normalizeCoordinate(borderRect.bottomRight.x);
+    vertices[5] = normalizeCoordinate(borderRect.bottomRight.y);
 
     Vec4 color = getRandomBlockColor();
     vertices[6] = color.r;
