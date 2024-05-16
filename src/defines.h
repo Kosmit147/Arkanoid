@@ -4,7 +4,6 @@
 #include <GLFW/glfw3.h>
 
 #include <float.h>
-
 #include "defines_shared.h"
 
 #define MATH_PI 3.14159265358979323846

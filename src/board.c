@@ -15,7 +15,7 @@
 #include "rendering.h"
 #include "game_state.h"
 #include "entities.h"
-
+#include "structures.h"
 #include "defines.h"
 
 INCTXT(level0, "../levels/level0.txt");
@@ -23,20 +23,22 @@ INCTXT(level1, "../levels/level1.txt");
 
 static Block createPaddle(Vec2 position, float width, float height)
 {
-    return (Block) {
+    return (Block)
+    {
         .position = position,
-        .width = width,
-        .height = height,
+            .width = width,
+            .height = height,
     };
 }
 
 static Ball createBall(Vec2 position, float radius, Vec2 direction, float speed)
 {
-    return (Ball) {
+    return (Ball)
+    {
         .position = position,
-        .radius = radius,
-        .direction = direction,
-        .speed = speed,
+            .radius = radius,
+            .direction = direction,
+            .speed = speed,
     };
 }
 
@@ -87,6 +89,8 @@ static const char* getLevelData(unsigned int level)
 
 static Block* createBlocks(unsigned int level, size_t* blockCount)
 {
+    Block bounds = { {.x = 0,.y = 0}, COORDINATE_SPACE, COORDINATE_SPACE / 2 };
+    globalQuadTree = createQuadtree(0, bounds);
     *blockCount = 0;
 
     const char* levelData = getLevelData(level);
@@ -121,6 +125,8 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
                 .height = blockHeight,
             };
 
+
+            insert(globalQuadTree, &newBlock);
             vectorPushBack(&blocksVector, &newBlock, Block);
             (*blockCount)++;
         }
@@ -135,7 +141,7 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
             col++;
         }
     }
-
+    display(globalQuadTree);
     return blocksVector.data;
 }
 
@@ -143,11 +149,14 @@ GameObjects createGameObjects(unsigned int level)
 {
     GameObjects gameObjects;
 
-    gameObjects.paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
+    gameObjects.paddle = createPaddle((Vec2) { .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
         PADDLE_WIDTH, PADDLE_HEIGHT);
     gameObjects.blocks = createBlocks(level, &gameObjects.blockCount);
-    gameObjects.ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
-        (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
+    gameObjects.ball = createBall((Vec2) { .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
+        (Vec2)
+    {
+        .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y
+    }, 0.0f);
 
     return gameObjects;
 }
@@ -240,15 +249,24 @@ static void removeBlockAndUpdateInstanceBuffer(Block* blocks, size_t blockCount,
     eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, instanceBuffer, removedIndex, blockCount, BLOCK_INSTANCE_VERTICES_SIZE);
 }
 
+
 void collideBall(GameState* state, GameObjects* gameObjects, GameRenderData* renderData)
 {
+
+    Block** retrievedBlocks = (Block**)malloc(MAX_OBJECTS * sizeof(Block*));
+    size_t count = 0;
+    retrieveBlocks(globalQuadTree, gameObjects->ball.position, retrievedBlocks, &count);
+
     collideBallWithWalls(&gameObjects->ball);
     collideBallWithPaddle(&gameObjects->ball, &gameObjects->paddle);
 
-    for (size_t i = 0; i < gameObjects->blockCount; i++)
+
+
+    for (size_t i = 0; i < count; i++)
     {
-        if (collideBallWithBlock(&gameObjects->ball, &gameObjects->blocks[i]))
+        if (collideBallWithBlock(&gameObjects->ball, retrievedBlocks[i]))
         {
+            removeBlock(globalQuadTree, retrievedBlocks[i]);
             removeBlockAndUpdateInstanceBuffer(gameObjects->blocks, gameObjects->blockCount--,
                 i--, renderData->blocksRenderer.instanceBuffer);
 
