@@ -1,44 +1,43 @@
 #include "game.h"
 
 #include "input.h"
+#include "rendering.h"
 
 void initGame(Game* game, unsigned int level)
 {
     initGameState(&game->state, level);
-
-    game->objects = createGameObjects(game->state.level);
-    initRenderData(&game->renderData, &game->objects);
+    initBoard(&game->board, game->state.level);
+    initRenderer(&game->renderer, &game->board);
 }
 
 void advanceLevel(Game* game)
 {
-    freeGameObjects(&game->objects);
-    freeRenderData(&game->renderData);
+    freeBoard(&game->board);
+    freeGameRenderer(&game->renderer.gameRenderer);
 
     gameStateAdvanceLevel(&game->state);
-
-    game->objects = createGameObjects(game->state.level);
-    initRenderData(&game->renderData, &game->objects);
+    initBoard(&game->board, game->state.level);
+    initGameRenderer(&game->renderer.gameRenderer, &game->board, game->renderer.quadIB);
 }
 
 void freeGame(const Game* game)
 {
-    freeGameObjects(&game->objects);
-    freeRenderData(&game->renderData);
-}
-
-void moveGameObjects(Game* game)
-{
-    moveBall(&game->objects.ball);
-}
-
-void collideGameObjects(Game* game)
-{
-    collideBall(&game->state, &game->objects, &game->renderData);
+    freeBoard(&game->board);
+    freeRenderer(&game->renderer);
 }
 
 void processGameInput(Game* game, GLFWwindow* window)
 {
-    processPaddleMovementInput(&game->objects.paddle, window);
-    processBallLaunchInput(&game->state, &game->objects.ball, &game->objects.paddle, window);
+    processPaddleMovementInput(&game->board.paddle, window);
+    processBallLaunchInput(&game->state, &game->board.ball, &game->board.paddle, window);
+}
+
+void moveGameObjects(Game* game)
+{
+    moveBall(&game->board.ball);
+}
+
+void collideGameObjects(Game* game)
+{
+    collideBall(&game->state, &game->board, &game->renderer.gameRenderer);
 }

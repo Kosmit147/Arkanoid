@@ -8,6 +8,7 @@
 typedef struct Block
 {
     Vec2 position; // top-left corner
+    // TODO: we dont need to store width and height for every block since all blocks are the same
     float width;
     float height;
 } Block;
@@ -20,15 +21,15 @@ typedef struct Ball
     float speed;
 } Ball;
 
-typedef struct Rect
+typedef struct RectBounds
 {
     Vec2 topLeft;
     Vec2 bottomRight;
-} Rect;
+} RectBounds;
 
-static inline Rect getBlockBorderRect(const Block* block)
+static inline RectBounds getBlockBorderBounds(const Block* block)
 {
-    return (Rect) {
+    return (RectBounds) {
         .topLeft = (Vec2) {
             .x = block->position.x + BLOCK_BORDER_WIDTH,
             .y = block->position.y - BLOCK_BORDER_WIDTH,
@@ -52,14 +53,14 @@ static inline Vec4 getRandomBlockColor()
     return saturateColor(randomColor);
 }
 
-static inline Vec4 getRandomPaddleColor()
+static inline Vec4 getPaddleColor()
 {
-    return getRandomBlockColor();
+    return PADDLE_COLOR;
 }
 
-static inline Vec4 getRandomBallColor()
+static inline Vec4 getBallColor()
 {
-    return getRandomBlockColor();
+    return BALL_COLOR;
 }
 
 static inline Vec2 getClosestPointOnBlock(const Ball* ball, const Block* block)
