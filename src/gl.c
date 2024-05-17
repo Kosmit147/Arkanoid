@@ -1,15 +1,18 @@
 #include "gl.h"
 
 #include <stdlib.h>
+#include <assert.h>
 
 #include "helpers.h"
 #include "log.h"
+#include "entities.h"
+#include "texture.h"
 
 #include "defines.h"
 
 #ifdef _DEBUG
-void rendererGLDebugCallback(GLenum unused(source), GLenum unused(type), GLuint unused(id), GLenum severity,
-    GLsizei unused(length), const GLchar* message, const void* unused(userParam))
+void rendererGLDebugCallback(GLenum UNUSED(source), GLenum UNUSED(type), GLuint UNUSED(id), GLenum severity,
+    GLsizei UNUSED(length), const GLchar* message, const void* UNUSED(userParam))
 {
     if (ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY != GL_DEBUG_SEVERITY_NOTIFICATION &&
         severity > ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY)
@@ -60,6 +63,118 @@ unsigned int genIB()
     return IB;
 }
 
+static RectBounds getTextRendererCharTexCoords(char character, const BitmapFont* font)
+{
+    character -= font->offset;
+
+    unsigned int col = (unsigned int)character % font->cols;
+    unsigned int row = (unsigned int)character / font->cols;
+
+    float offsetPerCol = 1.0f / (float)font->cols;
+    float offsetPerRow = 1.0f / (float)font->rows;
+
+    return (RectBounds) {
+        .topLeft = (Vec2) {
+            .x = 0.0f + (float)col * offsetPerCol,
+            .y = 1.0f - (float)row * offsetPerRow,
+        },
+        .bottomRight = (Vec2) {
+            .x = 1.0f - (float)(font->cols - col - 1) * offsetPerCol,
+            .y = 0.0f + (float)(font->rows - row - 1) * offsetPerRow,
+        },
+    };
+}
+
+static void getTextRendererCharVertices(char character, const BitmapFont* font, float* vertices,
+    Vec2 position, float charWidth, float charHeight)
+{
+    static_assert(TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX == 4,
+        "Expected TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX == 4");
+
+    float x1 = position.x;
+    float x2 = position.x + charWidth;
+    float y1 = position.y;
+    float y2 = position.y - charHeight;
+
+    RectBounds texCoords = getTextRendererCharTexCoords(character, font);
+
+    vertices[0] = x1;                       vertices[1] = y1;
+    vertices[2] = texCoords.topLeft.x;      vertices[3] = texCoords.topLeft.y;
+
+    vertices[4] = x2;                       vertices[5] = y1;
+    vertices[6] = texCoords.bottomRight.x;  vertices[7] = texCoords.topLeft.y;
+
+    vertices[8] = x2;                       vertices[9] = y2;
+    vertices[10] = texCoords.bottomRight.x; vertices[11] = texCoords.bottomRight.y;
+
+    vertices[12] = x1;                      vertices[13] = y2;
+    vertices[14] = texCoords.topLeft.x;     vertices[15] = texCoords.bottomRight.y;
+}
+
+static unsigned int createTextRendererVB(const char* text, size_t textLength, const BitmapFont* font,
+    Vec2 position, float charWidth, float charHeight)
+{
+    unsigned int VB = genVB();
+
+    float* vertices = malloc(TEXT_RENDERER_CHAR_VERTICES_SIZE * textLength);
+
+    for (size_t i = 0; i < textLength; i++)
+    {
+        getTextRendererCharVertices(text[i], font, vertices + i * TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX * 4,
+            (Vec2){ .x = position.x + charWidth * (float)i, .y = position.y }, charWidth, charHeight);
+    }
+
+    glBufferData(GL_ARRAY_BUFFER, (GLsizei)(TEXT_RENDERER_CHAR_VERTICES_SIZE * textLength), vertices,
+        GL_STATIC_DRAW);
+
+    free(vertices);
+
+    return VB;
+}
+
+static void setTextRendererVertexAttributes()
+{
+    static_assert(TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX == 4,
+        "Expected TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX == 4");
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX,
+        NULL);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX,
+        (void*)(sizeof(float) * 2));
+    glEnableVertexAttribArray(1);
+}
+
+TextRenderer createTextRenderer(const char* text, size_t textLength, const BitmapFont* font, Vec2 position,
+    float charWidth, float charHeight, unsigned int quadIB)
+{
+    TextRenderer renderer = {
+        .VA = genVA(),
+        .VB = createTextRendererVB(text, textLength, font, position, charWidth, charHeight),
+        .charCount = textLength,
+        .charWidth = charWidth,
+        .charHeight = charHeight,
+        .font = font,
+    };
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
+    setTextRendererVertexAttributes();
+
+    return renderer;
+}
+
+void updateTextRenderer(TextRenderer* renderer, const char* newText, size_t newTextLength, Vec2 newPosition)
+{
+    glDeleteBuffers(1, &renderer->VB);
+
+    renderer->VB = createTextRendererVB(newText, newTextLength, renderer->font, newPosition,
+        renderer->charWidth, renderer->charHeight);
+    renderer->charCount = newTextLength;
+
+    setTextRendererVertexAttributes();
+}
+
 int retrieveUniformLocation(unsigned int shader, const char* name)
 {
     int location = glGetUniformLocation(shader, name);
@@ -84,6 +199,13 @@ void drawInstances(unsigned int VA, GLsizei vertexCount, GLsizei instanceCount, 
     glDrawElementsInstanced(GL_TRIANGLES, vertexCount, IBType, NULL, instanceCount);
 }
 
+// this function expects the appropriate shader to be bound
+void renderText(const TextRenderer* renderer)
+{
+    bindTexture(renderer->font->textureID, GL_TEXTURE0);
+    drawElements(renderer->VA, (GLsizei)renderer->charCount * 6, QUAD_IB_DATA_TYPE);
+}
+
 void moveDataWithinGLBuffer(GLenum bufferType, unsigned int buffer, GLintptr dstOffset,
     GLintptr srcOffset, GLsizeiptr size)
 {
@@ -106,7 +228,8 @@ void moveObjectsWithinGLBuffer(GLenum bufferType, unsigned int buffer, size_t ds
     moveDataWithinGLBuffer(bufferType, buffer, dstOffset, srcOffset, dataSize);
 }
 
-void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer, size_t index, size_t objectCount, size_t objSize)
+void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer, size_t index, size_t objectCount,
+    size_t objSize)
 {
     size_t objectsToMove = objectCount - index - 1;
     moveObjectsWithinGLBuffer(bufferType, buffer, index, index + 1, objectsToMove, objSize);
@@ -114,6 +237,8 @@ void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer, size_t inde
 
 unsigned int createQuadIB(size_t count, GLenum usage)
 {
+    static_assert(QUAD_IB_DATA_TYPE == GL_UNSIGNED_SHORT, "Expected QUAD_IB_DATA_TYPE == GL_UNSIGNED_SHORT");
+
     unsigned int IB = genIB();
 
     size_t dataSize = sizeof(unsigned short) * 2 * 3 * count;
@@ -143,15 +268,21 @@ unsigned int createQuadIB(size_t count, GLenum usage)
     return IB;
 }
 
-void freeQuadRenderer(const QuadRenderer* quad)
+void freeQuadRenderer(const QuadRenderer* renderer)
 {
-    glDeleteVertexArrays(1, &quad->VA);
-    glDeleteBuffers(1, &quad->VB);
+    glDeleteVertexArrays(1, &renderer->VA);
+    glDeleteBuffers(1, &renderer->VB);
 }
 
-void freeInstancedQuadRenderer(const InstancedQuadRenderer* quad)
+void freeInstancedQuadRenderer(const InstancedQuadRenderer* renderer)
 {
-    glDeleteVertexArrays(1, &quad->VA);
-    glDeleteBuffers(1, &quad->VB);
-    glDeleteBuffers(1, &quad->instanceBuffer);
+    glDeleteVertexArrays(1, &renderer->VA);
+    glDeleteBuffers(1, &renderer->VB);
+    glDeleteBuffers(1, &renderer->instanceBuffer);
+}
+
+void freeTextRenderer(const TextRenderer* renderer)
+{
+    glDeleteVertexArrays(1, &renderer->VA);
+    glDeleteBuffers(1, &renderer->VB);
 }

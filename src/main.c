@@ -1,15 +1,15 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <stb_image.h>
 
 #include <time.h>
+#include <stdbool.h>
 
 #include "window.h"
 #include "game.h"
 #include "game_time.h"
-#include "helpers.h"
 #include "log.h"
 #include "board.h"
-#include "input.h"
 #include "rendering.h"
 
 #include "defines.h"
@@ -17,6 +17,7 @@
 int main()
 {
     srand((unsigned int)time(NULL));
+    stbi_set_flip_vertically_on_load(true);
 
     GLFWwindow* window = setUpWindow("Arkanoid", WINDOW_WIDTH, WINDOW_HEIGHT);
 
@@ -54,24 +55,31 @@ int main()
             collideGameObjects(&game);
         }
 
-        updateRenderData(&game.renderData, &game.objects);
-        render(&game.renderData, &game.objects);
+        updateRenderer(&game.renderer, &game.board);
+        render(&game.renderer, &game.board);
 
-        if (boardCleared(&game.objects))
+        if (boardCleared(&game.board))
             advanceLevel(&game);
 
-        if (gameOver(&game) && glfwGetKey(window, RESTART_GAME_KEY) == GLFW_PRESS)
+        if (gameOver(&game))
         {
-            // if GAME_OVER_START_NEW_GAME_KEY is the same as LAUNCH_BALL_KEY then 
-            // the ball would launch instantly after restarting the game
-            // this is a hacky solution
-            while (glfwGetKey(window, RESTART_GAME_KEY) == GLFW_PRESS)
-                glfwPollEvents();
+            game.renderer.hudRenderer.drawGameOverText = true;
 
-            // TODO: write high score to file
+            if (glfwGetKey(window, RESTART_GAME_KEY) == GLFW_PRESS)
+            {
+                // if RESTART_GAME_KEY is the same as LAUNCH_BALL_KEY then 
+                // the ball would launch instantly after restarting the game
+                // this is a hacky solution
+                while (glfwGetKey(window, RESTART_GAME_KEY) == GLFW_PRESS)
+                    glfwPollEvents();
 
-            freeGame(&game);
-            initGame(&game, STARTING_LEVEL);
+                // TODO: write high score to file
+                
+                // TODO: refactor into restartGame function
+
+                freeGame(&game);
+                initGame(&game, STARTING_LEVEL);
+            }
         }
 
         glfwSwapBuffers(window);
