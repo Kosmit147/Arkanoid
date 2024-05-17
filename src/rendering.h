@@ -10,8 +10,8 @@ typedef struct PaddleShaderUnifs
 
 typedef struct BallShaderUnifs
 {
-    int normalBallCenter;
-    int normalBallRadiusSquared;
+    int normalizedBallCenter;
+    int normalizedBallRadiusSquared;
     int color;
 } BallShaderUnifs;
 
@@ -25,17 +25,49 @@ typedef struct GameShaders
     BallShaderUnifs ballShaderUnifs;
 } GameShaders;
 
-typedef struct GameRenderData
+typedef struct GameRenderer
 {
-    // after adding new data update freeRenderingData()
+    // after adding new data update freeGameRenderer()
     GameShaders shaders;
-    unsigned int quadIB;
     QuadRenderer paddleRenderer;
     InstancedQuadRenderer blocksRenderer;
     QuadRenderer ballRenderer;
-} GameRenderData;
+} GameRenderer;
 
-void initRenderData(GameRenderData* data, const GameObjects* gameObjects);
-void updateRenderData(GameRenderData* renderData, const GameObjects* gameObjects);
-void freeRenderData(const GameRenderData* renderData);
-void render(const GameRenderData* renderData, const GameObjects* gameObjects);
+typedef struct HudShaders
+{
+    // after adding new data update freeHudShaders()
+    unsigned int textRendererShader;
+} HudShaders;
+
+typedef struct HudRenderer
+{
+    // after adding new data update freeHudRenderer()
+    HudShaders shaders;
+    bool drawGameOverText;
+    TextRenderer gameOverRenderer;
+    TextRenderer pressRestartGameKeyRenderer;
+    TextRenderer pointsRenderer;
+    BitmapFont font;
+} HudRenderer;
+
+typedef struct Renderer
+{
+    GameRenderer gameRenderer;
+    HudRenderer hudRenderer;
+    unsigned int quadIB;
+} Renderer;
+
+void initRenderer(Renderer* renderer, const Board* board);
+void updateRenderer(Renderer* renderer, const Board* board);
+void freeRenderer(const Renderer* renderer);
+void render(const Renderer* renderer, const Board* board);
+
+void initGameRenderer(GameRenderer* renderer, const Board* board, unsigned int quadIB);
+void updateGameRenderer(GameRenderer* renderer, const Board* board);
+void freeGameRenderer(const GameRenderer* renderer);
+void renderGame(const GameRenderer* renderer, const Board* board);
+
+void initHudRenderer(HudRenderer* renderer, unsigned int quadIB);
+void freeHudRenderer(const HudRenderer* renderer);
+void renderHud(const HudRenderer* renderer);

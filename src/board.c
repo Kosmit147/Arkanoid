@@ -18,7 +18,10 @@
 
 #include "defines.h"
 
-INCTXT(level0, "../levels/level0.txt");
+#ifdef _DEBUG
+INCTXT(level0, "../levels/level0.txt"); // debug level
+#endif
+
 INCTXT(level1, "../levels/level1.txt");
 
 static Block createPaddle(Vec2 position, float width, float height)
@@ -48,6 +51,7 @@ static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, siz
     size_t currLineLength = 0;
 
     const char* ch;
+
     for (ch = str; *ch; ch++)
     {
         if (*ch != '\n' && *ch != '\r')
@@ -71,12 +75,18 @@ static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, siz
 
 static const char* getLevelData(unsigned int level)
 {
-    static_assert(STARTING_LEVEL == 0 || STARTING_LEVEL == 1, "Expected STARTING_LEVEL == 0 || STARTING_LEVEL == 1");
+    static_assert(STARTING_LEVEL == 0 || STARTING_LEVEL == 1,
+        "Expected STARTING_LEVEL == 0 || STARTING_LEVEL == 1");
 
     switch (level)
     {
+#ifdef _DEBUG
     case 0:
         return level0Data;
+#else
+    case 0:
+        return NULL;
+#endif
     case 1:
         return level1Data;
     default:
@@ -139,17 +149,13 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
     return blocksVector.data;
 }
 
-GameObjects createGameObjects(unsigned int level)
+void initBoard(Board* board, unsigned int level)
 {
-    GameObjects gameObjects;
-
-    gameObjects.paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
-        PADDLE_WIDTH, PADDLE_HEIGHT);
-    gameObjects.blocks = createBlocks(level, &gameObjects.blockCount);
-    gameObjects.ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
+    board->paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y }, PADDLE_WIDTH,
+        PADDLE_HEIGHT);
+    board->blocks = createBlocks(level, &board->blockCount);
+    board->ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
         (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
-
-    return gameObjects;
 }
 
 void moveBall(Ball* ball)
@@ -234,31 +240,33 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
     }
 }
 
-static void removeBlockAndUpdateInstanceBuffer(Block* blocks, size_t blockCount, size_t removedIndex, unsigned int instanceBuffer)
+static void removeBlockAndUpdateInstanceBuffer(Block* blocks, size_t blockCount, size_t removedIndex,
+    unsigned int instanceBuffer)
 {
     eraseFromArr(blocks, removedIndex, blockCount, sizeof(Block));
-    eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, instanceBuffer, removedIndex, blockCount, BLOCK_INSTANCE_VERTICES_SIZE);
+    eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, instanceBuffer, removedIndex, blockCount,
+        BLOCK_INSTANCE_VERTICES_SIZE);
 }
 
-void collideBall(GameState* state, GameObjects* gameObjects, GameRenderData* renderData)
+void collideBall(GameState* state, Board* board, GameRenderer* renderer)
 {
-    collideBallWithWalls(&gameObjects->ball);
-    collideBallWithPaddle(&gameObjects->ball, &gameObjects->paddle);
+    collideBallWithWalls(&board->ball);
+    collideBallWithPaddle(&board->ball, &board->paddle);
 
-    for (size_t i = 0; i < gameObjects->blockCount; i++)
+    for (size_t i = 0; i < board->blockCount; i++)
     {
-        if (collideBallWithBlock(&gameObjects->ball, &gameObjects->blocks[i]))
+        if (collideBallWithBlock(&board->ball, &board->blocks[i]))
         {
-            removeBlockAndUpdateInstanceBuffer(gameObjects->blocks, gameObjects->blockCount--,
-                i--, renderData->blocksRenderer.instanceBuffer);
+            removeBlockAndUpdateInstanceBuffer(board->blocks, board->blockCount--, i--,
+                renderer->blocksRenderer.instanceBuffer);
 
             state->points += POINTS_PER_BLOCK_DESTROYED;
-            logNotification("Points: %u\n", state->points); // TODO: change once text rendering works
+            logNotification("Points: %u\n", state->points); // TODO: update once text rendering works
         }
     }
 }
 
-void freeGameObjects(const GameObjects* objects)
+void freeBoard(const Board* board)
 {
-    free(objects->blocks);
+    free(board->blocks);
 }

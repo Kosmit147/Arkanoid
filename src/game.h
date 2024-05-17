@@ -7,16 +7,16 @@
 typedef struct Game
 {
     GameState state;
-    GameObjects objects;
-    GameRenderData renderData;
+    Board board;
+    Renderer renderer;
 } Game;
 
-static inline bool gameOver(const Game* game) { return ballOutOfBounds(&game->objects.ball); }
+static inline bool gameOver(const Game* game) { return ballOutOfBounds(&game->board.ball); }
 
 void initGame(Game* game, unsigned int level);
 void advanceLevel(Game* game);
 void freeGame(const Game* game);
 
+void processGameInput(Game* game, GLFWwindow* window);
 void moveGameObjects(Game* game);
 void collideGameObjects(Game* game);
-void processGameInput(Game* game, GLFWwindow* window);
