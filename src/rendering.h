@@ -5,23 +5,23 @@
 
 typedef struct PaddleShaderUnifs
 {
-    int color;
+    GLint color;
 } PaddleShaderUnifs;
 
 typedef struct BallShaderUnifs
 {
-    int normalizedBallCenter;
-    int normalizedBallRadiusSquared;
-    int color;
+    GLint normalizedBallCenter;
+    GLint normalizedBallRadiusSquared;
+    GLint color;
 } BallShaderUnifs;
 
 typedef struct GameShaders
 {
     // after adding new shaders update freeGameShaders()
-    unsigned int paddleShader;
+    GLuint paddleShader;
     PaddleShaderUnifs paddleShaderUnifs;
-    unsigned int blockShader;
-    unsigned int ballShader;
+    GLuint blockShader;
+    GLuint ballShader;
     BallShaderUnifs ballShaderUnifs;
 } GameShaders;
 
@@ -37,7 +37,7 @@ typedef struct GameRenderer
 typedef struct HudShaders
 {
     // after adding new data update freeHudShaders()
-    unsigned int textRendererShader;
+    GLuint textRendererShader;
 } HudShaders;
 
 typedef struct HudRenderer
@@ -55,7 +55,7 @@ typedef struct Renderer
 {
     GameRenderer gameRenderer;
     HudRenderer hudRenderer;
-    unsigned int quadIB;
+    GLuint quadIB;
 } Renderer;
 
 void initRenderer(Renderer* renderer, const Board* board);
@@ -63,11 +63,11 @@ void updateRenderer(Renderer* renderer, const Board* board);
 void freeRenderer(const Renderer* renderer);
 void render(const Renderer* renderer, const Board* board);
 
-void initGameRenderer(GameRenderer* renderer, const Board* board, unsigned int quadIB);
+void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB);
 void updateGameRenderer(GameRenderer* renderer, const Board* board);
 void freeGameRenderer(const GameRenderer* renderer);
 void renderGame(const GameRenderer* renderer, const Board* board);
 
-void initHudRenderer(HudRenderer* renderer, unsigned int quadIB);
+void initHudRenderer(HudRenderer* renderer, GLuint quadIB);
 void freeHudRenderer(const HudRenderer* renderer);
 void renderHud(const HudRenderer* renderer);

@@ -36,27 +36,27 @@ void rendererGLDebugCallback(GLenum UNUSED(source), GLenum UNUSED(type), GLuint 
 }
 #endif
 
-unsigned int genVA()
+GLuint genVA()
 {
-    unsigned int VA;
+    GLuint VA;
     glGenVertexArrays(1, &VA);
     glBindVertexArray(VA);
 
     return VA;
 }
 
-unsigned int genVB()
+GLuint genVB()
 {
-    unsigned int VB;
+    GLuint VB;
     glGenBuffers(1, &VB);
     glBindBuffer(GL_ARRAY_BUFFER, VB);
 
     return VB;
 }
 
-unsigned int genIB()
+GLuint genIB()
 {
-    unsigned int IB;
+    GLuint IB;
     glGenBuffers(1, &IB);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 
@@ -111,10 +111,10 @@ static void getTextRendererCharVertices(char character, const BitmapFont* font, 
     vertices[14] = texCoords.topLeft.x;     vertices[15] = texCoords.bottomRight.y;
 }
 
-static unsigned int createTextRendererVB(const char* text, size_t textLength, const BitmapFont* font,
+static GLuint createTextRendererVB(const char* text, size_t textLength, const BitmapFont* font,
     Vec2 position, float charWidth, float charHeight)
 {
-    unsigned int VB = genVB();
+    GLuint VB = genVB();
 
     float* vertices = malloc(TEXT_RENDERER_CHAR_VERTICES_SIZE * textLength);
 
@@ -124,7 +124,7 @@ static unsigned int createTextRendererVB(const char* text, size_t textLength, co
             (Vec2){ .x = position.x + charWidth * (float)i, .y = position.y }, charWidth, charHeight);
     }
 
-    glBufferData(GL_ARRAY_BUFFER, (GLsizei)(TEXT_RENDERER_CHAR_VERTICES_SIZE * textLength), vertices,
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(TEXT_RENDERER_CHAR_VERTICES_SIZE * textLength), vertices,
         GL_STATIC_DRAW);
 
     free(vertices);
@@ -175,9 +175,9 @@ void updateTextRenderer(TextRenderer* renderer, const char* newText, size_t newT
     setTextRendererVertexAttributes();
 }
 
-int retrieveUniformLocation(unsigned int shader, const char* name)
+GLint retrieveUniformLocation(GLuint shader, const GLchar* name)
 {
-    int location = glGetUniformLocation(shader, name);
+    GLint location = glGetUniformLocation(shader, name);
 
 #ifdef _DEBUG
     if (location == -1)
@@ -187,13 +187,13 @@ int retrieveUniformLocation(unsigned int shader, const char* name)
     return location;
 }
 
-void drawElements(unsigned int VA, GLsizei count, GLenum IBType)
+void drawElements(GLuint VA, GLsizei count, GLenum IBType)
 {
     glBindVertexArray(VA);
     glDrawElements(GL_TRIANGLES, count, IBType, NULL);
 }
 
-void drawInstances(unsigned int VA, GLsizei vertexCount, GLsizei instanceCount, GLenum IBType)
+void drawInstances(GLuint VA, GLsizei vertexCount, GLsizei instanceCount, GLenum IBType)
 {
     glBindVertexArray(VA);
     glDrawElementsInstanced(GL_TRIANGLES, vertexCount, IBType, NULL, instanceCount);
@@ -206,8 +206,8 @@ void renderText(const TextRenderer* renderer)
     drawElements(renderer->VA, (GLsizei)renderer->charCount * 6, QUAD_IB_DATA_TYPE);
 }
 
-void moveDataWithinGLBuffer(GLenum bufferType, unsigned int buffer, GLintptr dstOffset,
-    GLintptr srcOffset, GLsizeiptr size)
+void moveDataWithinGLBuffer(GLenum bufferType, GLuint buffer, GLintptr dstOffset, GLintptr srcOffset,
+    GLsizeiptr size)
 {
     void* tmpData = malloc((size_t)size);
 
@@ -218,8 +218,8 @@ void moveDataWithinGLBuffer(GLenum bufferType, unsigned int buffer, GLintptr dst
     free(tmpData);
 }
 
-void moveObjectsWithinGLBuffer(GLenum bufferType, unsigned int buffer, size_t dstIndex,
-    size_t srcIndex, size_t count, size_t objSize)
+void moveObjectsWithinGLBuffer(GLenum bufferType, GLuint buffer, size_t dstIndex, size_t srcIndex,
+    size_t count, size_t objSize)
 {
     GLintptr srcOffset = (GLintptr)(objSize * srcIndex);
     GLintptr dstOffset = (GLintptr)(objSize * dstIndex);
@@ -228,25 +228,25 @@ void moveObjectsWithinGLBuffer(GLenum bufferType, unsigned int buffer, size_t ds
     moveDataWithinGLBuffer(bufferType, buffer, dstOffset, srcOffset, dataSize);
 }
 
-void eraseObjectFromGLBuffer(GLenum bufferType, unsigned int buffer, size_t index, size_t objectCount,
+void eraseObjectFromGLBuffer(GLenum bufferType, GLuint buffer, size_t index, size_t objectCount,
     size_t objSize)
 {
     size_t objectsToMove = objectCount - index - 1;
     moveObjectsWithinGLBuffer(bufferType, buffer, index, index + 1, objectsToMove, objSize);
 }
 
-unsigned int createQuadIB(size_t count, GLenum usage)
+GLuint createQuadIB(size_t count, GLenum usage)
 {
     static_assert(QUAD_IB_DATA_TYPE == GL_UNSIGNED_SHORT, "Expected QUAD_IB_DATA_TYPE == GL_UNSIGNED_SHORT");
 
-    unsigned int IB = genIB();
+    GLuint IB = genIB();
 
-    size_t dataSize = sizeof(unsigned short) * 2 * 3 * count;
-    unsigned short* indices = malloc(dataSize);
+    GLsizeiptr dataSize = (GLsizeiptr)(sizeof(GLushort) * 2 * 3 * count);
+    GLushort* indices = malloc((size_t)dataSize);
 
-    unsigned short vertexOffset = 0;
+    GLushort vertexOffset = 0;
 
-    for (unsigned short i = 0; i < count * 6; i += 6)
+    for (GLushort i = 0; i < count * 6; i += 6)
     {
         // first triangle
         indices[i + 0] = vertexOffset + 0;
@@ -261,7 +261,7 @@ unsigned int createQuadIB(size_t count, GLenum usage)
         vertexOffset += 4;
     }
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)dataSize, indices, usage);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, dataSize, indices, usage);
 
     free(indices);
 

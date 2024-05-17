@@ -69,6 +69,7 @@
 #define MAX_QUADS 1000
 #define QUAD_IB_DATA_TYPE GL_UNSIGNED_SHORT
 
+// TODO: get rid of these
 #define FLOATS_PER_BLOCK_VERTEX 2 // position
 #define BLOCK_VERTICES_SIZE (sizeof(float) * FLOATS_PER_BLOCK_VERTEX * 4)
 #define FLOATS_PER_BLOCK_INSTANCE_VERTEX (2 + 4 + 4) // translation, border, color

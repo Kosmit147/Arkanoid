@@ -23,10 +23,10 @@ static void setTextureGLOptions(const TextureOptions* options)
         glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, options->swizzleMask);
 }
 
-unsigned int createTexture(GLenum slot, GLsizei width, GLsizei height, void* data, GLenum dataType,
+GLuint createTexture(GLenum slot, GLsizei width, GLsizei height, void* data, GLenum dataType,
     GLenum dataFormat, GLint internalFormat, const TextureOptions* options)
 {
-    unsigned int texture;
+    GLuint texture;
     glGenTextures(1, &texture);
     bindTexture(texture, slot);
 
@@ -40,13 +40,13 @@ unsigned int createTexture(GLenum slot, GLsizei width, GLsizei height, void* dat
     return texture;
 }
 
-void bindTexture(unsigned int texture, GLenum slot)
+void bindTexture(GLuint texture, GLenum slot)
 {
     glActiveTexture(slot);
     glBindTexture(GL_TEXTURE_2D, texture);
 }
 
-void freeTexture(unsigned int texture)
+void freeTexture(GLuint texture)
 {
     glDeleteTextures(1, &texture);
 }

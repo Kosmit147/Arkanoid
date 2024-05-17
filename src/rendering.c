@@ -68,9 +68,9 @@ static void getPaddleVertices(float* vertices, const Block* paddle)
     vertices[6] = x1; vertices[7] = y2;
 }
 
-static unsigned int createPaddleVB(const Block* paddle)
+static GLuint createPaddleVB(const Block* paddle)
 {
-    unsigned int VB = genVB();
+    GLuint VB = genVB();
 
     float vertices[FLOATS_PER_PADDLE_VERTEX * 4];
     getPaddleVertices(vertices, paddle);
@@ -95,9 +95,9 @@ static void getBlockVertices(float* vertices, const Block* block)
     vertices[6] = normalizedX1; vertices[7] = normalizedY2;
 }
 
-static unsigned int createBlockVB(const Block* block)
+static GLuint createBlockVB(const Block* block)
 {
-    unsigned int VB = genVB();
+    GLuint VB = genVB();
 
     float vertices[FLOATS_PER_BLOCK_VERTEX * 4];
     getBlockVertices(vertices, block);
@@ -128,16 +128,16 @@ static void getBlockInstanceVertices(float* vertices, const Block* block)
     vertices[9] = color.a;
 }
 
-static unsigned int createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
+static GLuint createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
 {
-    unsigned int instBuff = genVB();
+    GLuint instBuff = genVB();
 
     float* vertices = malloc(BLOCK_INSTANCE_VERTICES_SIZE * blockCount);
 
     for (size_t i = 0; i < blockCount; i++)
         getBlockInstanceVertices(vertices + i * FLOATS_PER_BLOCK_INSTANCE_VERTEX, &blocks[i]);
 
-    glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_INSTANCE_VERTICES_SIZE * (GLsizei)blockCount, vertices,
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(BLOCK_INSTANCE_VERTICES_SIZE * blockCount), vertices,
         GL_DYNAMIC_DRAW);
 
     free(vertices);
@@ -160,9 +160,9 @@ static void getBallVertices(float* vertices, const Ball* ball)
     vertices[6] = x1; vertices[7] = y2;
 }
 
-static unsigned int createBallVB(const Ball* ball)
+static GLuint createBallVB(const Ball* ball)
 {
-    unsigned int VB = genVB();
+    GLuint VB = genVB();
 
     float vertices[FLOATS_PER_BALL_VERTEX * 4];
     getBallVertices(vertices, ball);
@@ -172,14 +172,14 @@ static unsigned int createBallVB(const Ball* ball)
     return VB;
 }
 
-static PaddleShaderUnifs retrievePaddleShaderUnifs(unsigned int paddleShader)
+static PaddleShaderUnifs retrievePaddleShaderUnifs(GLuint paddleShader)
 {
     return (PaddleShaderUnifs) {
         .color = retrieveUniformLocation(paddleShader, "color"),
     };
 }
 
-static BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
+static BallShaderUnifs retrieveBallShaderUnifs(GLuint ballShader)
 {
     return (BallShaderUnifs) {
         .normalizedBallCenter = retrieveUniformLocation(ballShader, "normalizedBallCenter"),
@@ -214,7 +214,7 @@ static void setPaddleRendererVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
-static QuadRenderer createPaddleRenderer(const Block* paddle, unsigned int quadIB)
+static QuadRenderer createPaddleRenderer(const Block* paddle, GLuint quadIB)
 {
     QuadRenderer renderer = {
         .VA = genVA(),
@@ -227,7 +227,7 @@ static QuadRenderer createPaddleRenderer(const Block* paddle, unsigned int quadI
     return renderer;
 }
 
-static void setBlockRendererVertexAttributes(unsigned int VB, unsigned int instanceBuffer)
+static void setBlockRendererVertexAttributes(GLuint VB, GLuint instanceBuffer)
 {
     static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
     static_assert(FLOATS_PER_BLOCK_INSTANCE_VERTEX == 10, "Expected FLOATS_PER_BLOCK_INSTANCE_VERTEX == 10");
@@ -261,9 +261,9 @@ static void setBlockRendererVertexAttributes(unsigned int VB, unsigned int insta
     glEnableVertexAttribArray(4);
 }
 
-static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount,
-    unsigned int quadIB)
+static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount, GLuint quadIB)
 {
+    // TODO: fix this hacky solution
     Block baseBlock = {
         // start at (-1.0, -1.0), use a translation vector in the shader
         .position = (Vec2){ .x = -1.0f, .y = -1.0f },
@@ -298,7 +298,7 @@ static void setBallRendererVertexAttributes()
     glEnableVertexAttribArray(0);
 }
 
-static QuadRenderer createBallRenderer(const Ball* ball, unsigned int quadIB)
+static QuadRenderer createBallRenderer(const Ball* ball, GLuint quadIB)
 {
     QuadRenderer renderer = {
         .VA = genVA(),
@@ -321,7 +321,7 @@ static void initBallShaderUnifs(const BallShaderUnifs* unifs, const Vec4* ballCo
     glUniform4f(unifs->color, ballColor->r, ballColor->g, ballColor->b, ballColor->a);
 }
 
-void initGameRenderer(GameRenderer* renderer, const Board* board, unsigned int quadIB)
+void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB)
 {
     renderer->shaders = createGameShaders();
 
@@ -338,7 +338,7 @@ void initGameRenderer(GameRenderer* renderer, const Board* board, unsigned int q
     renderer->ballRenderer = createBallRenderer(&board->ball, quadIB);
 }
 
-static void updatePaddleVB(const Block* paddle, unsigned int paddleVB)
+static void updatePaddleVB(const Block* paddle, GLuint paddleVB)
 {
     float vertices[FLOATS_PER_PADDLE_VERTEX * 4];
     getPaddleVertices(vertices, paddle);
@@ -347,7 +347,7 @@ static void updatePaddleVB(const Block* paddle, unsigned int paddleVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, PADDLE_VERTICES_SIZE, vertices);
 }
 
-static void updateBallVB(const Ball* ball, unsigned int ballVB)
+static void updateBallVB(const Ball* ball, GLuint ballVB)
 {
     float vertices[FLOATS_PER_BALL_VERTEX * 4];
     getBallVertices(vertices, ball);
@@ -385,21 +385,20 @@ static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball
     glUniform1f(unifs->normalizedBallRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
 }
 
-static void drawBall(const Ball* ball, unsigned int shader, const BallShaderUnifs* unifs,
-    unsigned int ballVA)
+static void drawBall(const Ball* ball, GLuint shader, const BallShaderUnifs* unifs, GLuint ballVA)
 {
     glUseProgram(shader);
     updateBallShaderUnifs(unifs, ball);
     drawElements(ballVA, 6, QUAD_IB_DATA_TYPE);
 }
 
-static void drawPaddle(unsigned int shader, unsigned int paddleVA)
+static void drawPaddle(GLuint shader, GLuint paddleVA)
 {
     glUseProgram(shader);
     drawElements(paddleVA, 6, QUAD_IB_DATA_TYPE);
 }
 
-static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA)
+static void drawBlocks(size_t blockCount, GLuint shader, GLuint blocksVA)
 {
     glUseProgram(shader);
     drawInstances(blocksVA, 6, (GLsizei)blockCount, QUAD_IB_DATA_TYPE);
@@ -421,14 +420,14 @@ static HudShaders createHudShaders()
     };
 }
 
-static unsigned int createHudRendererFontTexture()
+static GLuint createHudRendererFontTexture()
 {
     int texWidth;
     int texHeight;
     int texChannels;
 
-    unsigned char* texData = stbi_load_from_memory(fontTextureData, (int)fontTextureSize, &texWidth,
-        &texHeight, &texChannels, 1);
+    stbi_uc* texData = stbi_load_from_memory(fontTextureData, (int)fontTextureSize, &texWidth, &texHeight,
+        &texChannels, 1);
 
     GLint swizzleMask[4] = { GL_RED, GL_RED, GL_RED, GL_RED };
     TextureOptions texOptions = {
@@ -440,18 +439,18 @@ static unsigned int createHudRendererFontTexture()
         .swizzleMask = swizzleMask,
     };
 
-    unsigned int texture = createTexture(GL_TEXTURE0, texWidth, texHeight, texData, GL_UNSIGNED_BYTE, GL_RED,
+    GLuint texture = createTexture(GL_TEXTURE0, texWidth, texHeight, texData, GL_UNSIGNED_BYTE, GL_RED,
         GL_RED, &texOptions);
 
     stbi_image_free(texData);
     return texture;
 }
 
-void initHudRenderer(HudRenderer* renderer, unsigned int quadIB)
+void initHudRenderer(HudRenderer* renderer, GLuint quadIB)
 {
     renderer->shaders = createHudShaders();
 
-    unsigned int texture = createHudRendererFontTexture();
+    GLuint texture = createHudRendererFontTexture();
 
     renderer->font = (BitmapFont) {
         .cols = 8,
