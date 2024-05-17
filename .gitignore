@@ -74,3 +74,6 @@ _deps
 
 # VIM
 Session.vim
+
+# Documentation
+/docs

@@ -1,4 +1,4 @@
-struct Rect
+struct RectBounds
 {
     vec2 topLeft;
     vec2 bottomRight;
@@ -11,14 +11,13 @@ float normalizeCoordinate(float coord)
 
 vec4 normalizeVertexCoordinates(vec4 position)
 {
-    return vec4(normalizeCoordinate(position.x), 
-        normalizeCoordinate(position.y), 0.0, 1.0);
+    return vec4(normalizeCoordinate(position.x), normalizeCoordinate(position.y), 0.0, 1.0);
 }
 
-bool pointInsideRect(vec2 point, Rect rect)
+bool pointInsideRectBounds(vec2 point, RectBounds bounds)
 {
-    return point.x >= rect.topLeft.x && point.x <= rect.bottomRight.x
-        && point.y <= rect.topLeft.y && point.y >= rect.bottomRight.y;
+    return point.x >= bounds.topLeft.x && point.x <= bounds.bottomRight.x
+        && point.y <= bounds.topLeft.y && point.y >= bounds.bottomRight.y;
 }
 
 vec4 saturateColor(vec4 color, float percentage)

@@ -8,6 +8,7 @@
 typedef struct Block
 {
     Vec2 position; // top-left corner
+    // TODO: we dont need to store width and height for every block since all blocks are the same
     float width;
     float height;
 } Block;
@@ -59,14 +60,14 @@ static inline Vec4 getRandomBlockColor()
     return saturateColor(randomColor);
 }
 
-static inline Vec4 getRandomPaddleColor()
+static inline Vec4 getPaddleColor()
 {
-    return getRandomBlockColor();
+    return PADDLE_COLOR;
 }
 
-static inline Vec4 getRandomBallColor()
+static inline Vec4 getBallColor()
 {
-    return getRandomBlockColor();
+    return BALL_COLOR;
 }
 
 static inline Vec2 getClosestPointOnBlock(const Ball* ball, const Block* block)

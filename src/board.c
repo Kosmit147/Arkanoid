@@ -16,9 +16,13 @@
 #include "game_state.h"
 #include "entities.h"
 #include "structures.h"
+
 #include "defines.h"
 
-INCTXT(level0, "../levels/level0.txt");
+#ifdef _DEBUG
+INCTXT(level0, "../levels/level0.txt"); // debug level
+#endif
+
 INCTXT(level1, "../levels/level1.txt");
 
 static Block createPaddle(Vec2 position, float width, float height)
@@ -50,6 +54,7 @@ static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, siz
     size_t currLineLength = 0;
 
     const char* ch;
+
     for (ch = str; *ch; ch++)
     {
         if (*ch != '\n' && *ch != '\r')
@@ -73,12 +78,18 @@ static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, siz
 
 static const char* getLevelData(unsigned int level)
 {
-    static_assert(STARTING_LEVEL == 0 || STARTING_LEVEL == 1, "Expected STARTING_LEVEL == 0 || STARTING_LEVEL == 1");
+    static_assert(STARTING_LEVEL == 0 || STARTING_LEVEL == 1,
+        "Expected STARTING_LEVEL == 0 || STARTING_LEVEL == 1");
 
     switch (level)
     {
+#ifdef _DEBUG
     case 0:
         return level0Data;
+#else
+    case 0:
+        return NULL;
+#endif
     case 1:
         return level1Data;
     default:
@@ -87,10 +98,10 @@ static const char* getLevelData(unsigned int level)
     }
 }
 
-static Quadtree* createBlocks(unsigned int level)
+static QuadTree* createBlocks(unsigned int level)
 {
     Rect bounds = { {.x = 0, .y = 0}, COORDINATE_SPACE, COORDINATE_SPACE / 2 };
-    Quadtree* quadTree = createQuadtree(0, bounds);
+    QuadTree* quadTree = createQuadTree(0, bounds);
 
     const char* levelData = getLevelData(level);
 
@@ -143,17 +154,13 @@ static Quadtree* createBlocks(unsigned int level)
     return quadTree;
 }
 
-GameObjects createGameObjects(unsigned int level)
+void initBoard(Board* board, unsigned int level)
 {
-    GameObjects gameObjects;
-
-    gameObjects.paddle = createPaddle((Vec2) { .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y },
-        PADDLE_WIDTH, PADDLE_HEIGHT);
-    gameObjects.quadTree = createBlocks(level);
-    gameObjects.ball = createBall((Vec2) { .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
-        (Vec2) { .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
-
-    return gameObjects;
+    board->paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y }, PADDLE_WIDTH,
+        PADDLE_HEIGHT);
+    board->quadTree = createBlocks(level);
+    board->ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
+        (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
 }
 
 void moveBall(Ball* ball)
@@ -245,35 +252,35 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 //     eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, instanceBuffer, removedIndex, blockCount, BLOCK_INSTANCE_VERTICES_SIZE);
 // }
 
-void collideBall(GameState* state, GameObjects* gameObjects, GameRenderData* renderData)
+void collideBall(GameState* state, Board* board, GameRenderer* renderer)
 {
     Block** retrievedBlocks = (Block**)malloc(MAX_OBJECTS * sizeof(Block*));
     size_t count = 0;
-    retrieveBlocks(gameObjects->quadTree, gameObjects->ball.position, retrievedBlocks, &count);
+    retrieveBlocks(board->quadTree, board->ball.position, retrievedBlocks, &count);
 
-    collideBallWithWalls(&gameObjects->ball);
-    collideBallWithPaddle(&gameObjects->ball, &gameObjects->paddle);
+    collideBallWithWalls(&board->ball);
+    collideBallWithPaddle(&board->ball, &board->paddle);
 
     for (size_t i = 0; i < count; i++)
     {
-        if (collideBallWithBlock(&gameObjects->ball, retrievedBlocks[i]))
+        if (collideBallWithBlock(&board->ball, retrievedBlocks[i]))
         {
-            removeBlock(gameObjects->quadTree, retrievedBlocks[i]);
-            // TODO: fix
-            
-            glDeleteBuffers(1, &renderData->blocksRenderer.instanceBuffer);
-            createBlocksInstanceBuffer(gameObjects->quadTree);
+            removeBlock(board->quadTree, retrievedBlocks[i]);
+
+            // TODO: fix (dont completely recreate the buffer every time)
+            glDeleteBuffers(1, &renderer->blocksRenderer.instanceBuffer);
+            createBlocksInstanceBuffer(board->quadTree);
 
             // removeBlockAndUpdateInstanceBuffer(gameObjects->blocks, gameObjects->blockCount--,
             //     i--, renderData->blocksRenderer.instanceBuffer);
 
             state->points += POINTS_PER_BLOCK_DESTROYED;
-            logNotification("Points: %u\n", state->points); // TODO: change once text rendering works
+            logNotification("Points: %u\n", state->points); // TODO: update once text rendering works
         }
     }
 }
 
-void freeGameObjects(const GameObjects* unused(objects))
+void freeBoard(const Board* UNUSED(board))
 {
     // TODO
     // freeQuadTree(objects->quadTree);

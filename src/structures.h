@@ -1,27 +1,34 @@
 #pragma once
-#include "entities.h"
+
 #include <stdbool.h>
+
+#include "entities.h"
+
 #define MAX_OBJECTS 10
 #define MAX_LEVELS 6
-
 #define INVALID_INDEX SIZE_MAX
 
-typedef struct Quadtree
+#define TOP_LEFT_QUADRANT 1
+#define TOP_RIGHT_QUADRANT 0
+#define BOTTOM_RIGHT_QUADRANT 3
+#define BOTTOM_LEFT_QUADRANT 2
+
+typedef struct QuadTree
 {
     int level;
     Rect bounds;
-    struct Quadtree* nodes[4];
+    struct QuadTree* nodes[4];
     Block* objects[MAX_OBJECTS];
     size_t objCount;
-} Quadtree;
+} QuadTree;
 
-Quadtree* createQuadtree(int level, Rect bounds);
-void split(Quadtree* quadtree);
+QuadTree* createQuadTree(int level, Rect bounds);
+void split(QuadTree* quadTree);
 size_t getIndex(Rect bounds, Block* object);
-void insert(Quadtree* quadtree, Block* object);
-void retrieve(Quadtree* quadtree, Block* object);
-Block* retrieveNth(const Quadtree* quadTree, size_t index);
-void display(Quadtree* quadtree);
-void removeBlock(Quadtree* quadtree, Block* block);
-void retrieveBlocks(Quadtree* quadtree, Vec2 position, Block** blocks, size_t* count);
+void insert(QuadTree* quadTree, Block* object);
+void retrieve(QuadTree* quadTree, Block* object);
+Block* retrieveNth(const QuadTree* quadTree, size_t index);
+void display(QuadTree* quadTree);
+void removeBlock(QuadTree* quadTree, Block* block);
+void retrieveBlocks(QuadTree* quadTree, Vec2 position, Block** blocks, size_t* count);
 

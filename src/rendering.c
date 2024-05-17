@@ -1,6 +1,7 @@
 #include "rendering.h"
 
 #include <glad/glad.h>
+#include <stb_image.h>
 
 #define INCBIN_PREFIX
 #include <incbin.h>
@@ -10,6 +11,7 @@
 #include <assert.h>
 
 #include "shader.h"
+#include "texture.h"
 
 #include "defines.h"
 
@@ -20,6 +22,36 @@ INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
 INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
 INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
 INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
+
+INCTXT(textRendererVertexShaderSrc, "../shaders/text.vert");
+INCTXT(textRendererFragmentShaderSrc, "../shaders/text.frag");
+
+INCBIN(fontTexture, "../res/font.png");
+
+void initRenderer(Renderer* renderer, const Board* board)
+{
+    renderer->quadIB = createQuadIB(MAX_QUADS, GL_STATIC_DRAW);
+    initGameRenderer(&renderer->gameRenderer, board, renderer->quadIB);
+    initHudRenderer(&renderer->hudRenderer, renderer->quadIB);
+}
+
+void updateRenderer(Renderer* renderer, const Board* board)
+{
+    updateGameRenderer(&renderer->gameRenderer, board);
+}
+
+void freeRenderer(const Renderer* renderer)
+{
+    freeGameRenderer(&renderer->gameRenderer);
+    freeHudRenderer(&renderer->hudRenderer);
+    glDeleteBuffers(1, &renderer->quadIB);
+}
+
+void render(const Renderer* renderer, const Board* board)
+{
+    renderGame(&renderer->gameRenderer, board);
+    renderHud(&renderer->hudRenderer);
+}
 
 static void getPaddleVertices(float* vertices, const Block* paddle)
 {
@@ -96,7 +128,7 @@ static void getBlockInstanceVertices(float* vertices, const Block* block)
     vertices[9] = color.a;
 }
 
-static void createBlocksInstanceBufferImpl(const Quadtree* quadTree, float** vertices)
+static void createBlocksInstanceBufferImpl(const QuadTree* quadTree, float** vertices)
 {
     for (size_t i = 0; i < MAX_OBJECTS; i++)
     {
@@ -118,7 +150,7 @@ static void createBlocksInstanceBufferImpl(const Quadtree* quadTree, float** ver
 }
 
 // TODO: this shouldn't be public
-unsigned int createBlocksInstanceBuffer(const Quadtree* quadTree)
+unsigned int createBlocksInstanceBuffer(const QuadTree* quadTree)
 {
     unsigned int instBuff = genVB();
 
@@ -189,8 +221,8 @@ static PaddleShaderUnifs retrievePaddleShaderUnifs(unsigned int paddleShader)
 static BallShaderUnifs retrieveBallShaderUnifs(unsigned int ballShader)
 {
     return (BallShaderUnifs) {
-        .normalBallCenter = retrieveUniformLocation(ballShader, "normalizedBallCenter"),
-        .normalBallRadiusSquared = retrieveUniformLocation(ballShader, "normalizedBallRadiusSquared"),
+        .normalizedBallCenter = retrieveUniformLocation(ballShader, "normalizedBallCenter"),
+        .normalizedBallRadiusSquared = retrieveUniformLocation(ballShader, "normalizedBallRadiusSquared"),
         .color = retrieveUniformLocation(ballShader, "color"),
     };
 }
@@ -241,6 +273,7 @@ static void setBlockRendererVertexAttributes(unsigned int VB, unsigned int insta
 
     // vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, VB);
+
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_VERTEX, NULL);
     glEnableVertexAttribArray(0);
 
@@ -267,7 +300,7 @@ static void setBlockRendererVertexAttributes(unsigned int VB, unsigned int insta
     glEnableVertexAttribArray(4);
 }
 
-static InstancedQuadRenderer createBlocksRenderer(const Quadtree* quadTree, unsigned int quadIB)
+static InstancedQuadRenderer createBlocksRenderer(const QuadTree* quadTree, unsigned int quadIB)
 {
     Block baseBlock = {
         // start at (-1.0, -1.0), use a translation vector in the shader
@@ -346,38 +379,35 @@ static QuadRenderer createBallRenderer(const Ball* ball, unsigned int quadIB)
     return renderer;
 }
 
-static void initPaddleShaderUnifs(const PaddleShaderUnifs* unifs)
+static void initPaddleShaderUnifs(const PaddleShaderUnifs* unifs, const Vec4* paddleColor)
 {
-    Vec4 paddleColor = getRandomPaddleColor();
-    glUniform4f(unifs->color, paddleColor.r, paddleColor.g, paddleColor.b, paddleColor.a);
+    glUniform4f(unifs->color, paddleColor->r, paddleColor->g, paddleColor->b, paddleColor->a);
 }
 
-static void initBallShaderUnifs(const BallShaderUnifs* unifs)
+static void initBallShaderUnifs(const BallShaderUnifs* unifs, const Vec4* ballColor)
 {
-    Vec4 ballColor = getRandomBallColor();
-    glUniform4f(unifs->color, ballColor.r, ballColor.g, ballColor.b, ballColor.a);
+    glUniform4f(unifs->color, ballColor->r, ballColor->g, ballColor->b, ballColor->a);
 }
 
-void initRenderData(GameRenderData* data, const GameObjects* gameObjects)
+void initGameRenderer(GameRenderer* renderer, const Board* board, unsigned int quadIB)
 {
-    data->shaders = createGameShaders();
+    renderer->shaders = createGameShaders();
 
-    glUseProgram(data->shaders.paddleShader);
-    initPaddleShaderUnifs(&data->shaders.paddleShaderUnifs);
+    glUseProgram(renderer->shaders.paddleShader);
+    Vec4 paddleColor = getPaddleColor();
+    initPaddleShaderUnifs(&renderer->shaders.paddleShaderUnifs, &paddleColor);
 
-    glUseProgram(data->shaders.ballShader);
-    initBallShaderUnifs(&data->shaders.ballShaderUnifs);
+    glUseProgram(renderer->shaders.ballShader);
+    Vec4 ballColor = getBallColor();
+    initBallShaderUnifs(&renderer->shaders.ballShaderUnifs, &ballColor);
 
-    data->quadIB = createQuadIB(MAX_QUADS, GL_STATIC_DRAW);
-    data->paddleRenderer = createPaddleRenderer(&gameObjects->paddle, data->quadIB);
-    data->blocksRenderer = createBlocksRenderer(gameObjects->quadTree, data->quadIB);
-    data->ballRenderer = createBallRenderer(&gameObjects->ball, data->quadIB);
+    renderer->paddleRenderer = createPaddleRenderer(&board->paddle, quadIB);
+    renderer->blocksRenderer = createBlocksRenderer(board->quadTree, quadIB);
+    renderer->ballRenderer = createBallRenderer(&board->ball, quadIB);
 }
 
 static void updatePaddleVB(const Block* paddle, unsigned int paddleVB)
 {
-    static_assert(FLOATS_PER_PADDLE_VERTEX == 2, "Expected FLOATS_PER_PADDLE_VERTEX == 2");
-
     float vertices[FLOATS_PER_PADDLE_VERTEX * 4];
     getPaddleVertices(vertices, paddle);
 
@@ -387,8 +417,6 @@ static void updatePaddleVB(const Block* paddle, unsigned int paddleVB)
 
 static void updateBallVB(const Ball* ball, unsigned int ballVB)
 {
-    static_assert(FLOATS_PER_BALL_VERTEX == 2, "Expected FLOATS_PER_BALL_VERTEX == 2");
-
     float vertices[FLOATS_PER_BALL_VERTEX * 4];
     getBallVertices(vertices, ball);
 
@@ -396,10 +424,10 @@ static void updateBallVB(const Ball* ball, unsigned int ballVB)
     glBufferSubData(GL_ARRAY_BUFFER, 0, BALL_VERTICES_SIZE, vertices);
 }
 
-void updateRenderData(GameRenderData* renderData, const GameObjects* gameObjects)
+void updateGameRenderer(GameRenderer* renderer, const Board* board)
 {
-    updatePaddleVB(&gameObjects->paddle, renderData->paddleRenderer.VB);
-    updateBallVB(&gameObjects->ball, renderData->ballRenderer.VB);
+    updatePaddleVB(&board->paddle, renderer->paddleRenderer.VB);
+    updateBallVB(&board->ball, renderer->ballRenderer.VB);
 }
 
 static void freeGameShaders(const GameShaders* shaders)
@@ -409,48 +437,143 @@ static void freeGameShaders(const GameShaders* shaders)
     glDeleteProgram(shaders->ballShader);
 }
 
-void freeRenderData(const GameRenderData* renderData)
+void freeGameRenderer(const GameRenderer* renderer)
 {
-    freeGameShaders(&renderData->shaders);
+    freeGameShaders(&renderer->shaders);
 
-    freeQuadRenderer(&renderData->paddleRenderer);
-    freeInstancedQuadRenderer(&renderData->blocksRenderer);
-    freeQuadRenderer(&renderData->ballRenderer);
-
-    glDeleteBuffers(1, &renderData->quadIB);
+    freeQuadRenderer(&renderer->paddleRenderer);
+    freeInstancedQuadRenderer(&renderer->blocksRenderer);
+    freeQuadRenderer(&renderer->ballRenderer);
 }
 
 static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
 {
-    glUniform2f(unifs->normalBallCenter, normalizeCoordinate(ball->position.x),
+    glUniform2f(unifs->normalizedBallCenter, normalizeCoordinate(ball->position.x),
         normalizeCoordinate(ball->position.y));
-    glUniform1f(unifs->normalBallRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
+    glUniform1f(unifs->normalizedBallRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
 }
 
-static void drawBall(const Ball* ball, unsigned int ballShader, const BallShaderUnifs* unifs,
+static void drawBall(const Ball* ball, unsigned int shader, const BallShaderUnifs* unifs,
     unsigned int ballVA)
 {
-    glUseProgram(ballShader);
+    glUseProgram(shader);
     updateBallShaderUnifs(unifs, ball);
-    drawElements(ballVA, 6, GL_UNSIGNED_SHORT);
+    drawElements(ballVA, 6, QUAD_IB_DATA_TYPE);
 }
 
 static void drawPaddle(unsigned int shader, unsigned int paddleVA)
 {
     glUseProgram(shader);
-    drawElements(paddleVA, 6, GL_UNSIGNED_SHORT);
+    drawElements(paddleVA, 6, QUAD_IB_DATA_TYPE);
 }
 
 static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int blocksVA)
 {
     glUseProgram(shader);
-    drawInstances(blocksVA, 6, (GLsizei)blockCount, GL_UNSIGNED_SHORT);
+    drawInstances(blocksVA, 6, (GLsizei)blockCount, QUAD_IB_DATA_TYPE);
 }
 
-void render(const GameRenderData* renderData, const GameObjects* gameObjects)
+void renderGame(const GameRenderer* renderer, const Board* board)
 {
-    drawPaddle(renderData->shaders.paddleShader, renderData->paddleRenderer.VA);
-    drawBlocks(gameObjects->quadTree->objCount, renderData->shaders.blockShader, renderData->blocksRenderer.VA);
-    drawBall(&gameObjects->ball, renderData->shaders.ballShader, &renderData->shaders.ballShaderUnifs,
-        renderData->ballRenderer.VA);
+    drawPaddle(renderer->shaders.paddleShader, renderer->paddleRenderer.VA);
+    drawBlocks(board->quadTree->objCount, renderer->shaders.blockShader, renderer->blocksRenderer.VA);
+    drawBall(&board->ball, renderer->shaders.ballShader, &renderer->shaders.ballShaderUnifs,
+        renderer->ballRenderer.VA);
+}
+
+static HudShaders createHudShaders()
+{
+    return (HudShaders) {
+        .textRendererShader = createShader(textRendererVertexShaderSrcData,
+            textRendererFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
+    };
+}
+
+static unsigned int createHudRendererFontTexture()
+{
+    int texWidth;
+    int texHeight;
+    int texChannels;
+
+    unsigned char* texData = stbi_load_from_memory(fontTextureData, (int)fontTextureSize, &texWidth,
+        &texHeight, &texChannels, 1);
+
+    GLint swizzleMask[4] = { GL_RED, GL_RED, GL_RED, GL_RED };
+    TextureOptions texOptions = {
+        .horizontalWrap = GL_REPEAT,
+        .verticalWrap = GL_REPEAT,
+        .minFilter = GL_LINEAR,
+        .magFilter = GL_LINEAR,
+        .borderColor = NULL,
+        .swizzleMask = swizzleMask,
+    };
+
+    unsigned int texture = createTexture(GL_TEXTURE0, texWidth, texHeight, texData, GL_UNSIGNED_BYTE, GL_RED,
+        GL_RED, &texOptions);
+
+    stbi_image_free(texData);
+    return texture;
+}
+
+void initHudRenderer(HudRenderer* renderer, unsigned int quadIB)
+{
+    renderer->shaders = createHudShaders();
+
+    unsigned int texture = createHudRendererFontTexture();
+
+    renderer->font = (BitmapFont) {
+        .cols = 8,
+        .rows = 12,
+        .offset = ' ',
+        .textureID = texture,
+    };
+
+    Vec2 gameOverPos = {
+        .x = 0.0f - FONT_WIDTH * (float)strlen(GAME_OVER_STR) / 2.0f,
+        .y = 0.0f + FONT_HEIGHT,
+    };
+
+    Vec2 pressRestartGameKeyPos = {
+        .x = 0.0f - FONT_WIDTH * (float)strlen(PRESS_RESTART_GAME_KEY_STR) / 2.0f,
+        .y = 0.0f,
+    };
+
+    Vec2 pointsPos = { .x = -1.0f, .y = -1.0f + FONT_HEIGHT};
+
+    renderer->drawGameOverText = false;
+    renderer->gameOverRenderer = createTextRenderer(GAME_OVER_STR, strlen(GAME_OVER_STR), &renderer->font,
+        gameOverPos, FONT_WIDTH, FONT_HEIGHT, quadIB);
+    renderer->pressRestartGameKeyRenderer = createTextRenderer(PRESS_RESTART_GAME_KEY_STR,
+        strlen(PRESS_RESTART_GAME_KEY_STR), &renderer->font, pressRestartGameKeyPos, FONT_WIDTH, FONT_HEIGHT,
+        quadIB);
+    renderer->pointsRenderer = createTextRenderer(POINTS_STR, strlen(POINTS_STR), &renderer->font, pointsPos,
+        FONT_WIDTH, FONT_HEIGHT, quadIB);
+}
+
+static void freeHudShaders(const HudShaders* shaders)
+{
+    glDeleteProgram(shaders->textRendererShader);
+}
+
+void freeHudRenderer(const HudRenderer* renderer)
+{
+    freeHudShaders(&renderer->shaders);
+
+    freeBitmapFont(&renderer->font);
+    freeTextRenderer(&renderer->gameOverRenderer);
+    freeTextRenderer(&renderer->pressRestartGameKeyRenderer);
+    freeTextRenderer(&renderer->pointsRenderer);
+}
+
+void renderHud(const HudRenderer* renderer)
+{
+    glUseProgram(renderer->shaders.textRendererShader);
+
+    if (renderer->drawGameOverText)
+    {
+        renderText(&renderer->gameOverRenderer);
+        renderText(&renderer->pressRestartGameKeyRenderer);
+    }
+
+    renderText(&renderer->pointsRenderer);
 }

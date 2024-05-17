@@ -53,7 +53,7 @@ bool loadGlad()
     return true;
 }
 
-void onWindowResize(GLFWwindow* unused(window), int width, int height)
+void onWindowResize(GLFWwindow* UNUSED(window), int width, int height)
 {
     int xOffset = 0;
     int yOffset = 0;
