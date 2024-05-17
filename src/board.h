@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "entities.h"
+#include "structures.h"
 
 #include "defines.h"
 
@@ -15,8 +16,7 @@ typedef struct GameRenderData GameRenderData;
 typedef struct GameObjects
 {
     Block paddle;
-    size_t blockCount;
-    Block* blocks;
+    Quadtree* quadTree;
     Ball ball;
 } GameObjects;
 
@@ -32,7 +32,7 @@ static inline float normalizeLength(float length) { return length / (float)COORD
 GameObjects createGameObjects(unsigned int level);
 
 static inline bool ballOutOfBounds(const Ball* ball) { return ball->position.y + ball->radius < 0.0f; }
-static inline bool boardCleared(const GameObjects* objects) { return objects->blockCount == 0; }
+static inline bool boardCleared(const GameObjects* objects) { return objects->quadTree->objCount == 0; }
 
 void moveBall(Ball* ball);
 void collideBall(GameState* state, GameObjects* gameObjects, GameRenderData* renderData);

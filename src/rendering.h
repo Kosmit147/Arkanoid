@@ -35,6 +35,9 @@ typedef struct GameRenderData
     QuadRenderer ballRenderer;
 } GameRenderData;
 
+// TODO: this shouldn't be public
+unsigned int createBlocksInstanceBuffer(const Quadtree* quadTree);
+
 void initRenderData(GameRenderData* data, const GameObjects* gameObjects);
 void updateRenderData(GameRenderData* renderData, const GameObjects* gameObjects);
 void freeRenderData(const GameRenderData* renderData);

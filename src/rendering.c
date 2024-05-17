@@ -83,11 +83,11 @@ static void getBlockInstanceVertices(float* vertices, const Block* block)
     vertices[0] = translation.x;
     vertices[1] = translation.y;
 
-    Rect borderRect = getBlockBorderRect(block);
-    vertices[2] = normalizeCoordinate(borderRect.topLeft.x);
-    vertices[3] = normalizeCoordinate(borderRect.topLeft.y);
-    vertices[4] = normalizeCoordinate(borderRect.bottomRight.x);
-    vertices[5] = normalizeCoordinate(borderRect.bottomRight.y);
+    RectBounds borderBounds = getBlockBorderBounds(block);
+    vertices[2] = normalizeCoordinate(borderBounds.topLeft.x);
+    vertices[3] = normalizeCoordinate(borderBounds.topLeft.y);
+    vertices[4] = normalizeCoordinate(borderBounds.bottomRight.x);
+    vertices[5] = normalizeCoordinate(borderBounds.bottomRight.y);
 
     Vec4 color = getRandomBlockColor();
     vertices[6] = color.r;
@@ -96,22 +96,61 @@ static void getBlockInstanceVertices(float* vertices, const Block* block)
     vertices[9] = color.a;
 }
 
-static unsigned int createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
+static void createBlocksInstanceBufferImpl(const Quadtree* quadTree, float** vertices)
+{
+    for (size_t i = 0; i < MAX_OBJECTS; i++)
+    {
+        if (quadTree->objects[i] != NULL)
+        {
+            const Block* block = quadTree->objects[i];
+            getBlockInstanceVertices(*vertices, block);
+            *vertices += FLOATS_PER_BLOCK_INSTANCE_VERTEX;
+        }
+    }
+
+    for (size_t i = 0; i < 4; i++)
+    {
+        if (quadTree->nodes[i] != NULL)
+        {
+            createBlocksInstanceBufferImpl(quadTree->nodes[i], vertices);
+        }
+    }
+}
+
+// TODO: this shouldn't be public
+unsigned int createBlocksInstanceBuffer(const Quadtree* quadTree)
 {
     unsigned int instBuff = genVB();
 
-    float* vertices = malloc(BLOCK_INSTANCE_VERTICES_SIZE * blockCount);
+    float* vertices = malloc(BLOCK_INSTANCE_VERTICES_SIZE * quadTree->objCount);
+    float* currentVerticesAddr = vertices;
 
-    for (size_t i = 0; i < blockCount; i++)
-        getBlockInstanceVertices(vertices + i * FLOATS_PER_BLOCK_INSTANCE_VERTEX, &blocks[i]);
+    createBlocksInstanceBufferImpl(quadTree, &currentVerticesAddr);
 
-    glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_INSTANCE_VERTICES_SIZE * (GLsizei)blockCount, vertices,
+    glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_INSTANCE_VERTICES_SIZE * (GLsizei)quadTree->objCount, vertices,
         GL_DYNAMIC_DRAW);
 
     free(vertices);
 
     return instBuff;
 }
+
+// static unsigned int createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
+// {
+//     unsigned int instBuff = genVB();
+// 
+//     float* vertices = malloc(BLOCK_INSTANCE_VERTICES_SIZE * blockCount);
+// 
+//     for (size_t i = 0; i < blockCount; i++)
+//         getBlockInstanceVertices(vertices + i * FLOATS_PER_BLOCK_INSTANCE_VERTEX, &blocks[i]);
+// 
+//     glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_INSTANCE_VERTICES_SIZE * (GLsizei)blockCount, vertices,
+//         GL_DYNAMIC_DRAW);
+// 
+//     free(vertices);
+// 
+//     return instBuff;
+// }
 
 static void getBallVertices(float* vertices, const Ball* ball)
 {
@@ -228,8 +267,7 @@ static void setBlockRendererVertexAttributes(unsigned int VB, unsigned int insta
     glEnableVertexAttribArray(4);
 }
 
-static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount,
-    unsigned int quadIB)
+static InstancedQuadRenderer createBlocksRenderer(const Quadtree* quadTree, unsigned int quadIB)
 {
     Block baseBlock = {
         // start at (-1.0, -1.0), use a translation vector in the shader
@@ -239,16 +277,17 @@ static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t bl
     };
 
     // assumes all blocks have the same width and height
-    if (blockCount > 0)
+    if (quadTree->objCount > 0)
     {
-        baseBlock.width = blocks[0].width;
-        baseBlock.height = blocks[0].height;
+        const Block* block = retrieveNth(quadTree, 0);
+        baseBlock.width = block->width;
+        baseBlock.height = block->height;
     }
 
     InstancedQuadRenderer renderer = {
         .VA = genVA(),
         .VB = createBlockVB(&baseBlock),
-        .instanceBuffer = createBlocksInstanceBuffer(blocks, blockCount),
+        .instanceBuffer = createBlocksInstanceBuffer(quadTree),
     };
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
@@ -256,6 +295,35 @@ static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t bl
 
     return renderer;
 }
+
+// static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount,
+//     unsigned int quadIB)
+// {
+//     Block baseBlock = {
+//         // start at (-1.0, -1.0), use a translation vector in the shader
+//         .position = (Vec2){ .x = -1.0f, .y = -1.0f },
+//         .width = 0.0f,
+//         .height = 0.0f,
+//     };
+// 
+//     // assumes all blocks have the same width and height
+//     if (blockCount > 0)
+//     {
+//         baseBlock.width = blocks[0].width;
+//         baseBlock.height = blocks[0].height;
+//     }
+// 
+//     InstancedQuadRenderer renderer = {
+//         .VA = genVA(),
+//         .VB = createBlockVB(&baseBlock),
+//         .instanceBuffer = createBlocksInstanceBuffer(blocks, blockCount),
+//     };
+// 
+//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
+//     setBlockRendererVertexAttributes(renderer.VB, renderer.instanceBuffer);
+// 
+//     return renderer;
+// }
 
 static void setBallRendererVertexAttributes()
 {
@@ -302,7 +370,7 @@ void initRenderData(GameRenderData* data, const GameObjects* gameObjects)
 
     data->quadIB = createQuadIB(MAX_QUADS, GL_STATIC_DRAW);
     data->paddleRenderer = createPaddleRenderer(&gameObjects->paddle, data->quadIB);
-    data->blocksRenderer = createBlocksRenderer(gameObjects->blocks, gameObjects->blockCount, data->quadIB);
+    data->blocksRenderer = createBlocksRenderer(gameObjects->quadTree, data->quadIB);
     data->ballRenderer = createBallRenderer(&gameObjects->ball, data->quadIB);
 }
 
@@ -382,7 +450,7 @@ static void drawBlocks(size_t blockCount, unsigned int shader, unsigned int bloc
 void render(const GameRenderData* renderData, const GameObjects* gameObjects)
 {
     drawPaddle(renderData->shaders.paddleShader, renderData->paddleRenderer.VA);
-    drawBlocks(gameObjects->blockCount, renderData->shaders.blockShader, renderData->blocksRenderer.VA);
+    drawBlocks(gameObjects->quadTree->objCount, renderData->shaders.blockShader, renderData->blocksRenderer.VA);
     drawBall(&gameObjects->ball, renderData->shaders.ballShader, &renderData->shaders.ballShaderUnifs,
         renderData->ballRenderer.VA);
 }
