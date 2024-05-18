@@ -13,6 +13,7 @@
 #include "gl.h"
 #include "helpers.h"
 #include "vector.h"
+#include "memory.h"
 #include "shader.h"
 #include "texture.h"
 #include "entities.h"
@@ -184,7 +185,7 @@ GLuint createBlocksInstanceBuffer(const QuadTree* quadTree)
 {
     GLuint instBuff = genVB();
 
-    BlockInstanceVertex* vertices = malloc(sizeof(BlockInstanceVertex) * quadTree->objCount);
+    BlockInstanceVertex* vertices = checkedMalloc(sizeof(BlockInstanceVertex) * quadTree->objCount);
     BlockInstanceVertex* currAddr = vertices;
 
     createBlocksInstanceBufferImpl(quadTree, &currAddr);
