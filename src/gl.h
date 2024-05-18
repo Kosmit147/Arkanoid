@@ -7,6 +7,17 @@
 #include "vec.h"
 #include "font.h"
 
+#define vertexAttribfv(location, type, name) { glVertexAttribPointer((location),\
+    sizeof(((type*)NULL)->name) / sizeof(float), GL_FLOAT, GL_FALSE, sizeof(type),\
+    (void*)offsetof(type, name));\
+    glEnableVertexAttribArray((location)); }
+
+#define instVertexAttribfv(location, type, name) { glVertexAttribPointer((location),\
+    sizeof(((type*)NULL)->name) / sizeof(float), GL_FLOAT, GL_FALSE, sizeof(type),\
+    (void*)offsetof(type, name));\
+    glEnableVertexAttribArray((location));\
+    glVertexAttribDivisor((location), 1); }
+
 typedef struct QuadRenderer
 {
     GLuint VA;
