@@ -346,6 +346,13 @@ void updateGameRenderer(GameRenderer* renderer, const Board* board)
     updateBallVB(&board->ball, renderer->ballRenderer.VB);
 }
 
+void deleteBlockFromGameRenderer(GameRenderer* renderer, size_t deletedIndex, size_t blockCount)
+{
+    // TODO: refactor
+    eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, renderer->blocksRenderer.instanceBuffer, deletedIndex,
+        blockCount, sizeof(BlockInstanceVertex));
+}
+
 static void freeGameShaders(const GameShaders* shaders)
 {
     glDeleteProgram(shaders->paddleShader);

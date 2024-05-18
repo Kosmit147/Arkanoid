@@ -266,14 +266,6 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
     }
 }
 
-static void removeBlockAndUpdateInstanceBuffer(Block* blocks, size_t blockCount, size_t removedIndex,
-    unsigned int instanceBuffer)
-{
-    eraseFromArr(blocks, removedIndex, blockCount, sizeof(Block));
-    eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, instanceBuffer, removedIndex, blockCount,
-        BLOCK_INSTANCE_VERTICES_SIZE);
-}
-
 void collideBall(GameState* state, Board* board, GameRenderer* renderer)
 {
     collideBallWithWalls(&board->ball);
@@ -283,8 +275,11 @@ void collideBall(GameState* state, Board* board, GameRenderer* renderer)
     {
         if (collideBallWithBlock(&board->ball, &board->blocks[i]))
         {
-            removeBlockAndUpdateInstanceBuffer(board->blocks, board->blockCount--, i--,
-                renderer->blocksRenderer.instanceBuffer);
+            eraseFromArr(board->blocks, i, board->blockCount, sizeof(board->blocks[i]));
+            deleteBlockFromGameRenderer(renderer, i, board->blockCount);
+
+            i--;
+            board->blockCount--;
 
             state->points += POINTS_PER_BLOCK_DESTROYED;
             logNotification("Points: %u\n", state->points); // TODO: update once text rendering works
