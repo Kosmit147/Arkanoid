@@ -68,7 +68,7 @@ typedef struct Renderer
 } Renderer;
 
 // TODO: this shouldn't be public
-GLuint createBlocksInstanceBuffer(const QuadTree* quadTree);
+InstancedQuadRenderer createBlocksRenderer(const QuadTree* quadTree, unsigned int quadIB);
 
 void initRenderer(Renderer* renderer, const Board* board);
 void updateRenderer(Renderer* renderer, const Board* board);

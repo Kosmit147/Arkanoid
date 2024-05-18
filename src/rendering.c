@@ -178,8 +178,7 @@ static void createBlocksInstanceBufferImpl(const QuadTree* quadTree, BlockInstan
     }
 }
 
-// TODO: this shouldn't be public
-GLuint createBlocksInstanceBuffer(const QuadTree* quadTree)
+static GLuint createBlocksInstanceBuffer(const QuadTree* quadTree)
 {
     GLuint instBuff = genVB();
 
@@ -354,7 +353,7 @@ static void setBlockRendererVertexAttributes(GLuint VB, GLuint instanceBuffer)
     instVertexAttribfv(4, BlockInstanceVertex, color);
 }
 
-static InstancedQuadRenderer createBlocksRenderer(const QuadTree* quadTree, unsigned int quadIB)
+InstancedQuadRenderer createBlocksRenderer(const QuadTree* quadTree, unsigned int quadIB)
 {
     // TODO: fix this hacky solution
     Block baseBlock = {

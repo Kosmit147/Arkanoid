@@ -126,13 +126,15 @@ static const char* getLevelData(unsigned int level)
 
 static QuadTree* createBlocks(unsigned int level)
 {
-    Rect bounds = { { .x = 0, .y = COORDINATE_SPACE }, COORDINATE_SPACE, COORDINATE_SPACE };
+    Rect bounds = {
+        .position = { .x = 0.0f, .y = (float)COORDINATE_SPACE },
+        .width = COORDINATE_SPACE,
+        .height = COORDINATE_SPACE,
+    };
+
     QuadTree* quadTree = createQuadTree(0, bounds);
 
     const char* levelData = getLevelData(level);
-
-    Vector blocksVector = vectorCreate();
-    vectorReserve(&blocksVector, 30, Block);
 
     size_t maxLineLength;
     size_t lineCount;
@@ -150,19 +152,16 @@ static QuadTree* createBlocks(unsigned int level)
     {
         if (*currChar == BLOCK_CHAR)
         {
-            Vec2 position = {
-                .x = (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
-                .y = (float)(lineCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
-            };
-
             Block newBlock = {
-                .position = position,
+                .position = {
+                    .x = (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
+                    .y = (float)(lineCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
+                },
                 .width = blockWidth,
                 .height = blockHeight,
             };
 
             insert(quadTree, &newBlock);
-            vectorPushBack(&blocksVector, &newBlock, Block);
         }
 
         if (*currChar == '\n')
@@ -177,6 +176,7 @@ static QuadTree* createBlocks(unsigned int level)
     }
     
     display(quadTree);
+
     return quadTree;
 }
 
@@ -271,9 +271,10 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
     }
 }
 
-void collideBall(GameState* state, Board* board, GameRenderer* renderer)
+void collideBall(GameState* state, Board* board, Renderer* renderer)
 {
-    Block** retrievedBlocks = (Block**)malloc(MAX_OBJECTS * sizeof(Block*));
+    Block** retrievedBlocks = checkedMalloc(MAX_OBJECTS * sizeof(Block*));
+    
     size_t count = 0;
     retrieveBlocks(board->quadTree, board->ball.position, retrievedBlocks, &count);
 
@@ -286,12 +287,11 @@ void collideBall(GameState* state, Board* board, GameRenderer* renderer)
         {
             removeBlock(board->quadTree, retrievedBlocks[i]);
 
-            // TODO: fix (dont completely recreate the buffer every time)
-            glDeleteBuffers(1, &renderer->blocksRenderer.instanceBuffer);
-            createBlocksInstanceBuffer(board->quadTree);
+            // TODO: fix hacky solution
+            freeInstancedQuadRenderer(&renderer->gameRenderer.blocksRenderer);
+            createBlocksRenderer(board->quadTree, renderer->quadIB);
 
             i--;
-            board->quadTree->objCount--;
 
             state->points += POINTS_PER_BLOCK_DESTROYED;
             logNotification("Points: %u\n", state->points); // TODO: update once text rendering works

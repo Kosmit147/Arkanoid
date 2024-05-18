@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdbool.h>
-
 #include "entities.h"
 
 #define MAX_OBJECTS 10
@@ -24,11 +22,10 @@ typedef struct QuadTree
 
 QuadTree* createQuadTree(int level, Rect bounds);
 void split(QuadTree* quadTree);
-size_t getIndex(Rect bounds, Block* object);
-void insert(QuadTree* quadTree, Block* object);
-void retrieve(QuadTree* quadTree, Block* object);
+size_t getIndex(Rect bounds, const Block* object);
+void insert(QuadTree* quadTree, const Block* object);
+void retrieve(const QuadTree* quadTree, const Block* object);
 Block* retrieveNth(const QuadTree* quadTree, size_t index);
-void display(QuadTree* quadTree);
-void removeBlock(QuadTree* quadTree, Block* block);
-void retrieveBlocks(QuadTree* quadTree, Vec2 position, Block** blocks, size_t* count);
-
+void display(const QuadTree* quadTree);
+void removeBlock(QuadTree* quadTree, const Block* block);
+void retrieveBlocks(const QuadTree* quadTree, Vec2 position, Block** blocks, size_t* count);

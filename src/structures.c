@@ -1,5 +1,7 @@
 #include "structures.h"
 
+#include <stdbool.h>
+
 #include "log.h"
 #include "memory.h"
 
@@ -51,21 +53,20 @@ void split(QuadTree* quadTree)
     });
 }
 
-size_t getIndex(Rect bounds, Block* object)
+size_t getIndex(Rect bounds, const Block* object)
 {
     size_t index = INVALID_INDEX;
 
     float verticalMidpoint = bounds.position.x + (bounds.width / 2.0f);
-    float horizontalMidpoint = bounds.position.y + (bounds.height / 2.0f);
+    float horizontalMidpoint = bounds.position.y - (bounds.height / 2.0f);
 
     // Object can completely fit within the top quadrants
-    bool topQuadrant = (object->position.y < horizontalMidpoint 
-        && object->position.y + object->height < horizontalMidpoint);
+    bool topQuadrant = object->position.y - object->height > horizontalMidpoint;
     // Object can completely fit within the bottom quadrants
-    bool bottomQuadrant = (object->position.y > horizontalMidpoint);
+    bool bottomQuadrant = object->position.y < horizontalMidpoint;
 
     // Object can completely fit within the left quadrants
-    if (object->position.x < verticalMidpoint && object->position.x + object->width < verticalMidpoint)
+    if (object->position.x + object->width < verticalMidpoint)
     {
         if (topQuadrant)
             index = TOP_LEFT_QUADRANT;
@@ -84,7 +85,7 @@ size_t getIndex(Rect bounds, Block* object)
     return index;
 }
 
-void insert(QuadTree* quadTree, Block* object)
+void insert(QuadTree* quadTree, const Block* object)
 {
     if (quadTree->nodes[0] != NULL)
     {
@@ -93,8 +94,8 @@ void insert(QuadTree* quadTree, Block* object)
         {
             insert(quadTree->nodes[index], object);
             quadTree->objCount++;
-            return;
         }
+        return;
     }
 
     // Jeśli lista obiektów jest pełna, dzielimy obszar na podobszary
@@ -117,23 +118,28 @@ void insert(QuadTree* quadTree, Block* object)
             }
             quadTree->objects[i] = NULL; // Czyścimy referencję do obiektu z listy
         }
+        
+        insert(quadTree, object);
     }
-
-    // Dodajemy klon nowego obiektu do listy w bieżącym węźle
-    for (int i = 0; i < MAX_OBJECTS; i++)
+    else
     {
-        if (quadTree->objects[i] == NULL)
+        // Dodajemy klon nowego obiektu do listy w bieżącym węźle
+        for (size_t i = 0; i < MAX_OBJECTS; i++)
         {
-            Block* object_clone = checkedMalloc(sizeof(Block));
-            *object_clone = *object; // Klonujemy obiekt
-            quadTree->objects[i] = object_clone;
-            quadTree->objCount++;
-            break;
+            if (quadTree->objects[i] == NULL)
+            {
+                // TODO: add blocks to an array instead of mallocing every time :(
+                Block* object_clone = checkedMalloc(sizeof(Block));
+                *object_clone = *object; // Klonujemy obiekt
+                quadTree->objects[i] = object_clone;
+                quadTree->objCount++;
+                break;
+            }
         }
     }
 }
 
-void retrieve(QuadTree* quadTree, Block* object)
+void retrieve(const QuadTree* quadTree, const Block* object)
 {
     size_t index = getIndex(quadTree->bounds, object);
 
@@ -141,7 +147,7 @@ void retrieve(QuadTree* quadTree, Block* object)
         retrieve(quadTree->nodes[index], object);
 }
 
-void display(QuadTree* quadTree)
+void display(const QuadTree* quadTree)
 {
     logNotification("quadTree bounds: (%.2lf, %.2lf, %.2lf, %.2lf)\n",
         (double)quadTree->bounds.position.x, (double)quadTree->bounds.position.y,
@@ -164,7 +170,7 @@ void display(QuadTree* quadTree)
     }
 }
 
-void removeBlock(QuadTree* quadTree, Block* block)
+void removeBlock(QuadTree* quadTree, const Block* block)
 {
     size_t index = getIndex(quadTree->bounds, block);
 
@@ -189,7 +195,7 @@ void removeBlock(QuadTree* quadTree, Block* block)
     quadTree->objCount--;
 }
 
-void retrieveBlocks(QuadTree* quadTree, Vec2 position, Block** blocks, size_t* count)
+void retrieveBlocks(const QuadTree* quadTree, Vec2 position, Block** blocks, size_t* count)
 {
     size_t index;
 

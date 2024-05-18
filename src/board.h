@@ -10,6 +10,7 @@
 
 #include "defines.h"
 
+typedef struct Renderer Renderer;
 typedef struct GameState GameState;
 typedef struct GameRenderer GameRenderer;
 
@@ -38,6 +39,6 @@ static inline bool ballOutOfBounds(const Ball* ball) { return ball->position.y +
 static inline bool boardCleared(const Board* board) { return board->quadTree->objCount == 0; }
 
 void moveBall(Ball* ball);
-void collideBall(GameState* state, Board* board, GameRenderer* renderer);
+void collideBall(GameState* state, Board* board, Renderer* renderer);
 
 void freeBoard(const Board* board);
