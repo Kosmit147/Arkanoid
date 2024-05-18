@@ -108,47 +108,23 @@ static void getTextRendererCharVertices(char character, const BitmapFont* font,
     RectBounds texCoords = getTextRendererCharTexCoords(character, font);
 
     vertices[0] = (TextRendererCharVertex) {
-        .position = {
-            .x = x1,
-            .y = y1,
-        },
-        .texCoords = {
-            .x = texCoords.topLeft.x,
-            .y = texCoords.topLeft.y,
-        },
+        .position = { .x = x1, .y = y1, },
+        .texCoords = { .x = texCoords.topLeft.x, .y = texCoords.topLeft.y, },
     };
 
     vertices[1] = (TextRendererCharVertex) {
-        .position = {
-            .x = x2,
-            .y = y1,
-        },
-        .texCoords = {
-            .x = texCoords.bottomRight.x,
-            .y = texCoords.topLeft.y,
-        },
+        .position = { .x = x2, .y = y1, },
+        .texCoords = { .x = texCoords.bottomRight.x, .y = texCoords.topLeft.y, },
     };
 
     vertices[2] = (TextRendererCharVertex) {
-        .position = {
-            .x = x2,
-            .y = y2,
-        },
-        .texCoords = {
-            .x = texCoords.bottomRight.x,
-            .y = texCoords.bottomRight.y,
-        },
+        .position = { .x = x2, .y = y2, },
+        .texCoords = { .x = texCoords.bottomRight.x, .y = texCoords.bottomRight.y, },
     };
 
     vertices[3] = (TextRendererCharVertex) {
-        .position = {
-            .x = x1,
-            .y = y2,
-        },
-        .texCoords = {
-            .x = texCoords.topLeft.x,
-            .y = texCoords.bottomRight.y,
-        },
+        .position = { .x = x1, .y = y2, },
+        .texCoords = { .x = texCoords.topLeft.x, .y = texCoords.bottomRight.y, },
     };
 }
 
