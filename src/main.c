@@ -3,6 +3,7 @@
 #include <stb_image.h>
 
 #include <time.h>
+#include <stdlib.h>
 #include <stdbool.h>
 
 #include "window.h"
@@ -22,10 +23,10 @@ int main()
     GLFWwindow* window = setUpWindow("Arkanoid", WINDOW_WIDTH, WINDOW_HEIGHT);
 
     if (!window)
-        return -1;
+        return EXIT_FAILURE;
 
     if (!loadGlad())
-        return -1;
+        return EXIT_FAILURE;
 
     initGLViewport(window);
     glfwSetFramebufferSizeCallback(window, onWindowResize);
@@ -74,7 +75,7 @@ int main()
                     glfwPollEvents();
 
                 // TODO: write high score to file
-                
+
                 // TODO: refactor into restartGame function
 
                 freeGame(&game);
@@ -89,5 +90,5 @@ int main()
     freeGame(&game);
 
     glfwTerminate();
-    return 0;
+    return EXIT_SUCCESS;
 }

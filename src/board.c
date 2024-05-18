@@ -24,6 +24,32 @@ INCTXT(level0, "../levels/level0.txt"); // debug level
 
 INCTXT(level1, "../levels/level1.txt");
 
+Rect normalizeRect(Rect rect)
+{
+    return (Rect) {
+        .position = {
+            .x = normalizeCoordinate(rect.position.x),
+            .y = normalizeCoordinate(rect.position.y),
+        },
+        .width = normalizeLength(rect.width),
+        .height = normalizeLength(rect.height),
+    };
+}
+
+RectBounds normalizeRectBounds(RectBounds rect)
+{
+    return (RectBounds) {
+        .topLeft = {
+            .x = normalizeCoordinate(rect.topLeft.x),
+            .y = normalizeCoordinate(rect.topLeft.y),
+        },
+        .bottomRight = {
+            .x = normalizeCoordinate(rect.bottomRight.x),
+            .y = normalizeCoordinate(rect.bottomRight.y),
+        },
+    };
+}
+
 static Block createPaddle(Vec2 position, float width, float height)
 {
     return (Block) {
@@ -240,14 +266,6 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
     }
 }
 
-static void removeBlockAndUpdateInstanceBuffer(Block* blocks, size_t blockCount, size_t removedIndex,
-    unsigned int instanceBuffer)
-{
-    eraseFromArr(blocks, removedIndex, blockCount, sizeof(Block));
-    eraseObjectFromGLBuffer(GL_ARRAY_BUFFER, instanceBuffer, removedIndex, blockCount,
-        BLOCK_INSTANCE_VERTICES_SIZE);
-}
-
 void collideBall(GameState* state, Board* board, GameRenderer* renderer)
 {
     collideBallWithWalls(&board->ball);
@@ -257,8 +275,11 @@ void collideBall(GameState* state, Board* board, GameRenderer* renderer)
     {
         if (collideBallWithBlock(&board->ball, &board->blocks[i]))
         {
-            removeBlockAndUpdateInstanceBuffer(board->blocks, board->blockCount--, i--,
-                renderer->blocksRenderer.instanceBuffer);
+            eraseFromArr(board->blocks, i, board->blockCount, sizeof(board->blocks[i]));
+            deleteBlockFromGameRenderer(renderer, i, board->blockCount);
+
+            i--;
+            board->blockCount--;
 
             state->points += POINTS_PER_BLOCK_DESTROYED;
             logNotification("Points: %u\n", state->points); // TODO: update once text rendering works

@@ -16,5 +16,4 @@ void setCommonShaderSrc(const char* src);
 /// @param versionDecl GLSL version directive which will be inserted before vertex and fragment shaders'
 /// source code.
 /// @return ID of the created shader.
-unsigned int createShader(const char* vertexShaderSrc, const char* fragmentShaderSrc,
-    const char* versionDecl);
+GLuint createShader(const char* vertexShaderSrc, const char* fragmentShaderSrc, const char* versionDecl);

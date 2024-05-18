@@ -21,13 +21,20 @@ typedef struct Ball
     float speed;
 } Ball;
 
+typedef struct Rect
+{
+    Vec2 position;
+    float width;
+    float height;
+} Rect;
+
 typedef struct RectBounds
 {
     Vec2 topLeft;
     Vec2 bottomRight;
 } RectBounds;
 
-static inline RectBounds getBlockBorderBounds(const Block* block)
+static inline RectBounds getBlockBorderRect(const Block* block)
 {
     return (RectBounds) {
         .topLeft = (Vec2) {

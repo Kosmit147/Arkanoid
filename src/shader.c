@@ -24,14 +24,14 @@ void setCommonShaderSrc(const char* src)
 /// @brief Verifies that a shader was compiled successfully. Logs an error if it wasn't.
 /// @param shader Shader ID.
 /// @return True if the shader was compiled successfully, false otherwise.
-static bool verifyShaderCompilation(unsigned int shader)
+static bool verifyShaderCompilation(GLuint shader)
 {
-    int success;
+    GLint success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
     if (!success)
     {
-        char infoLog[512];
+        GLchar infoLog[512];
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
         logError("Shader compilation failed: %s.\n", infoLog);
     }
@@ -42,14 +42,14 @@ static bool verifyShaderCompilation(unsigned int shader)
 /// @brief Verifies that a shader (program) was linked successfully. Logs an error if it wasn't.
 /// @param shader Program ID.
 /// @return True if the program was linked successfully, false otherwise.
-static bool verifyProgramLinkage(unsigned int program)
+static bool verifyProgramLinkage(GLuint program)
 {
-    int success;
+    GLint success;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
 
     if (!success)
     {
-        char infoLog[512];
+        GLchar infoLog[512];
         glGetProgramInfoLog(program, 512, NULL, infoLog);
         logError("Shader program linkage failed: %s.\n", infoLog);
     }
@@ -62,7 +62,7 @@ static bool verifyProgramLinkage(unsigned int program)
 /// @param type Shader type.
 /// @param versionDecl GLSL version directive which will be inserted before the shader's source code.
 /// @return Shader ID.
-static unsigned int compileShader(const char* shaderSrc, GLenum type, const char* versionDecl)
+static GLuint compileShader(const char* shaderSrc, GLenum type, const char* versionDecl)
 {
     const char* shaderSources[SHADER_SOURCES_COUNT] = {
         versionDecl,
@@ -73,21 +73,21 @@ static unsigned int compileShader(const char* shaderSrc, GLenum type, const char
         shaderSrc,
     };
 
-    unsigned int shader = glCreateShader(type);
+    GLuint shader = glCreateShader(type);
     glShaderSource(shader, SHADER_SOURCES_COUNT, shaderSources, NULL);
     glCompileShader(shader);
 
     return shader;
 }
 
-unsigned int createShader(const char* vertexShaderSrc, const char* fragmentShaderSrc, const char* versionDecl)
+GLuint createShader(const char* vertexShaderSrc, const char* fragmentShaderSrc, const char* versionDecl)
 {
-    unsigned int vertexShader = compileShader(vertexShaderSrc, GL_VERTEX_SHADER, versionDecl);
+    GLuint vertexShader = compileShader(vertexShaderSrc, GL_VERTEX_SHADER, versionDecl);
     verifyShaderCompilation(vertexShader);
-    unsigned int fragmentShader = compileShader(fragmentShaderSrc, GL_FRAGMENT_SHADER, versionDecl);
+    GLuint fragmentShader = compileShader(fragmentShaderSrc, GL_FRAGMENT_SHADER, versionDecl);
     verifyShaderCompilation(fragmentShader);
 
-    unsigned int shaderProgram = glCreateProgram();
+    GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);

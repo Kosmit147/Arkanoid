@@ -55,8 +55,8 @@ bool loadGlad()
 
 void onWindowResize(GLFWwindow* UNUSED(window), int width, int height)
 {
-    int xOffset = 0;
-    int yOffset = 0;
+    GLint xOffset = 0;
+    GLint yOffset = 0;
 
     if (height > width)
     {

@@ -4,6 +4,8 @@
 
 #include "helpers.h"
 
+ENSURE_PACKED
+
 typedef struct Vec2
 {
     union { float x; float r; };
@@ -24,6 +26,8 @@ typedef struct Vec4
     union { float z; float b; };
     union { float w; float a; };
 } Vec4;
+
+END_ENSURE_PACKED
 
 static inline Vec2 subVecs(Vec2 a, Vec2 b)
 {
