@@ -174,9 +174,7 @@ static void createBlocksInstanceBufferImpl(const QuadTree* quadTree, BlockInstan
     for (size_t i = 0; i < 4; i++)
     {
         if (quadTree->nodes[i] != NULL)
-        {
             createBlocksInstanceBufferImpl(quadTree->nodes[i], vertices);
-        }
     }
 }
 
@@ -266,9 +264,7 @@ static void createQuadTreeVBImpl(const QuadTree* quadTree, Vector* vertices)
     for (size_t i = 0; i < 4; i++)
     {
         if (quadTree->nodes[i] != NULL)
-        {
             createQuadTreeVBImpl(quadTree->nodes[i], vertices);
-        }
     }
 }
 
@@ -284,6 +280,7 @@ static GLuint createQuadTreeVB(const QuadTree* quadTree, size_t* quadTreeNodeCou
     *quadTreeNodeCount = vectorSize(&vertices, QuadTreeNodeVertex) / 4;
 
     vectorFree(&vertices);
+
     return VB;
 }
 #endif
@@ -317,7 +314,7 @@ static GameShaders createGameShaders()
         ballFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
         
 #ifdef DRAW_QUAD_TREE
-    shaders.transparentShader = createShader(debugVertexShaderSrcData,
+    shaders.debugShader = createShader(debugVertexShaderSrcData,
         debugFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
 #endif
 
@@ -479,6 +476,7 @@ void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB)
     renderer->paddleRenderer = createPaddleRenderer(&board->paddle, quadIB);
     renderer->blocksRenderer = createBlocksRenderer(board->quadTree, quadIB);
     renderer->ballRenderer = createBallRenderer(&board->ball, quadIB);
+
 #ifdef DRAW_QUAD_TREE
     renderer->quadTreeRenderer = createQuadTreeRenderer(board->quadTree, quadIB, &renderer->quadTreeNodeCount);
 #endif
@@ -513,7 +511,7 @@ static void freeGameShaders(const GameShaders* shaders)
     glDeleteProgram(shaders->ballShader);
     
 #ifdef DRAW_QUAD_TREE
-    glDeleteProgram(shaders->transparentShader);
+    glDeleteProgram(shaders->debugShader);
 #endif
 }
 
@@ -573,8 +571,7 @@ void renderGame(const GameRenderer* renderer, const Board* board)
 #ifdef DRAW_QUAD_TREE
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glLineWidth(2.5f);
-    drawQuadTree(renderer->quadTreeNodeCount, renderer->shaders.transparentShader,
-        renderer->quadTreeRenderer.VA);
+    drawQuadTree(renderer->quadTreeNodeCount, renderer->shaders.debugShader, renderer->quadTreeRenderer.VA);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
 }

@@ -25,7 +25,7 @@ typedef struct GameShaders
     BallShaderUnifs ballShaderUnifs;
     
 #ifdef DRAW_QUAD_TREE
-    GLuint transparentShader;
+    GLuint debugShader;
 #endif
 } GameShaders;
 
