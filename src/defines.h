@@ -70,4 +70,4 @@
 #define QUAD_IB_DATA_TYPE GL_UNSIGNED_SHORT
 
 // error codes
-#define BAD_ALLOC 2
+#define EXIT_BAD_ALLOC 2

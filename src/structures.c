@@ -1,10 +1,11 @@
 #include "structures.h"
 
 #include "log.h"
+#include "memory.h"
 
 QuadTree* createQuadTree(int level, Rect bounds)
 {
-    QuadTree* quadTree = (QuadTree*)malloc(sizeof(QuadTree));
+    QuadTree* quadTree = checkedMalloc(sizeof(QuadTree));
     quadTree->level = level;
     quadTree->bounds = bounds;
     quadTree->objCount = 0;
@@ -110,7 +111,7 @@ void insert(QuadTree* quadTree, Block* object)
             if (index != INVALID_INDEX)
             {
                 // TODO: add blocks to an array instead of mallocing every time :(
-                Block* object_clone = (Block*)malloc(sizeof(Block));
+                Block* object_clone = checkedMalloc(sizeof(Block));
                 *object_clone = *quadTree->objects[i]; // Klonujemy obiekt
                 insert(quadTree->nodes[index], object_clone);
             }
@@ -123,7 +124,7 @@ void insert(QuadTree* quadTree, Block* object)
     {
         if (quadTree->objects[i] == NULL)
         {
-            Block* object_clone = (Block*)malloc(sizeof(Block));
+            Block* object_clone = checkedMalloc(sizeof(Block));
             *object_clone = *object; // Klonujemy obiekt
             quadTree->objects[i] = object_clone;
             quadTree->objCount++;
