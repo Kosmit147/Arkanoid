@@ -21,6 +21,13 @@ typedef struct Ball
     float speed;
 } Ball;
 
+typedef struct Rect
+{
+    Vec2 position;
+    float width;
+    float height;
+} Rect;
+
 typedef struct RectBounds
 {
     Vec2 topLeft;

@@ -12,10 +12,10 @@ void main()
 
     vec2 distVec = Position - normalizedBallCenter;
     float distSquared = dot(distVec, distVec);
-    
+
     if (distSquared > normalizedBallRadiusSquared) 
         discard;
-    
+
     float alpha = 1.0 - smoothstep(normalizedBallRadiusSquared - aaLevel,
         normalizedBallRadiusSquared, distSquared);
 
