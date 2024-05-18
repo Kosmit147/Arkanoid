@@ -34,7 +34,7 @@ typedef struct RectBounds
     Vec2 bottomRight;
 } RectBounds;
 
-static inline RectBounds getBlockBorderBounds(const Block* block)
+static inline RectBounds getBlockBorderRect(const Block* block)
 {
     return (RectBounds) {
         .topLeft = (Vec2) {
