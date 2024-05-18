@@ -75,7 +75,7 @@ int main()
                     glfwPollEvents();
 
                 // TODO: write high score to file
-                
+
                 // TODO: refactor into restartGame function
 
                 freeGame(&game);

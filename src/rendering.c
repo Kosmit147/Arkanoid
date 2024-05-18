@@ -10,8 +10,11 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "gl.h"
+#include "helpers.h"
 #include "shader.h"
 #include "texture.h"
+#include "entities.h"
 
 #include "defines.h"
 
@@ -27,6 +30,34 @@ INCTXT(textRendererVertexShaderSrc, "../shaders/text.vert");
 INCTXT(textRendererFragmentShaderSrc, "../shaders/text.frag");
 
 INCBIN(fontTexture, "../res/font.png");
+
+// Vertex structs must be packed in order to correctly send data to OpenGL
+// After modifying remember to update the appropriate getVertices and setVertexAttributes functions
+ENSURE_PACKED
+
+typedef struct PaddleVertex
+{
+    Vec2 position;
+} PaddleVertex;
+
+typedef struct BlockVertex
+{
+    Vec2 position;
+} BlockVertex;
+
+typedef struct BlockInstanceVertex
+{
+    Vec2 translation;
+    RectBounds borderRect;
+    Vec4 color;
+} BlockInstanceVertex;
+
+typedef struct BallVertex
+{
+    Vec2 position;
+} BallVertex;
+
+END_ENSURE_PACKED
 
 void initRenderer(Renderer* renderer, const Board* board)
 {
@@ -53,91 +84,77 @@ void render(const Renderer* renderer, const Board* board)
     renderHud(&renderer->hudRenderer);
 }
 
-static void getPaddleVertices(float* vertices, const Block* paddle)
+static void getPaddleVertices(PaddleVertex vertices[4], const Block* paddle)
 {
-    static_assert(FLOATS_PER_PADDLE_VERTEX == 2, "Expected FLOATS_PER_PADDLE_VERTEX == 2");
-
     float x1 = paddle->position.x;
     float x2 = paddle->position.x + paddle->width;
     float y1 = paddle->position.y;
     float y2 = paddle->position.y - paddle->height;
 
-    vertices[0] = x1; vertices[1] = y1;
-    vertices[2] = x2; vertices[3] = y1;
-    vertices[4] = x2; vertices[5] = y2;
-    vertices[6] = x1; vertices[7] = y2;
+    vertices[0] = (PaddleVertex) { .position = { .x = x1, .y = y1 } };
+    vertices[1] = (PaddleVertex) { .position = { .x = x2, .y = y1 } };
+    vertices[2] = (PaddleVertex) { .position = { .x = x2, .y = y2 } };
+    vertices[3] = (PaddleVertex) { .position = { .x = x1, .y = y2 } };
 }
 
 static GLuint createPaddleVB(const Block* paddle)
 {
     GLuint VB = genVB();
 
-    float vertices[FLOATS_PER_PADDLE_VERTEX * 4];
+    PaddleVertex vertices[4];
     getPaddleVertices(vertices, paddle);
 
-    glBufferData(GL_ARRAY_BUFFER, PADDLE_VERTICES_SIZE, vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(PaddleVertex) * 4, vertices, GL_DYNAMIC_DRAW);
 
     return VB;
 }
 
-static void getBlockVertices(float* vertices, const Block* block)
+static void getBlockVertices(BlockVertex vertices[4], const Block* block)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
-
     float normalizedX1 = block->position.x;
     float normalizedY1 = block->position.y;
     float normalizedX2 = normalizedX1 + normalizeLength(block->width);
     float normalizedY2 = normalizedY1 - normalizeLength(block->height);
 
-    vertices[0] = normalizedX1; vertices[1] = normalizedY1;
-    vertices[2] = normalizedX2; vertices[3] = normalizedY1;
-    vertices[4] = normalizedX2; vertices[5] = normalizedY2;
-    vertices[6] = normalizedX1; vertices[7] = normalizedY2;
+    vertices[0] = (BlockVertex) { .position = { .x = normalizedX1, .y = normalizedY1 } };
+    vertices[1] = (BlockVertex) { .position = { .x = normalizedX2, .y = normalizedY1 } };
+    vertices[2] = (BlockVertex) { .position = { .x = normalizedX2, .y = normalizedY2 } };
+    vertices[3] = (BlockVertex) { .position = { .x = normalizedX1, .y = normalizedY2 } };
 }
 
 static GLuint createBlockVB(const Block* block)
 {
     GLuint VB = genVB();
 
-    float vertices[FLOATS_PER_BLOCK_VERTEX * 4];
+    BlockVertex vertices[4];
     getBlockVertices(vertices, block);
-
-    glBufferData(GL_ARRAY_BUFFER, BLOCK_VERTICES_SIZE, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(BlockVertex) * 4, vertices, GL_STATIC_DRAW);
 
     return VB;
 }
 
-static void getBlockInstanceVertices(float* vertices, const Block* block)
+static BlockInstanceVertex getBlockInstanceVertex(const Block* block)
 {
-    static_assert(FLOATS_PER_BLOCK_INSTANCE_VERTEX == 10, "Expected FLOATS_PER_BLOCK_INSTANCE_VERTEX == 10");
-
-    Vec2 translation = { .x = normalizeLength(block->position.x), .y = normalizeLength(block->position.y) };
-    vertices[0] = translation.x;
-    vertices[1] = translation.y;
-
-    RectBounds borderBounds = getBlockBorderBounds(block);
-    vertices[2] = normalizeCoordinate(borderBounds.topLeft.x);
-    vertices[3] = normalizeCoordinate(borderBounds.topLeft.y);
-    vertices[4] = normalizeCoordinate(borderBounds.bottomRight.x);
-    vertices[5] = normalizeCoordinate(borderBounds.bottomRight.y);
-
-    Vec4 color = getRandomBlockColor();
-    vertices[6] = color.r;
-    vertices[7] = color.g;
-    vertices[8] = color.b;
-    vertices[9] = color.a;
+    return (BlockInstanceVertex) {
+        .translation = (Vec2) {
+            .x = normalizeLength(block->position.x),
+            .y = normalizeLength(block->position.y),
+        },
+        .borderRect = normalizeRectBounds(getBlockBorderRect(block)),
+        .color = getRandomBlockColor(),
+    };
 }
 
 static GLuint createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
 {
     GLuint instBuff = genVB();
 
-    float* vertices = malloc(BLOCK_INSTANCE_VERTICES_SIZE * blockCount);
+    BlockInstanceVertex* vertices = malloc(sizeof(BlockInstanceVertex) * blockCount);
 
     for (size_t i = 0; i < blockCount; i++)
-        getBlockInstanceVertices(vertices + i * FLOATS_PER_BLOCK_INSTANCE_VERTEX, &blocks[i]);
+        vertices[i] = getBlockInstanceVertex(&blocks[i]);
 
-    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(BLOCK_INSTANCE_VERTICES_SIZE * blockCount), vertices,
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(BlockInstanceVertex) * blockCount), vertices,
         GL_DYNAMIC_DRAW);
 
     free(vertices);
@@ -145,29 +162,26 @@ static GLuint createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
     return instBuff;
 }
 
-static void getBallVertices(float* vertices, const Ball* ball)
+static void getBallVertices(BallVertex vertices[4], const Ball* ball)
 {
-    static_assert(FLOATS_PER_BALL_VERTEX == 2, "Expected FLOATS_PER_BALL_VERTEX == 2");
-
     float x1 = ball->position.x - ball->radius;
     float x2 = ball->position.x + ball->radius;
     float y1 = ball->position.y - ball->radius;
     float y2 = ball->position.y + ball->radius;
 
-    vertices[0] = x1; vertices[1] = y1;
-    vertices[2] = x2; vertices[3] = y1;
-    vertices[4] = x2; vertices[5] = y2;
-    vertices[6] = x1; vertices[7] = y2;
+    vertices[0] = (BallVertex){ .position = { .x = x1, .y = y1 } };
+    vertices[1] = (BallVertex){ .position = { .x = x2, .y = y1 } };
+    vertices[2] = (BallVertex){ .position = { .x = x2, .y = y2 } };
+    vertices[3] = (BallVertex){ .position = { .x = x1, .y = y2 } };
 }
 
 static GLuint createBallVB(const Ball* ball)
 {
     GLuint VB = genVB();
 
-    float vertices[FLOATS_PER_BALL_VERTEX * 4];
+    BallVertex vertices[4];
     getBallVertices(vertices, ball);
-
-    glBufferData(GL_ARRAY_BUFFER, BALL_VERTICES_SIZE, vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(BallVertex) * 4, vertices, GL_DYNAMIC_DRAW);
 
     return VB;
 }
@@ -208,10 +222,7 @@ static GameShaders createGameShaders()
 
 static void setPaddleRendererVertexAttributes()
 {
-    static_assert(FLOATS_PER_PADDLE_VERTEX == 2, "Expected FLOATS_PER_PADDLE_VERTEX == 2");
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_PADDLE_VERTEX, NULL);
-    glEnableVertexAttribArray(0);
+    vertexAttribfv(0, PaddleVertex, position);
 }
 
 static QuadRenderer createPaddleRenderer(const Block* paddle, GLuint quadIB)
@@ -229,36 +240,14 @@ static QuadRenderer createPaddleRenderer(const Block* paddle, GLuint quadIB)
 
 static void setBlockRendererVertexAttributes(GLuint VB, GLuint instanceBuffer)
 {
-    static_assert(FLOATS_PER_BLOCK_VERTEX == 2, "Expected FLOATS_PER_BLOCK_VERTEX == 2");
-    static_assert(FLOATS_PER_BLOCK_INSTANCE_VERTEX == 10, "Expected FLOATS_PER_BLOCK_INSTANCE_VERTEX == 10");
-
-    // vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, VB);
+    vertexAttribfv(0, BlockVertex, position);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_VERTEX, NULL);
-    glEnableVertexAttribArray(0);
-
-    // instance buffer
     glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_INSTANCE_VERTEX, NULL);
-    glVertexAttribDivisor(1, 1);
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_INSTANCE_VERTEX,
-        (void*)(sizeof(float) * 2));
-    glVertexAttribDivisor(2, 1);
-    glEnableVertexAttribArray(2);
-
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_INSTANCE_VERTEX,
-        (void*)(sizeof(float) * 4));
-    glVertexAttribDivisor(3, 1);
-    glEnableVertexAttribArray(3);
-
-    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BLOCK_INSTANCE_VERTEX,
-        (void*)(sizeof(float) * 6));
-    glVertexAttribDivisor(4, 1);
-    glEnableVertexAttribArray(4);
+    instVertexAttribfv(1, BlockInstanceVertex, translation);
+    instVertexAttribfv(2, BlockInstanceVertex, borderRect.topLeft);
+    instVertexAttribfv(3, BlockInstanceVertex, borderRect.bottomRight);
+    instVertexAttribfv(4, BlockInstanceVertex, color);
 }
 
 static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount, GLuint quadIB)
@@ -292,10 +281,7 @@ static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t bl
 
 static void setBallRendererVertexAttributes()
 {
-    static_assert(FLOATS_PER_BALL_VERTEX == 2, "Expected FLOATS_PER_BALL_VERTEX == 2");
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * FLOATS_PER_BALL_VERTEX, NULL);
-    glEnableVertexAttribArray(0);
+    vertexAttribfv(0, BallVertex, position);
 }
 
 static QuadRenderer createBallRenderer(const Ball* ball, GLuint quadIB)
@@ -340,20 +326,18 @@ void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB)
 
 static void updatePaddleVB(const Block* paddle, GLuint paddleVB)
 {
-    float vertices[FLOATS_PER_PADDLE_VERTEX * 4];
+    PaddleVertex vertices[4];
     getPaddleVertices(vertices, paddle);
-
     glBindBuffer(GL_ARRAY_BUFFER, paddleVB);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, PADDLE_VERTICES_SIZE, vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(PaddleVertex) * 4, vertices);
 }
 
 static void updateBallVB(const Ball* ball, GLuint ballVB)
 {
-    float vertices[FLOATS_PER_BALL_VERTEX * 4];
+    BallVertex vertices[4];
     getBallVertices(vertices, ball);
-
     glBindBuffer(GL_ARRAY_BUFFER, ballVB);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, BALL_VERTICES_SIZE, vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(BallVertex) * 4, vertices);
 }
 
 void updateGameRenderer(GameRenderer* renderer, const Board* board)

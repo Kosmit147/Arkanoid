@@ -36,6 +36,18 @@ void rendererGLDebugCallback(GLenum UNUSED(source), GLenum UNUSED(type), GLuint 
 }
 #endif
 
+// Vertex structs must be packed in order to correctly send data to OpenGL
+// After modifying remember to update the appropriate getVertices and setVertexAttributes functions
+ENSURE_PACKED
+
+typedef struct TextRendererCharVertex
+{
+    Vec2 position;
+    Vec2 texCoords;
+} TextRendererCharVertex;
+
+END_ENSURE_PACKED
+
 GLuint genVA()
 {
     GLuint VA;
@@ -85,12 +97,9 @@ static RectBounds getTextRendererCharTexCoords(char character, const BitmapFont*
     };
 }
 
-static void getTextRendererCharVertices(char character, const BitmapFont* font, float* vertices,
-    Vec2 position, float charWidth, float charHeight)
+static void getTextRendererCharVertices(char character, const BitmapFont* font,
+    TextRendererCharVertex vertices[4], Vec2 position, float charWidth, float charHeight)
 {
-    static_assert(TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX == 4,
-        "Expected TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX == 4");
-
     float x1 = position.x;
     float x2 = position.x + charWidth;
     float y1 = position.y;
@@ -98,17 +107,49 @@ static void getTextRendererCharVertices(char character, const BitmapFont* font, 
 
     RectBounds texCoords = getTextRendererCharTexCoords(character, font);
 
-    vertices[0] = x1;                       vertices[1] = y1;
-    vertices[2] = texCoords.topLeft.x;      vertices[3] = texCoords.topLeft.y;
+    vertices[0] = (TextRendererCharVertex) {
+        .position = {
+            .x = x1,
+            .y = y1,
+        },
+        .texCoords = {
+            .x = texCoords.topLeft.x,
+            .y = texCoords.topLeft.y,
+        },
+    };
 
-    vertices[4] = x2;                       vertices[5] = y1;
-    vertices[6] = texCoords.bottomRight.x;  vertices[7] = texCoords.topLeft.y;
+    vertices[1] = (TextRendererCharVertex) {
+        .position = {
+            .x = x2,
+            .y = y1,
+        },
+        .texCoords = {
+            .x = texCoords.bottomRight.x,
+            .y = texCoords.topLeft.y,
+        },
+    };
 
-    vertices[8] = x2;                       vertices[9] = y2;
-    vertices[10] = texCoords.bottomRight.x; vertices[11] = texCoords.bottomRight.y;
+    vertices[2] = (TextRendererCharVertex) {
+        .position = {
+            .x = x2,
+            .y = y2,
+        },
+        .texCoords = {
+            .x = texCoords.bottomRight.x,
+            .y = texCoords.bottomRight.y,
+        },
+    };
 
-    vertices[12] = x1;                      vertices[13] = y2;
-    vertices[14] = texCoords.topLeft.x;     vertices[15] = texCoords.bottomRight.y;
+    vertices[3] = (TextRendererCharVertex) {
+        .position = {
+            .x = x1,
+            .y = y2,
+        },
+        .texCoords = {
+            .x = texCoords.topLeft.x,
+            .y = texCoords.bottomRight.y,
+        },
+    };
 }
 
 static GLuint createTextRendererVB(const char* text, size_t textLength, const BitmapFont* font,
@@ -116,15 +157,15 @@ static GLuint createTextRendererVB(const char* text, size_t textLength, const Bi
 {
     GLuint VB = genVB();
 
-    float* vertices = malloc(TEXT_RENDERER_CHAR_VERTICES_SIZE * textLength);
+    TextRendererCharVertex* vertices = malloc(sizeof(TextRendererCharVertex) * 4 * textLength);
 
     for (size_t i = 0; i < textLength; i++)
     {
-        getTextRendererCharVertices(text[i], font, vertices + i * TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX * 4,
+        getTextRendererCharVertices(text[i], font, vertices + i * 4,
             (Vec2){ .x = position.x + charWidth * (float)i, .y = position.y }, charWidth, charHeight);
     }
 
-    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(TEXT_RENDERER_CHAR_VERTICES_SIZE * textLength), vertices,
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(TextRendererCharVertex) * 4 * textLength), vertices,
         GL_STATIC_DRAW);
 
     free(vertices);
@@ -134,16 +175,8 @@ static GLuint createTextRendererVB(const char* text, size_t textLength, const Bi
 
 static void setTextRendererVertexAttributes()
 {
-    static_assert(TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX == 4,
-        "Expected TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX == 4");
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX,
-        NULL);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * TEXT_RENDERER_FLOATS_PER_CHAR_VERTEX,
-        (void*)(sizeof(float) * 2));
-    glEnableVertexAttribArray(1);
+    vertexAttribfv(0, TextRendererCharVertex, position);
+    vertexAttribfv(1, TextRendererCharVertex, texCoords);
 }
 
 TextRenderer createTextRenderer(const char* text, size_t textLength, const BitmapFont* font, Vec2 position,

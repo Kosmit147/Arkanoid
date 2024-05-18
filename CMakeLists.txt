@@ -34,6 +34,7 @@ if (CMAKE_C_COMPILER_ID MATCHES ".*GNU.*")
         -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches
         -fanalyzer
         -Wno-analyzer-possible-null-dereference
+        -Wno-analyzer-null-dereference
         -Wno-analyzer-malloc-leak
         -Wno-analyzer-null-argument
         -ffast-math
