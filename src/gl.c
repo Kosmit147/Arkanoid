@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "helpers.h"
+#include "memory.h"
 #include "log.h"
 #include "entities.h"
 #include "texture.h"
@@ -133,7 +134,7 @@ static GLuint createTextRendererVB(const char* text, size_t textLength, const Bi
 {
     GLuint VB = genVB();
 
-    TextRendererCharVertex* vertices = malloc(sizeof(TextRendererCharVertex) * 4 * textLength);
+    TextRendererCharVertex* vertices = checkedMalloc(sizeof(TextRendererCharVertex) * 4 * textLength);
 
     for (size_t i = 0; i < textLength; i++)
     {
@@ -218,7 +219,7 @@ void renderText(const TextRenderer* renderer)
 void moveDataWithinGLBuffer(GLenum bufferType, GLuint buffer, GLintptr dstOffset, GLintptr srcOffset,
     GLsizeiptr size)
 {
-    void* tmpData = malloc((size_t)size);
+    void* tmpData = checkedMalloc((size_t)size);
 
     glBindBuffer(bufferType, buffer);
     glGetBufferSubData(bufferType, srcOffset, size, tmpData);
@@ -251,7 +252,7 @@ GLuint createQuadIB(size_t count, GLenum usage)
     GLuint IB = genIB();
 
     GLsizeiptr dataSize = (GLsizeiptr)(sizeof(GLushort) * 2 * 3 * count);
-    GLushort* indices = malloc((size_t)dataSize);
+    GLushort* indices = checkedMalloc((size_t)dataSize);
 
     GLushort vertexOffset = 0;
 

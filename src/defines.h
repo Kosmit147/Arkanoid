@@ -68,3 +68,6 @@
 
 #define MAX_QUADS 1000
 #define QUAD_IB_DATA_TYPE GL_UNSIGNED_SHORT
+
+// error codes
+#define BAD_ALLOC 2
