@@ -12,6 +12,7 @@
 
 #include "gl.h"
 #include "helpers.h"
+#include "memory.h"
 #include "shader.h"
 #include "texture.h"
 #include "entities.h"
@@ -149,7 +150,7 @@ static GLuint createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
 {
     GLuint instBuff = genVB();
 
-    BlockInstanceVertex* vertices = malloc(sizeof(BlockInstanceVertex) * blockCount);
+    BlockInstanceVertex* vertices = checkedMalloc(sizeof(BlockInstanceVertex) * blockCount);
 
     for (size_t i = 0; i < blockCount; i++)
         vertices[i] = getBlockInstanceVertex(&blocks[i]);
