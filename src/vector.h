@@ -5,7 +5,8 @@
 
 #define vectorReserve(vector_ptr, count, type) vectorReserveImpl((vector_ptr), (count), sizeof(type))
 #define vectorGet(vector_ptr, index, type) ((type*)vectorGetImpl((vector_ptr), (index), sizeof(type)))
-#define vectorPushBack(vector_ptr, elem_ptr, type) ((type*)vectorPushBackImpl((vector_ptr), (elem_ptr), sizeof(type))) 
+#define vectorPushBack(vector_ptr, elem_ptr, type) ((type*)vectorPushBackImpl((vector_ptr), (elem_ptr),\
+    sizeof(type))) 
 
 typedef struct Vector
 {

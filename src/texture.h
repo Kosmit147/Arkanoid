@@ -12,9 +12,9 @@ typedef struct TextureOptions
     const GLint* swizzleMask; // 4 values corresponding to RGBA channels
 } TextureOptions;
 
-unsigned int createTexture(GLenum slot, GLsizei width, GLsizei height, void* data, GLenum dataType,
+GLuint createTexture(GLenum slot, GLsizei width, GLsizei height, void* data, GLenum dataType,
     GLenum dataFormat, GLint internalFormat, const TextureOptions* options);
 
-void bindTexture(unsigned int texture, GLenum slot);
+void bindTexture(GLuint texture, GLenum slot);
 
-void freeTexture(unsigned int texture);
+void freeTexture(GLuint texture);
