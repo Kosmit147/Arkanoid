@@ -12,6 +12,7 @@
 
 #include "gl.h"
 #include "helpers.h"
+#include "vector.h"
 #include "shader.h"
 #include "texture.h"
 #include "entities.h"
@@ -25,6 +26,11 @@ INCTXT(paddleVertexShaderSrc, "../shaders/paddle.vert");
 INCTXT(paddleFragmentShaderSrc, "../shaders/paddle.frag");
 INCTXT(ballVertexShaderSrc, "../shaders/ball.vert");
 INCTXT(ballFragmentShaderSrc, "../shaders/ball.frag");
+
+#ifdef DRAW_QUAD_TREE
+INCTXT(debugVertexShaderSrc, "../shaders/debug.vert");
+INCTXT(debugFragmentShaderSrc, "../shaders/debug.frag");
+#endif
 
 INCTXT(textRendererVertexShaderSrc, "../shaders/text.vert");
 INCTXT(textRendererFragmentShaderSrc, "../shaders/text.frag");
@@ -56,6 +62,13 @@ typedef struct BallVertex
 {
     Vec2 position;
 } BallVertex;
+
+#ifdef DRAW_QUAD_TREE
+typedef struct QuadTreeNodeVertex
+{
+    Vec2 position;
+} QuadTreeNodeVertex;
+#endif
 
 END_ENSURE_PACKED
 
@@ -225,6 +238,55 @@ static GLuint createBallVB(const Ball* ball)
     return VB;
 }
 
+#ifdef DRAW_QUAD_TREE
+static void getQuadTreeNodeVertices(QuadTreeNodeVertex vertices[4], const QuadTree* quadTree) 
+{
+    float x1 = normalizeCoordinate(quadTree->bounds.position.x);
+    float x2 = normalizeCoordinate(quadTree->bounds.position.x + quadTree->bounds.width);
+    float y1 = normalizeCoordinate(quadTree->bounds.position.y);
+    float y2 = normalizeCoordinate(quadTree->bounds.position.y - quadTree->bounds.height);
+
+    vertices[0] = (QuadTreeNodeVertex){ .position = { .x = x1, .y = y1 }, };
+    vertices[1] = (QuadTreeNodeVertex){ .position = { .x = x2, .y = y1 }, };
+    vertices[2] = (QuadTreeNodeVertex){ .position = { .x = x2, .y = y2 }, };
+    vertices[3] = (QuadTreeNodeVertex){ .position = { .x = x1, .y = y2 }, };
+}
+
+static void createQuadTreeVBImpl(const QuadTree* quadTree, Vector* vertices)
+{
+    QuadTreeNodeVertex tmp[4];
+    getQuadTreeNodeVertices(tmp, quadTree);
+
+    vectorPushBack(vertices, &tmp[0], QuadTreeNodeVertex);
+    vectorPushBack(vertices, &tmp[1], QuadTreeNodeVertex);
+    vectorPushBack(vertices, &tmp[2], QuadTreeNodeVertex);
+    vectorPushBack(vertices, &tmp[3], QuadTreeNodeVertex);
+
+    for (size_t i = 0; i < 4; i++)
+    {
+        if (quadTree->nodes[i] != NULL)
+        {
+            createQuadTreeVBImpl(quadTree->nodes[i], vertices);
+        }
+    }
+}
+
+static GLuint createQuadTreeVB(const QuadTree* quadTree, size_t* quadTreeNodeCount)
+{
+    GLuint VB = genVB();
+
+    Vector vertices = vectorCreate();
+
+    createQuadTreeVBImpl(quadTree, &vertices);
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)vertices.size, vertices.data, GL_DYNAMIC_DRAW);
+
+    *quadTreeNodeCount = vectorSize(&vertices, QuadTreeNodeVertex) / 4;
+
+    vectorFree(&vertices);
+    return VB;
+}
+#endif
+
 static PaddleShaderUnifs retrievePaddleShaderUnifs(GLuint paddleShader)
 {
     return (PaddleShaderUnifs) {
@@ -252,6 +314,11 @@ static GameShaders createGameShaders()
         blockFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
     shaders.ballShader = createShader(ballVertexShaderSrcData,
         ballFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
+        
+#ifdef DRAW_QUAD_TREE
+    shaders.transparentShader = createShader(debugVertexShaderSrcData,
+        debugFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
+#endif
 
     shaders.paddleShaderUnifs = retrievePaddleShaderUnifs(shaders.paddleShader);
     shaders.ballShaderUnifs = retrieveBallShaderUnifs(shaders.ballShader);
@@ -366,6 +433,26 @@ static QuadRenderer createBallRenderer(const Ball* ball, GLuint quadIB)
     return renderer;
 }
 
+#ifdef DRAW_QUAD_TREE
+static void setQuadTreeRendererVertexAttributes()
+{
+    vertexAttribfv(0, QuadTreeNodeVertex, position);
+}
+
+static QuadRenderer createQuadTreeRenderer(const QuadTree* quadTree, GLuint quadIB, size_t* quadTreeNodeCount)
+{
+    QuadRenderer renderer = {
+        .VA = genVA(),
+        .VB = createQuadTreeVB(quadTree, quadTreeNodeCount),
+    };
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
+    setQuadTreeRendererVertexAttributes();
+
+    return renderer;
+}
+#endif
+
 static void initPaddleShaderUnifs(const PaddleShaderUnifs* unifs, const Vec4* paddleColor)
 {
     glUniform4f(unifs->color, paddleColor->r, paddleColor->g, paddleColor->b, paddleColor->a);
@@ -391,6 +478,9 @@ void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB)
     renderer->paddleRenderer = createPaddleRenderer(&board->paddle, quadIB);
     renderer->blocksRenderer = createBlocksRenderer(board->quadTree, quadIB);
     renderer->ballRenderer = createBallRenderer(&board->ball, quadIB);
+#ifdef DRAW_QUAD_TREE
+    renderer->quadTreeRenderer = createQuadTreeRenderer(board->quadTree, quadIB, &renderer->quadTreeNodeCount);
+#endif
 }
 
 static void updatePaddleVB(const Block* paddle, GLuint paddleVB)
@@ -420,6 +510,10 @@ static void freeGameShaders(const GameShaders* shaders)
     glDeleteProgram(shaders->paddleShader);
     glDeleteProgram(shaders->blockShader);
     glDeleteProgram(shaders->ballShader);
+    
+#ifdef DRAW_QUAD_TREE
+    glDeleteProgram(shaders->transparentShader);
+#endif
 }
 
 void freeGameRenderer(const GameRenderer* renderer)
@@ -429,6 +523,9 @@ void freeGameRenderer(const GameRenderer* renderer)
     freeQuadRenderer(&renderer->paddleRenderer);
     freeInstancedQuadRenderer(&renderer->blocksRenderer);
     freeQuadRenderer(&renderer->ballRenderer);
+#ifdef DRAW_QUAD_TREE
+    freeQuadRenderer(&renderer->quadTreeRenderer);
+#endif
 }
 
 static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
@@ -438,24 +535,32 @@ static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball
     glUniform1f(unifs->normalizedBallRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
 }
 
-static void drawBall(const Ball* ball, GLuint shader, const BallShaderUnifs* unifs, GLuint ballVA)
+static void drawBall(const Ball* ball, GLuint shader, const BallShaderUnifs* unifs, GLuint ballRendererVA)
 {
     glUseProgram(shader);
     updateBallShaderUnifs(unifs, ball);
-    drawElements(ballVA, 6, QUAD_IB_DATA_TYPE);
+    drawElements(ballRendererVA, 6, QUAD_IB_DATA_TYPE);
 }
 
-static void drawPaddle(GLuint shader, GLuint paddleVA)
+static void drawPaddle(GLuint shader, GLuint paddleRendererVA)
 {
     glUseProgram(shader);
-    drawElements(paddleVA, 6, QUAD_IB_DATA_TYPE);
+    drawElements(paddleRendererVA, 6, QUAD_IB_DATA_TYPE);
 }
 
-static void drawBlocks(size_t blockCount, GLuint shader, GLuint blocksVA)
+static void drawBlocks(size_t blockCount, GLuint shader, GLuint blocksRendererVA)
 {
     glUseProgram(shader);
-    drawInstances(blocksVA, 6, (GLsizei)blockCount, QUAD_IB_DATA_TYPE);
+    drawInstances(blocksRendererVA, 6, (GLsizei)blockCount, QUAD_IB_DATA_TYPE);
 }
+
+#ifdef DRAW_QUAD_TREE
+static void drawQuadTree(size_t nodeCount, GLuint shader, GLuint quadTreeRendererVA)
+{
+    glUseProgram(shader);
+    drawElements(quadTreeRendererVA, (GLsizei)(nodeCount * 6), QUAD_IB_DATA_TYPE);
+}
+#endif
 
 void renderGame(const GameRenderer* renderer, const Board* board)
 {
@@ -463,6 +568,14 @@ void renderGame(const GameRenderer* renderer, const Board* board)
     drawBlocks(board->quadTree->objCount, renderer->shaders.blockShader, renderer->blocksRenderer.VA);
     drawBall(&board->ball, renderer->shaders.ballShader, &renderer->shaders.ballShaderUnifs,
         renderer->ballRenderer.VA);
+    
+#ifdef DRAW_QUAD_TREE
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(2.5f);
+    drawQuadTree(renderer->quadTreeNodeCount, renderer->shaders.transparentShader,
+        renderer->quadTreeRenderer.VA);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
 }
 
 static HudShaders createHudShaders()

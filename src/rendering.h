@@ -23,6 +23,10 @@ typedef struct GameShaders
     GLuint blockShader;
     GLuint ballShader;
     BallShaderUnifs ballShaderUnifs;
+    
+#ifdef DRAW_QUAD_TREE
+    GLuint transparentShader;
+#endif
 } GameShaders;
 
 typedef struct GameRenderer
@@ -32,6 +36,11 @@ typedef struct GameRenderer
     QuadRenderer paddleRenderer;
     InstancedQuadRenderer blocksRenderer;
     QuadRenderer ballRenderer;
+
+#ifdef DRAW_QUAD_TREE
+    size_t quadTreeNodeCount;
+    QuadRenderer quadTreeRenderer;
+#endif
 } GameRenderer;
 
 typedef struct HudShaders

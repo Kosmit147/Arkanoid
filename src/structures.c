@@ -25,26 +25,26 @@ void split(QuadTree* quadTree)
     float x = quadTree->bounds.position.x;
     float y = quadTree->bounds.position.y;
 
-    quadTree->nodes[0] = createQuadTree(quadTree->level + 1, (Rect) { 
-        { .x = x + subWidth, .y = y },
-        .width = subWidth,
-        .height = subHeight 
-    });
-
-    quadTree->nodes[1] = createQuadTree(quadTree->level + 1, (Rect) {
+    quadTree->nodes[TOP_LEFT_QUADRANT] = createQuadTree(quadTree->level + 1, (Rect) { 
         { .x = x, .y = y },
         .width = subWidth,
         .height = subHeight 
     });
 
-    quadTree->nodes[2] = createQuadTree(quadTree->level + 1, (Rect) {
-        { .x = x, .y = y + subHeight },
+    quadTree->nodes[TOP_RIGHT_QUADRANT] = createQuadTree(quadTree->level + 1, (Rect) {
+        { .x = x + subWidth, .y = y },
+        .width = subWidth,
+        .height = subHeight 
+    });
+
+    quadTree->nodes[BOTTOM_RIGHT_QUADRANT] = createQuadTree(quadTree->level + 1, (Rect) {
+        { .x = x + subWidth, .y = y - subHeight },
         .width = subWidth,
         .height = subHeight
     });
 
-    quadTree->nodes[3] = createQuadTree(quadTree->level + 1, (Rect) {
-        { .x = x + subWidth, .y = y + subHeight },
+    quadTree->nodes[BOTTOM_LEFT_QUADRANT] = createQuadTree(quadTree->level + 1, (Rect) {
+        { .x = x, .y = y - subHeight },
         .width = subWidth,
         .height = subHeight
     });

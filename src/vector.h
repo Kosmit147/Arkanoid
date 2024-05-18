@@ -7,6 +7,7 @@
 #define vectorGet(vector_ptr, index, type) ((type*)vectorGetImpl((vector_ptr), (index), sizeof(type)))
 #define vectorPushBack(vector_ptr, elem_ptr, type) ((type*)vectorPushBackImpl((vector_ptr), (elem_ptr),\
     sizeof(type))) 
+#define vectorSize(vector_ptr, type) vectorSizeImpl((vector_ptr), sizeof(type))
 
 typedef struct Vector
 {
@@ -40,7 +41,12 @@ static inline void vectorReserveImpl(Vector* vector, size_t newElemCount, size_t
     vectorRealloc(vector, newSize);
 }
 
-static inline void* vectorGetImpl(Vector* vector, size_t index, size_t elemSize)
+static inline size_t vectorSizeImpl(const Vector* vector, size_t elemSize)
+{
+    return vector->size / elemSize;
+}
+
+static inline void* vectorGetImpl(const Vector* vector, size_t index, size_t elemSize)
 {
     return (void*)((char*)(vector->data) + index * elemSize);
 }

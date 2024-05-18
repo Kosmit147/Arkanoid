@@ -57,11 +57,16 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW lib only")
 set(GLFW_INSTALL OFF CACHE BOOL "GLFW lib only")
 option(GLFW_BUILD_X11 OFF)
 option(GLFW_BUILD_WAYLAND OFF)
+option(DRAW_QUAD_TREE OFF)
 
 if(GLFW_BUILD_WAYLAND)
     target_compile_definitions(arkanoid PRIVATE _GLFW_WAYLAND)
 elseif(GLFW_BUILD_X11)
     target_compile_definitions(arkanoid PRIVATE _GLFW_X11)
+endif()
+
+if(DRAW_QUAD_TREE)
+    target_compile_definitions(arkanoid PRIVATE DRAW_QUAD_TREE)
 endif()
 
 add_subdirectory(dependencies/GLAD)

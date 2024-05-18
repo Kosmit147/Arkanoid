@@ -126,7 +126,7 @@ static const char* getLevelData(unsigned int level)
 
 static QuadTree* createBlocks(unsigned int level)
 {
-    Rect bounds = { { .x = 0, .y = 0 }, COORDINATE_SPACE, COORDINATE_SPACE / 2 };
+    Rect bounds = { { .x = 0, .y = COORDINATE_SPACE }, COORDINATE_SPACE, COORDINATE_SPACE };
     QuadTree* quadTree = createQuadTree(0, bounds);
 
     const char* levelData = getLevelData(level);
