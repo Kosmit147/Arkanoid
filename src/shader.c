@@ -9,8 +9,11 @@
 
 INCTXT(definesShared, "../src/defines_shared.h");
 
+/// @brief The number of sources which comprise a shader's full source code.
 #define SHADER_SOURCES_COUNT 6
 
+/// @brief Additional source code which will be inserted before every shader's source code. Set by @ref
+/// setCommonShaderSrc.
 static const char* commonShaderSrc = "";
 
 void setCommonShaderSrc(const char* src)
@@ -18,6 +21,9 @@ void setCommonShaderSrc(const char* src)
     commonShaderSrc = src;
 }
 
+/// @brief Verifies that a shader was compiled successfully. Logs an error if it wasn't.
+/// @param shader Shader ID.
+/// @return True if the shader was compiled successfully, false otherwise.
 static bool verifyShaderCompilation(unsigned int shader)
 {
     int success;
@@ -33,6 +39,9 @@ static bool verifyShaderCompilation(unsigned int shader)
     return success;
 }
 
+/// @brief Verifies that a shader (program) was linked successfully. Logs an error if it wasn't.
+/// @param shader Program ID.
+/// @return True if the program was linked successfully, false otherwise.
 static bool verifyProgramLinkage(unsigned int program)
 {
     int success;
@@ -48,6 +57,11 @@ static bool verifyProgramLinkage(unsigned int program)
     return success;
 }
 
+/// @brief Compiles a shader.
+/// @param shaderSrc Shader source code.
+/// @param type Shader type.
+/// @param versionDecl GLSL version directive which will be inserted before the shader's source code.
+/// @return Shader ID.
 static unsigned int compileShader(const char* shaderSrc, GLenum type, const char* versionDecl)
 {
     const char* shaderSources[SHADER_SOURCES_COUNT] = {
