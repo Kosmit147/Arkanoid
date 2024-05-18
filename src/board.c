@@ -24,6 +24,32 @@ INCTXT(level0, "../levels/level0.txt"); // debug level
 
 INCTXT(level1, "../levels/level1.txt");
 
+Rect normalizeRect(Rect rect)
+{
+    return (Rect) {
+        .position = {
+            .x = normalizeCoordinate(rect.position.x),
+            .y = normalizeCoordinate(rect.position.y),
+        },
+        .width = normalizeLength(rect.width),
+        .height = normalizeLength(rect.height),
+    };
+}
+
+RectBounds normalizeRectBounds(RectBounds rect)
+{
+    return (RectBounds) {
+        .topLeft = {
+            .x = normalizeCoordinate(rect.topLeft.x),
+            .y = normalizeCoordinate(rect.topLeft.y),
+        },
+        .bottomRight = {
+            .x = normalizeCoordinate(rect.bottomRight.x),
+            .y = normalizeCoordinate(rect.bottomRight.y),
+        },
+    };
+}
+
 static Block createPaddle(Vec2 position, float width, float height)
 {
     return (Block) {
