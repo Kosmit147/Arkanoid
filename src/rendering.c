@@ -186,6 +186,8 @@ static GLuint createBallVB(const Ball* ball)
 static PaddleShaderUnifs retrievePaddleShaderUnifs(GLuint paddleShader)
 {
     return (PaddleShaderUnifs) {
+        .borderRectTopLeft = retrieveUniformLocation(paddleShader, "borderRect.topLeft"),
+        .borderRectBottomRight = retrieveUniformLocation(paddleShader, "borderRect.bottomRight"),
         .color = retrieveUniformLocation(paddleShader, "color"),
     };
 }
@@ -193,8 +195,8 @@ static PaddleShaderUnifs retrievePaddleShaderUnifs(GLuint paddleShader)
 static BallShaderUnifs retrieveBallShaderUnifs(GLuint ballShader)
 {
     return (BallShaderUnifs) {
-        .normalizedBallCenter = retrieveUniformLocation(ballShader, "normalizedBallCenter"),
-        .normalizedBallRadiusSquared = retrieveUniformLocation(ballShader, "normalizedBallRadiusSquared"),
+        .ballCenter = retrieveUniformLocation(ballShader, "ballCenter"),
+        .ballRadiusSquared = retrieveUniformLocation(ballShader, "ballRadiusSquared"),
         .color = retrieveUniformLocation(ballShader, "color"),
     };
 }
@@ -368,9 +370,9 @@ void freeGameRenderer(const GameRenderer* renderer)
 
 static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
 {
-    glUniform2f(unifs->normalizedBallCenter, normalizeCoordinate(ball->position.x),
+    glUniform2f(unifs->ballCenter, normalizeCoordinate(ball->position.x),
         normalizeCoordinate(ball->position.y));
-    glUniform1f(unifs->normalizedBallRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
+    glUniform1f(unifs->ballRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
 }
 
 static void drawBall(const Ball* ball, GLuint shader, const BallShaderUnifs* unifs, GLuint ballVA)
@@ -380,9 +382,17 @@ static void drawBall(const Ball* ball, GLuint shader, const BallShaderUnifs* uni
     drawElements(ballVA, 6, QUAD_IB_DATA_TYPE);
 }
 
-static void drawPaddle(GLuint shader, GLuint paddleVA)
+static void updatePaddleShaderUnifs(const PaddleShaderUnifs* unifs, const Block* paddle)
+{
+    RectBounds borderRect = getBlockBorderRect(paddle);
+    glUniform2f(unifs->borderRectTopLeft, borderRect.topLeft.x, borderRect.topLeft.y);
+    glUniform2f(unifs->borderRectBottomRight, borderRect.bottomRight.x, borderRect.bottomRight.y);
+}
+
+static void drawPaddle(const Block* paddle, GLuint shader, const PaddleShaderUnifs* unifs,  GLuint paddleVA)
 {
     glUseProgram(shader);
+    updatePaddleShaderUnifs(unifs, paddle);
     drawElements(paddleVA, 6, QUAD_IB_DATA_TYPE);
 }
 
@@ -394,7 +404,8 @@ static void drawBlocks(size_t blockCount, GLuint shader, GLuint blocksVA)
 
 void renderGame(const GameRenderer* renderer, const Board* board)
 {
-    drawPaddle(renderer->shaders.paddleShader, renderer->paddleRenderer.VA);
+    drawPaddle(&board->paddle, renderer->shaders.paddleShader, &renderer->shaders.paddleShaderUnifs,
+        renderer->paddleRenderer.VA);
     drawBlocks(board->blockCount, renderer->shaders.blockShader, renderer->blocksRenderer.VA);
     drawBall(&board->ball, renderer->shaders.ballShader, &renderer->shaders.ballShaderUnifs,
         renderer->ballRenderer.VA);

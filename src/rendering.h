@@ -5,13 +5,15 @@
 
 typedef struct PaddleShaderUnifs
 {
+    GLint borderRectTopLeft;
+    GLint borderRectBottomRight;
     GLint color;
 } PaddleShaderUnifs;
 
 typedef struct BallShaderUnifs
 {
-    GLint normalizedBallCenter;
-    GLint normalizedBallRadiusSquared;
+    GLint ballCenter;
+    GLint ballRadiusSquared;
     GLint color;
 } BallShaderUnifs;
 
