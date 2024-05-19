@@ -36,6 +36,7 @@ typedef struct TextRenderer
     GLuint VA;
     GLuint VB;
     size_t charCount;
+    Vec2 position;
     float charWidth;
     float charHeight;
     const BitmapFont* font;

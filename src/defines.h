@@ -58,12 +58,17 @@
 #define LAUNCH_BALL_KEY                 GLFW_KEY_SPACE
 #define RESTART_GAME_KEY                GLFW_KEY_SPACE
 
+#define LAUNCH_BALL_CONTROLS_STR "Press SPACE to launch the ball."
+#define PADDLE_CONTROLS_STR "Use WASD or arrow keys to move the paddle."
+#define LEVEL_STR "Level: "
+#define MAX_DIGITS_IN_LEVEL_NUM 5
+#define POINTS_STR "Points: "
+#define MAX_DIGITS_IN_POINTS_NUM 5
 #define GAME_OVER_STR "GAME OVER!"
 #define PRESS_RESTART_GAME_KEY_STR "Press SPACE to restart the game."
-#define POINTS_STR "Points: "
 
 #define FONT_PROPORTIONS (3.0f / 2.0f)
-#define FONT_WIDTH 0.06f
+#define FONT_WIDTH 0.047f
 #define FONT_HEIGHT (FONT_WIDTH * FONT_PROPORTIONS)
 
 #define MAX_QUADS 1000

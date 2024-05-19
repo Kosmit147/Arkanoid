@@ -153,12 +153,13 @@ static void setTextRendererVertexAttributes()
 }
 
 TextRenderer createTextRenderer(const char* text, size_t textLength, const BitmapFont* font, Vec2 position,
-    float charWidth, float charHeight, unsigned int quadIB)
+    float charWidth, float charHeight, GLuint quadIB)
 {
     TextRenderer renderer = {
         .VA = genVA(),
         .VB = createTextRendererVB(text, textLength, font, position, charWidth, charHeight),
         .charCount = textLength,
+        .position = position,
         .charWidth = charWidth,
         .charHeight = charHeight,
         .font = font,
@@ -172,6 +173,7 @@ TextRenderer createTextRenderer(const char* text, size_t textLength, const Bitma
 
 void updateTextRenderer(TextRenderer* renderer, const char* newText, size_t newTextLength, Vec2 newPosition)
 {
+    glBindVertexArray(renderer->VA);
     glDeleteBuffers(1, &renderer->VB);
 
     renderer->VB = createTextRendererVB(newText, newTextLength, renderer->font, newPosition,

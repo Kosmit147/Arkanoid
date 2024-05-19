@@ -1,3 +1,6 @@
+/// @file shader.c
+/// @brief Functionality related to OpenGL shaders.
+
 #include "shader.h"
 
 #define INCBIN_PREFIX

@@ -20,6 +20,7 @@ int main()
     srand((unsigned int)time(NULL));
     stbi_set_flip_vertically_on_load(true);
 
+    // GLFWwindow* window = initWindowAndContext();
     GLFWwindow* window = setUpWindow("Arkanoid", WINDOW_WIDTH, WINDOW_HEIGHT);
 
     if (!window)
@@ -57,14 +58,14 @@ int main()
         }
 
         updateRenderer(&game.renderer, &game.board);
-        render(&game.renderer, &game.board);
+        render(&game.renderer, &game.state, &game.board);
 
-        if (boardCleared(&game.board))
+        if (game.state.boardCleared)
             advanceLevel(&game);
 
         if (gameOver(&game))
         {
-            game.renderer.hudRenderer.drawGameOverText = true;
+            game.state.gameOver = true;
 
             if (glfwGetKey(window, RESTART_GAME_KEY) == GLFW_PRESS)
             {

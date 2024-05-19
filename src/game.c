@@ -39,5 +39,5 @@ void moveGameObjects(Game* game)
 
 void collideGameObjects(Game* game)
 {
-    collideBall(&game->state, &game->board, &game->renderer.gameRenderer);
+    collideBall(&game->state, &game->board, &game->renderer);
 }
