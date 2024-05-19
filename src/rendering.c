@@ -32,10 +32,8 @@ INCTXT(textRendererFragmentShaderSrc, "../shaders/text.frag");
 
 INCBIN(fontTexture, "../res/font.png");
 
-// Vertex structs must be packed in order to correctly send data to OpenGL
-// After modifying remember to update the appropriate getVertices and setVertexAttributes functions
-ENSURE_PACKED
-
+// After modifying vertex structs remember to update the appropriate
+// getVertices and setVertexAttributes functions
 typedef struct PaddleVertex
 {
     Vec2 position;
@@ -57,8 +55,6 @@ typedef struct BallVertex
 {
     Vec2 position;
 } BallVertex;
-
-END_ENSURE_PACKED
 
 void initRenderer(Renderer* renderer, const Board* board)
 {

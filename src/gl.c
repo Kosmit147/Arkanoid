@@ -37,17 +37,13 @@ void rendererGLDebugCallback(GLenum UNUSED(source), GLenum UNUSED(type), GLuint 
 }
 #endif
 
-// Vertex structs must be packed in order to correctly send data to OpenGL
-// After modifying remember to update the appropriate getVertices and setVertexAttributes functions
-ENSURE_PACKED
-
+// After modifying vertex structs remember to update the appropriate
+// getVertices and setVertexAttributes functions
 typedef struct TextRendererCharVertex
 {
     Vec2 position;
     Vec2 texCoords;
 } TextRendererCharVertex;
-
-END_ENSURE_PACKED
 
 GLuint genVA()
 {
