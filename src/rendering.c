@@ -321,26 +321,26 @@ void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB)
     renderer->ballRenderer = createBallRenderer(&board->ball, quadIB);
 }
 
-static void updatePaddleVB(const Block* paddle, GLuint paddleVB)
+static void updatePaddleRenderer(const Block* paddle, const QuadRenderer* paddleRenderer)
 {
     PaddleVertex vertices[4];
     getPaddleVertices(vertices, paddle);
-    glBindBuffer(GL_ARRAY_BUFFER, paddleVB);
+    glBindBuffer(GL_ARRAY_BUFFER, paddleRenderer->VB);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(PaddleVertex) * 4, vertices);
 }
 
-static void updateBallVB(const Ball* ball, GLuint ballVB)
+static void updateBallRenderer(const Ball* ball, const QuadRenderer* ballRenderer)
 {
     BallVertex vertices[4];
     getBallVertices(vertices, ball);
-    glBindBuffer(GL_ARRAY_BUFFER, ballVB);
+    glBindBuffer(GL_ARRAY_BUFFER, ballRenderer->VB);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(BallVertex) * 4, vertices);
 }
 
 void updateGameRenderer(GameRenderer* renderer, const Board* board)
 {
-    updatePaddleVB(&board->paddle, renderer->paddleRenderer.VB);
-    updateBallVB(&board->ball, renderer->ballRenderer.VB);
+    updatePaddleRenderer(&board->paddle, &renderer->paddleRenderer);
+    updateBallRenderer(&board->ball, &renderer->ballRenderer);
 }
 
 void deleteBlockFromGameRenderer(GameRenderer* renderer, size_t deletedIndex, size_t blockCount)
