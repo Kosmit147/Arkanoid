@@ -476,9 +476,9 @@ void initHudRenderer(HudRenderer* renderer, GLuint quadIB)
     renderer->paddleControlsRenderer = createTextRenderer(PADDLE_CONTROLS_STR,
         staticStrLen(PADDLE_CONTROLS_STR), &renderer->font, paddleControlsPos, FONT_WIDTH, FONT_HEIGHT,
         quadIB);
-    renderer->levelRenderer = createTextRenderer(LEVEL_STR, staticStrLen(LEVEL_STR), &renderer->font,
+    renderer->levelRenderer = createTextRenderer(LEVEL_0_STR, staticStrLen(LEVEL_0_STR), &renderer->font,
         levelPos, FONT_WIDTH, FONT_HEIGHT, quadIB);
-    renderer->pointsRenderer = createTextRenderer(POINTS_STR, staticStrLen(POINTS_STR), &renderer->font,
+    renderer->pointsRenderer = createTextRenderer(POINTS_0_STR, staticStrLen(POINTS_0_STR), &renderer->font,
         pointsPos, FONT_WIDTH, FONT_HEIGHT, quadIB);
     renderer->gameOverRenderer = createTextRenderer(GAME_OVER_STR, staticStrLen(GAME_OVER_STR),
         &renderer->font, gameOverPos, FONT_WIDTH, FONT_HEIGHT, quadIB);

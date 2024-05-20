@@ -62,8 +62,10 @@
 #define PADDLE_CONTROLS_STR "Use WASD or arrow keys to move the paddle."
 #define LEVEL_STR "Level: "
 #define MAX_DIGITS_IN_LEVEL_NUM 5
+#define LEVEL_0_STR "Level: 0"
 #define POINTS_STR "Points: "
 #define MAX_DIGITS_IN_POINTS_NUM 5
+#define POINTS_0_STR "Points: 0"
 #define GAME_OVER_STR "GAME OVER!"
 #define PRESS_RESTART_GAME_KEY_STR "Press SPACE to restart the game."
 
