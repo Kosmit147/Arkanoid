@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 #include "entities.h"
-#include "structures.h"
+#include "blocks_tree.h"
 
 #include "defines.h"
 

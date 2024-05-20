@@ -1,4 +1,4 @@
-#include "structures.h"
+#include "blocks_tree.h"
 
 #include <stdbool.h>
 
@@ -11,7 +11,7 @@ QuadTree* createQuadTree(int level, Rect bounds)
     quadTree->level = level;
     quadTree->bounds = bounds;
     quadTree->objCount = 0;
-    
+
     for (int i = 0; i < 4; i++)
         quadTree->nodes[i] = NULL;
 
@@ -191,7 +191,7 @@ void removeBlock(QuadTree* quadTree, const Block* block)
             }
         }
     }
-    
+
     quadTree->objCount--;
 }
 
@@ -244,7 +244,7 @@ static Block* retrieveNthImpl(const QuadTree* quadTree, size_t index, size_t* cu
                 return result;
         }
     }
-    
+
     return NULL;
 }
 

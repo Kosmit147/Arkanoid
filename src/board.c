@@ -14,7 +14,6 @@
 #include "rendering.h"
 #include "game_state.h"
 #include "entities.h"
-#include "structures.h"
 
 #include "defines.h"
 
