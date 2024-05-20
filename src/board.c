@@ -11,7 +11,6 @@
 #include "game_time.h"
 #include "helpers.h"
 #include "vector.h"
-#include "str_utils.h"
 #include "rendering.h"
 #include "game_state.h"
 #include "entities.h"
