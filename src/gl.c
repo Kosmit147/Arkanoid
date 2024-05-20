@@ -3,39 +3,12 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "helpers.h"
 #include "memory.h"
 #include "log.h"
 #include "entities.h"
 #include "texture.h"
 
 #include "defines.h"
-
-#ifdef _DEBUG
-void rendererGLDebugCallback(GLenum UNUSED(source), GLenum UNUSED(type), GLuint UNUSED(id), GLenum severity,
-    GLsizei UNUSED(length), const GLchar* message, const void* UNUSED(userParam))
-{
-    if (ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY != GL_DEBUG_SEVERITY_NOTIFICATION &&
-        severity > ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY)
-    {
-        return;
-    }
-
-    switch (severity)
-    {
-    case GL_DEBUG_SEVERITY_NOTIFICATION:
-        logNotification("[OpenGL Notification]: %s.\n", message);
-        break;
-    case GL_DEBUG_SEVERITY_LOW:
-    case GL_DEBUG_SEVERITY_MEDIUM:
-        logWarning("[OpenGL Warning]: %s.\n", message);
-        break;
-    case GL_DEBUG_SEVERITY_HIGH:
-        logError("[OpenGL Error]: %s.\n", message);
-        break;
-    }
-}
-#endif
 
 // After modifying vertex structs remember to update the appropriate
 // getVertices and setVertexAttributes functions
