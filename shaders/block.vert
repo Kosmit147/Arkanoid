@@ -1,6 +1,7 @@
 layout (location = 0) in vec2 inPosition;
 layout (location = 1) in vec2 inTranslation;
-layout (location = 2) in RectBounds inBorderBounds;
+layout (location = 2) in vec2 inBorderBoundsTopLeft;
+layout (location = 3) in vec2 inBorderBoundsBottomRight;
 layout (location = 4) in vec4 inColor;
 
 out vec2 Position;
@@ -9,7 +10,7 @@ out vec4 Color;
 
 void main()
 {
-    BorderBounds = inBorderBounds;
+    BorderBounds = RectBounds(inBorderBoundsTopLeft, inBorderBoundsBottomRight);
     Color = inColor;
 
     Position = inPosition + inTranslation;

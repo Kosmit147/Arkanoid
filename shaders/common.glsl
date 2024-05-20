@@ -4,15 +4,19 @@ struct RectBounds
     vec2 bottomRight;
 };
 
-float normalizeCoordinate(float coord)
+float normalizePosition(float coord)
 {
     return coord / float(COORDINATE_SPACE) * 2.0 - 1.0;
 }
 
-vec4 normalizeVertexCoordinates(vec4 position)
+vec2 normalizeVertexPosition(vec2 vec)
 {
-    return vec4(normalizeCoordinate(position.x),
-        normalizeCoordinate(position.y), 0.0, 1.0);
+    return vec2(normalizePosition(vec.x), normalizePosition(vec.y));
+}
+
+vec4 normalizeVertexPosition(vec4 coords)
+{
+    return vec4(normalizePosition(coords.x), normalizePosition(coords.y), 0.0, 1.0);
 }
 
 bool pointInsideRectBounds(vec2 point, RectBounds bounds)
