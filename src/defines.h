@@ -7,6 +7,9 @@
 
 #include "defines_shared.h"
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 #define MATH_PI 3.14159265358979323846
 #define RADIANS_IN_DEG 0.01745329252
 
@@ -62,10 +65,10 @@
 #define PADDLE_CONTROLS_STR "Use WASD or arrow keys to move the paddle."
 #define LEVEL_STR "Level: "
 #define MAX_DIGITS_IN_LEVEL_NUM 5
-#define LEVEL_0_STR "Level: 0"
+#define LEVEL_FIRST_STR (LEVEL_STR STR(STARTING_LEVEL))
 #define POINTS_STR "Points: "
 #define MAX_DIGITS_IN_POINTS_NUM 5
-#define POINTS_0_STR "Points: 0"
+#define POINTS_0_STR (POINTS_STR "0")
 #define GAME_OVER_STR "GAME OVER!"
 #define PRESS_RESTART_GAME_KEY_STR "Press SPACE to restart the game."
 

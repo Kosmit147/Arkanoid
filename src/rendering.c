@@ -11,7 +11,6 @@
 #include <assert.h>
 
 #include "gl.h"
-#include "helpers.h"
 #include "str_utils.h"
 #include "memory.h"
 #include "shader.h"
@@ -487,8 +486,8 @@ void initHudRenderer(HudRenderer* renderer, GLuint quadIB)
     renderer->paddleControlsRenderer = createTextRenderer(PADDLE_CONTROLS_STR,
         staticStrLen(PADDLE_CONTROLS_STR), &renderer->font, paddleControlsPos, FONT_WIDTH, FONT_HEIGHT,
         quadIB);
-    renderer->levelRenderer = createTextRenderer(LEVEL_0_STR, staticStrLen(LEVEL_0_STR), &renderer->font,
-        levelPos, FONT_WIDTH, FONT_HEIGHT, quadIB);
+    renderer->levelRenderer = createTextRenderer(LEVEL_FIRST_STR, staticStrLen(LEVEL_FIRST_STR),
+        &renderer->font, levelPos, FONT_WIDTH, FONT_HEIGHT, quadIB);
     renderer->pointsRenderer = createTextRenderer(POINTS_0_STR, staticStrLen(POINTS_0_STR), &renderer->font,
         pointsPos, FONT_WIDTH, FONT_HEIGHT, quadIB);
     renderer->gameOverRenderer = createTextRenderer(GAME_OVER_STR, staticStrLen(GAME_OVER_STR),
@@ -496,6 +495,26 @@ void initHudRenderer(HudRenderer* renderer, GLuint quadIB)
     renderer->pressRestartGameKeyRenderer = createTextRenderer(PRESS_RESTART_GAME_KEY_STR,
         staticStrLen(PRESS_RESTART_GAME_KEY_STR), &renderer->font, pressRestartGameKeyPos, FONT_WIDTH,
         FONT_HEIGHT, quadIB);
+}
+
+void updateHudLevelText(HudRenderer* renderer, unsigned int newLevel)
+{
+    char levelText[staticStrLen(LEVEL_STR) + MAX_DIGITS_IN_LEVEL_NUM + 1] = LEVEL_STR;
+    size_t charsWritten = uiToStr(newLevel, levelText + staticStrLen(LEVEL_STR),
+        MAX_DIGITS_IN_LEVEL_NUM + 1);
+
+    updateTextRenderer(&renderer->levelRenderer, levelText, staticStrLen(LEVEL_STR) + charsWritten,
+        renderer->levelRenderer.position);
+}
+
+void updateHudPointsText(HudRenderer* renderer, unsigned int newPoints)
+{
+    char pointsText[staticStrLen(POINTS_STR) + MAX_DIGITS_IN_POINTS_NUM + 1] = POINTS_STR;
+    size_t charsWritten = uiToStr(newPoints, pointsText + staticStrLen(POINTS_STR),
+        MAX_DIGITS_IN_POINTS_NUM + 1);
+
+    updateTextRenderer(&renderer->pointsRenderer, pointsText, staticStrLen(POINTS_STR) + charsWritten,
+        renderer->pointsRenderer.position);
 }
 
 static void freeHudShaders(const HudShaders* shaders)

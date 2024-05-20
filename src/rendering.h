@@ -75,5 +75,7 @@ void freeGameRenderer(const GameRenderer* renderer);
 void renderGame(const GameRenderer* renderer, const Board* board);
 
 void initHudRenderer(HudRenderer* renderer, GLuint quadIB);
+void updateHudLevelText(HudRenderer* renderer, unsigned int newLevel);
+void updateHudPointsText(HudRenderer* renderer, unsigned int newPoints);
 void freeHudRenderer(const HudRenderer* renderer);
 void renderHud(const HudRenderer* renderer, const GameState* state);

@@ -9,7 +9,6 @@
 #include <assert.h>
 
 #include "game_time.h"
-#include "log.h"
 #include "helpers.h"
 #include "vector.h"
 #include "str_utils.h"
@@ -267,19 +266,6 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
     }
 }
 
-// returns the length of the created string
-static size_t createPointsStr(char* str, size_t buffSize, unsigned int points)
-{
-    strcpy(str, POINTS_STR);
-    size_t charsWritten = (size_t)snprintf(str + staticStrLen(POINTS_STR),
-        buffSize - staticStrLen(POINTS_STR), "%u", points);
-
-    if (charsWritten > buffSize - staticStrLen(POINTS_STR) - 1)
-        charsWritten = buffSize - staticStrLen(POINTS_STR) - 1;
-
-    return staticStrLen(POINTS_STR) + charsWritten;
-}
-
 void collideBall(GameState* state, Board* board, Renderer* renderer)
 {
     collideBallWithWalls(&board->ball);
@@ -298,13 +284,7 @@ void collideBall(GameState* state, Board* board, Renderer* renderer)
             state->boardCleared = board->blockCount == 0;
             state->points += POINTS_PER_BLOCK_DESTROYED;
 
-            // TODO: refactor to use string type
-            char pointsText[staticStrLen(POINTS_STR) + MAX_DIGITS_IN_POINTS_NUM + 1];
-            size_t pointsTextLen = createPointsStr(pointsText,
-                staticStrLen(POINTS_STR) + MAX_DIGITS_IN_POINTS_NUM + 1, state->points);
-
-            TextRenderer* pointsRenderer = &renderer->hudRenderer.pointsRenderer;
-            updateTextRenderer(pointsRenderer, pointsText, pointsTextLen, pointsRenderer->position);
+            updateHudPointsText(&renderer->hudRenderer, state->points);
         }
     }
 }
