@@ -9,7 +9,6 @@
 #include <assert.h>
 
 #include "game_time.h"
-#include "log.h"
 #include "helpers.h"
 #include "vector.h"
 #include "rendering.h"
@@ -266,7 +265,7 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
     }
 }
 
-void collideBall(GameState* state, Board* board, GameRenderer* renderer)
+void collideBall(GameState* state, Board* board, Renderer* renderer)
 {
     collideBallWithWalls(&board->ball);
     collideBallWithPaddle(&board->ball, &board->paddle);
@@ -276,13 +275,15 @@ void collideBall(GameState* state, Board* board, GameRenderer* renderer)
         if (collideBallWithBlock(&board->ball, &board->blocks[i]))
         {
             eraseFromArr(board->blocks, i, board->blockCount, sizeof(board->blocks[i]));
-            deleteBlockFromGameRenderer(renderer, i, board->blockCount);
+            deleteBlockFromGameRenderer(&renderer->gameRenderer, i, board->blockCount);
 
-            i--;
+            i--; // we have to go back since we moved blocks within the array
             board->blockCount--;
 
+            state->boardCleared = board->blockCount == 0;
             state->points += POINTS_PER_BLOCK_DESTROYED;
-            logNotification("Points: %u\n", state->points); // TODO: update once text rendering works
+
+            updateHudPointsText(&renderer->hudRenderer, state->points);
         }
     }
 }

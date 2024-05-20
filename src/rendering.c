@@ -11,7 +11,7 @@
 #include <assert.h>
 
 #include "gl.h"
-#include "helpers.h"
+#include "str_utils.h"
 #include "memory.h"
 #include "shader.h"
 #include "texture.h"
@@ -75,10 +75,10 @@ void freeRenderer(const Renderer* renderer)
     glDeleteBuffers(1, &renderer->quadIB);
 }
 
-void render(const Renderer* renderer, const Board* board)
+void render(const Renderer* renderer, const GameState* state, const Board* board)
 {
     renderGame(&renderer->gameRenderer, board);
-    renderHud(&renderer->hudRenderer);
+    renderHud(&renderer->hudRenderer, state);
 }
 
 static void getPaddleVertices(PaddleVertex vertices[4], const Block* paddle)
@@ -448,7 +448,6 @@ static GLuint createHudRendererFontTexture()
 void initHudRenderer(HudRenderer* renderer, GLuint quadIB)
 {
     renderer->shaders = createHudShaders();
-
     GLuint texture = createHudRendererFontTexture();
 
     renderer->font = (BitmapFont) {
@@ -458,26 +457,69 @@ void initHudRenderer(HudRenderer* renderer, GLuint quadIB)
         .textureID = texture,
     };
 
-    Vec2 gameOverPos = {
-        .x = 0.0f - FONT_WIDTH * (float)strlen(GAME_OVER_STR) / 2.0f,
-        .y = 0.0f + FONT_HEIGHT,
+    static const Vec2 launchBallControlsPos = {
+        .x = 0.0f - CONTROLS_SCREEN_FONT_WIDTH * (float)staticStrLen(LAUNCH_BALL_CONTROLS_STR) / 2.0f,
+        .y = 0.0f - CONTROLS_SCREEN_FONT_HEIGHT * 1.5f,
     };
 
-    Vec2 pressRestartGameKeyPos = {
-        .x = 0.0f - FONT_WIDTH * (float)strlen(PRESS_RESTART_GAME_KEY_STR) / 2.0f,
+    static const Vec2 paddleControlsPos = {
+        .x = 0.0f - CONTROLS_SCREEN_FONT_WIDTH * (float)staticStrLen(PADDLE_CONTROLS_STR) / 2.0f,
+        .y = 0.0f - CONTROLS_SCREEN_FONT_HEIGHT * 2.5f,
+    };
+
+    static const Vec2 levelPos = { .x = -1.0f, .y = -1.0f + STATS_FONT_HEIGHT * 2.0f};
+    static const Vec2 pointsPos = { .x = -1.0f, .y = -1.0f + STATS_FONT_HEIGHT};
+
+    static const Vec2 gameOverPos = {
+        .x = 0.0f - GAME_OVER_SCREEN_FONT_WIDTH * (float)staticStrLen(GAME_OVER_STR) / 2.0f,
+        .y = 0.0f + GAME_OVER_SCREEN_FONT_HEIGHT,
+    };
+
+    static const Vec2 pressRestartGameKeyPos = {
+        .x = 0.0f - GAME_OVER_SCREEN_FONT_WIDTH * (float)staticStrLen(PRESS_RESTART_GAME_KEY_STR) / 2.0f,
         .y = 0.0f,
     };
 
-    Vec2 pointsPos = { .x = -1.0f, .y = -1.0f + FONT_HEIGHT};
+    renderer->launchBallControlsRenderer = createTextRenderer(LAUNCH_BALL_CONTROLS_STR,
+        staticStrLen(LAUNCH_BALL_CONTROLS_STR), &renderer->font, launchBallControlsPos,
+        CONTROLS_SCREEN_FONT_WIDTH, CONTROLS_SCREEN_FONT_HEIGHT, quadIB);
 
-    renderer->drawGameOverText = false;
-    renderer->gameOverRenderer = createTextRenderer(GAME_OVER_STR, strlen(GAME_OVER_STR), &renderer->font,
-        gameOverPos, FONT_WIDTH, FONT_HEIGHT, quadIB);
+    renderer->paddleControlsRenderer = createTextRenderer(PADDLE_CONTROLS_STR,
+        staticStrLen(PADDLE_CONTROLS_STR), &renderer->font, paddleControlsPos, CONTROLS_SCREEN_FONT_WIDTH,
+        CONTROLS_SCREEN_FONT_HEIGHT, quadIB);
+
+    renderer->levelRenderer = createTextRenderer(LEVEL_FIRST_STR, staticStrLen(LEVEL_FIRST_STR),
+        &renderer->font, levelPos, STATS_FONT_WIDTH, STATS_FONT_HEIGHT, quadIB);
+
+    renderer->pointsRenderer = createTextRenderer(POINTS_0_STR, staticStrLen(POINTS_0_STR), &renderer->font,
+        pointsPos, STATS_FONT_WIDTH, STATS_FONT_HEIGHT, quadIB);
+
+    renderer->gameOverRenderer = createTextRenderer(GAME_OVER_STR, staticStrLen(GAME_OVER_STR),
+        &renderer->font, gameOverPos, GAME_OVER_SCREEN_FONT_WIDTH, GAME_OVER_SCREEN_FONT_HEIGHT, quadIB);
+
     renderer->pressRestartGameKeyRenderer = createTextRenderer(PRESS_RESTART_GAME_KEY_STR,
-        strlen(PRESS_RESTART_GAME_KEY_STR), &renderer->font, pressRestartGameKeyPos, FONT_WIDTH, FONT_HEIGHT,
-        quadIB);
-    renderer->pointsRenderer = createTextRenderer(POINTS_STR, strlen(POINTS_STR), &renderer->font, pointsPos,
-        FONT_WIDTH, FONT_HEIGHT, quadIB);
+        staticStrLen(PRESS_RESTART_GAME_KEY_STR), &renderer->font, pressRestartGameKeyPos,
+        GAME_OVER_SCREEN_FONT_WIDTH, GAME_OVER_SCREEN_FONT_HEIGHT, quadIB);
+}
+
+void updateHudLevelText(HudRenderer* renderer, unsigned int newLevel)
+{
+    char levelText[staticStrLen(LEVEL_STR) + MAX_DIGITS_IN_LEVEL_NUM + 1] = LEVEL_STR;
+    size_t charsWritten = uiToStr(newLevel, levelText + staticStrLen(LEVEL_STR),
+        MAX_DIGITS_IN_LEVEL_NUM + 1);
+
+    updateTextRenderer(&renderer->levelRenderer, levelText, staticStrLen(LEVEL_STR) + charsWritten,
+        renderer->levelRenderer.position);
+}
+
+void updateHudPointsText(HudRenderer* renderer, unsigned int newPoints)
+{
+    char pointsText[staticStrLen(POINTS_STR) + MAX_DIGITS_IN_POINTS_NUM + 1] = POINTS_STR;
+    size_t charsWritten = uiToStr(newPoints, pointsText + staticStrLen(POINTS_STR),
+        MAX_DIGITS_IN_POINTS_NUM + 1);
+
+    updateTextRenderer(&renderer->pointsRenderer, pointsText, staticStrLen(POINTS_STR) + charsWritten,
+        renderer->pointsRenderer.position);
 }
 
 static void freeHudShaders(const HudShaders* shaders)
@@ -488,22 +530,32 @@ static void freeHudShaders(const HudShaders* shaders)
 void freeHudRenderer(const HudRenderer* renderer)
 {
     freeHudShaders(&renderer->shaders);
-
     freeBitmapFont(&renderer->font);
+
+    freeTextRenderer(&renderer->launchBallControlsRenderer);
+    freeTextRenderer(&renderer->paddleControlsRenderer);
+    freeTextRenderer(&renderer->levelRenderer);
+    freeTextRenderer(&renderer->pointsRenderer);
     freeTextRenderer(&renderer->gameOverRenderer);
     freeTextRenderer(&renderer->pressRestartGameKeyRenderer);
-    freeTextRenderer(&renderer->pointsRenderer);
 }
 
-void renderHud(const HudRenderer* renderer)
+void renderHud(const HudRenderer* renderer, const GameState* state)
 {
     glUseProgram(renderer->shaders.textRendererShader);
 
-    if (renderer->drawGameOverText)
+    if (!state->gameStarted)
+    {
+        renderText(&renderer->paddleControlsRenderer);
+        renderText(&renderer->launchBallControlsRenderer);
+    }
+
+    if (state->gameOver)
     {
         renderText(&renderer->gameOverRenderer);
         renderText(&renderer->pressRestartGameKeyRenderer);
     }
 
+    renderText(&renderer->levelRenderer);
     renderText(&renderer->pointsRenderer);
 }

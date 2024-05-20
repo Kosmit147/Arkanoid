@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gl.h"
+#include "game_state.h"
 #include "board.h"
 
 typedef struct PaddleShaderUnifs
@@ -46,10 +47,12 @@ typedef struct HudRenderer
 {
     // after adding new data update freeHudRenderer()
     HudShaders shaders;
-    bool drawGameOverText;
+    TextRenderer launchBallControlsRenderer;
+    TextRenderer paddleControlsRenderer;
+    TextRenderer levelRenderer;
+    TextRenderer pointsRenderer;
     TextRenderer gameOverRenderer;
     TextRenderer pressRestartGameKeyRenderer;
-    TextRenderer pointsRenderer;
     BitmapFont font;
 } HudRenderer;
 
@@ -63,7 +66,7 @@ typedef struct Renderer
 void initRenderer(Renderer* renderer, const Board* board);
 void updateRenderer(Renderer* renderer, const Board* board);
 void freeRenderer(const Renderer* renderer);
-void render(const Renderer* renderer, const Board* board);
+void render(const Renderer* renderer, const GameState* state, const Board* board);
 
 void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB);
 void updateGameRenderer(GameRenderer* renderer, const Board* board);
@@ -72,5 +75,7 @@ void freeGameRenderer(const GameRenderer* renderer);
 void renderGame(const GameRenderer* renderer, const Board* board);
 
 void initHudRenderer(HudRenderer* renderer, GLuint quadIB);
+void updateHudLevelText(HudRenderer* renderer, unsigned int newLevel);
+void updateHudPointsText(HudRenderer* renderer, unsigned int newPoints);
 void freeHudRenderer(const HudRenderer* renderer);
-void renderHud(const HudRenderer* renderer);
+void renderHud(const HudRenderer* renderer, const GameState* state);

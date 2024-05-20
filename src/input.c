@@ -40,6 +40,7 @@ void processBallLaunchInput(GameState* state, Ball* ball, const Block* paddle, G
         {
             ball->speed = BALL_LAUNCH_SPEED;
             state->ballLaunched = true;
+            state->gameStarted = true;
         }
 
         ball->position.x = paddle->position.x + paddle->width / 2.0f;

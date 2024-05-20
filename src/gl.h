@@ -36,15 +36,11 @@ typedef struct TextRenderer
     GLuint VA;
     GLuint VB;
     size_t charCount;
+    Vec2 position;
     float charWidth;
     float charHeight;
     const BitmapFont* font;
 } TextRenderer;
-
-#ifdef _DEBUG
-void rendererGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
-    const GLchar* message, const void* userParam);
-#endif
 
 GLuint genVA();
 GLuint genVB();
