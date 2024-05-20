@@ -10,6 +10,7 @@
 
 #include "game_time.h"
 #include "helpers.h"
+#include "memory.h"
 #include "rendering.h"
 #include "game_state.h"
 #include "entities.h"
@@ -286,7 +287,7 @@ void collideBall(GameState* state, Board* board, Renderer* renderer)
 
             // TODO: fix hacky solution
             freeInstancedQuadRenderer(&renderer->gameRenderer.blocksRenderer);
-            createBlocksRenderer(board->quadTree, renderer->quadIB);
+            renderer->gameRenderer.blocksRenderer = createBlocksRenderer(board->quadTree, renderer->quadIB);
 
             i--;
             board->quadTree->objCount--;

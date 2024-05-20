@@ -13,6 +13,7 @@
 #include "gl.h"
 #include "str_utils.h"
 #include "memory.h"
+#include "vector.h"
 #include "shader.h"
 #include "texture.h"
 #include "entities.h"
