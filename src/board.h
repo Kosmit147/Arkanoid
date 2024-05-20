@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 #include "entities.h"
-#include "blocks_tree.h"
+#include "quad_tree.h"
 
 #include "defines.h"
 
@@ -17,7 +17,7 @@ typedef struct Renderer Renderer;
 typedef struct Board
 {
     Block paddle;
-    QuadTree* quadTree;
+    QuadTreeNode* quadTree;
     Ball ball;
 } Board;
 

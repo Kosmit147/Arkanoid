@@ -155,7 +155,7 @@ static BlockInstanceVertex getBlockInstanceVertex(const Block* block)
     };
 }
 
-static void createBlocksInstanceBufferImpl(const QuadTree* quadTree, BlockInstanceVertex** vertices)
+static void createBlocksInstanceBufferImpl(const QuadTreeNode* quadTree, BlockInstanceVertex** vertices)
 {
     for (size_t i = 0; i < MAX_OBJECTS; i++)
     {
@@ -174,7 +174,7 @@ static void createBlocksInstanceBufferImpl(const QuadTree* quadTree, BlockInstan
     }
 }
 
-static GLuint createBlocksInstanceBuffer(const QuadTree* quadTree)
+static GLuint createBlocksInstanceBuffer(const QuadTreeNode* quadTree)
 {
     GLuint instBuff = genVB();
 
@@ -233,7 +233,7 @@ static GLuint createBallVB(const Ball* ball)
 }
 
 #ifdef DRAW_QUAD_TREE
-static void getQuadTreeNodeVertices(QuadTreeNodeVertex vertices[4], const QuadTree* quadTree) 
+static void getQuadTreeNodeVertices(QuadTreeNodeVertex vertices[4], const QuadTreeNode* quadTree) 
 {
     float x1 = normalizeCoordinate(quadTree->bounds.position.x);
     float x2 = normalizeCoordinate(quadTree->bounds.position.x + quadTree->bounds.width);
@@ -246,7 +246,7 @@ static void getQuadTreeNodeVertices(QuadTreeNodeVertex vertices[4], const QuadTr
     vertices[3] = (QuadTreeNodeVertex){ .position = { .x = x1, .y = y2 }, };
 }
 
-static void createQuadTreeVBImpl(const QuadTree* quadTree, Vector* vertices)
+static void createQuadTreeVBImpl(const QuadTreeNode* quadTree, Vector* vertices)
 {
     QuadTreeNodeVertex tmp[4];
     getQuadTreeNodeVertices(tmp, quadTree);
@@ -263,7 +263,7 @@ static void createQuadTreeVBImpl(const QuadTree* quadTree, Vector* vertices)
     }
 }
 
-static GLuint createQuadTreeVB(const QuadTree* quadTree, size_t* quadTreeNodeCount)
+static GLuint createQuadTreeVB(const QuadTreeNode* quadTree, size_t* quadTreeNodeCount)
 {
     GLuint VB = genVB();
 
@@ -351,7 +351,7 @@ static void setBlockRendererVertexAttributes(GLuint VB, GLuint instanceBuffer)
     instVertexAttribfv(4, BlockInstanceVertex, color);
 }
 
-InstancedQuadRenderer createBlocksRenderer(const QuadTree* quadTree, unsigned int quadIB)
+InstancedQuadRenderer createBlocksRenderer(const QuadTreeNode* quadTree, unsigned int quadIB)
 {
     // TODO: fix this hacky solution
     Block baseBlock = {
@@ -434,7 +434,7 @@ static void setQuadTreeRendererVertexAttributes()
     vertexAttribfv(0, QuadTreeNodeVertex, position);
 }
 
-static QuadRenderer createQuadTreeRenderer(const QuadTree* quadTree, GLuint quadIB, size_t* quadTreeNodeCount)
+static QuadRenderer createQuadTreeRenderer(const QuadTreeNode* quadTree, GLuint quadIB, size_t* quadTreeNodeCount)
 {
     QuadRenderer renderer = {
         .VA = genVA(),
