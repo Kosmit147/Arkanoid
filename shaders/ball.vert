@@ -4,6 +4,6 @@ out vec2 Position;
 
 void main()
 {
-    gl_Position = normalizeVertexCoordinates(inPosition);
+    gl_Position = normalizeVertexPosition(inPosition);
     Position = vec2(gl_Position);
 }

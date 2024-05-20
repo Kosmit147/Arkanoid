@@ -3,39 +3,12 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "helpers.h"
 #include "memory.h"
 #include "log.h"
 #include "entities.h"
 #include "texture.h"
 
 #include "defines.h"
-
-#ifdef _DEBUG
-void rendererGLDebugCallback(GLenum UNUSED(source), GLenum UNUSED(type), GLuint UNUSED(id), GLenum severity,
-    GLsizei UNUSED(length), const GLchar* message, const void* UNUSED(userParam))
-{
-    if (ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY != GL_DEBUG_SEVERITY_NOTIFICATION &&
-        severity > ARKANOID_GL_DEBUG_MESSAGE_MIN_SEVERITY)
-    {
-        return;
-    }
-
-    switch (severity)
-    {
-    case GL_DEBUG_SEVERITY_NOTIFICATION:
-        logNotification("[OpenGL Notification]: %s.\n", message);
-        break;
-    case GL_DEBUG_SEVERITY_LOW:
-    case GL_DEBUG_SEVERITY_MEDIUM:
-        logWarning("[OpenGL Warning]: %s.\n", message);
-        break;
-    case GL_DEBUG_SEVERITY_HIGH:
-        logError("[OpenGL Error]: %s.\n", message);
-        break;
-    }
-}
-#endif
 
 // After modifying vertex structs remember to update the appropriate
 // getVertices and setVertexAttributes functions
@@ -153,12 +126,13 @@ static void setTextRendererVertexAttributes()
 }
 
 TextRenderer createTextRenderer(const char* text, size_t textLength, const BitmapFont* font, Vec2 position,
-    float charWidth, float charHeight, unsigned int quadIB)
+    float charWidth, float charHeight, GLuint quadIB)
 {
     TextRenderer renderer = {
         .VA = genVA(),
         .VB = createTextRendererVB(text, textLength, font, position, charWidth, charHeight),
         .charCount = textLength,
+        .position = position,
         .charWidth = charWidth,
         .charHeight = charHeight,
         .font = font,
@@ -172,6 +146,7 @@ TextRenderer createTextRenderer(const char* text, size_t textLength, const Bitma
 
 void updateTextRenderer(TextRenderer* renderer, const char* newText, size_t newTextLength, Vec2 newPosition)
 {
+    glBindVertexArray(renderer->VA);
     glDeleteBuffers(1, &renderer->VB);
 
     renderer->VB = createTextRendererVB(newText, newTextLength, renderer->font, newPosition,

@@ -9,9 +9,7 @@
 #include <assert.h>
 
 #include "game_time.h"
-#include "log.h"
 #include "helpers.h"
-#include "vector.h"
 #include "rendering.h"
 #include "game_state.h"
 #include "entities.h"
@@ -174,9 +172,8 @@ static QuadTree* createBlocks(unsigned int level)
             col++;
         }
     }
-    
-    display(quadTree);
 
+    display(quadTree);
     return quadTree;
 }
 
@@ -274,7 +271,7 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 void collideBall(GameState* state, Board* board, Renderer* renderer)
 {
     Block** retrievedBlocks = checkedMalloc(MAX_OBJECTS * sizeof(Block*));
-    
+
     size_t count = 0;
     retrieveBlocks(board->quadTree, board->ball.position, retrievedBlocks, &count);
 
@@ -292,9 +289,11 @@ void collideBall(GameState* state, Board* board, Renderer* renderer)
             createBlocksRenderer(board->quadTree, renderer->quadIB);
 
             i--;
+            board->quadTree->objCount--;
+            state->boardCleared = board->quadTree->objCount == 0;
 
             state->points += POINTS_PER_BLOCK_DESTROYED;
-            logNotification("Points: %u\n", state->points); // TODO: update once text rendering works
+            updateHudPointsText(&renderer->hudRenderer, state->points);
         }
     }
 }

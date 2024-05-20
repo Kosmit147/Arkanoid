@@ -12,7 +12,7 @@
 static inline void* checkedMalloc(size_t size)
 {
     void* tmp = malloc(size);
-    
+
     if (!tmp)
         exit(EXIT_BAD_ALLOC);
 
@@ -21,8 +21,8 @@ static inline void* checkedMalloc(size_t size)
 
 static inline void* checkedRealloc(void* ptr, size_t newSize)
 {
-    void* tmp = realloc(ptr, newSize);    
-    
+    void* tmp = realloc(ptr, newSize);
+
     if (!tmp)
         exit(EXIT_BAD_ALLOC);
 

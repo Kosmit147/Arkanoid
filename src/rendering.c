@@ -11,8 +11,7 @@
 #include <assert.h>
 
 #include "gl.h"
-#include "helpers.h"
-#include "vector.h"
+#include "str_utils.h"
 #include "memory.h"
 #include "shader.h"
 #include "texture.h"
@@ -88,10 +87,10 @@ void freeRenderer(const Renderer* renderer)
     glDeleteBuffers(1, &renderer->quadIB);
 }
 
-void render(const Renderer* renderer, const Board* board)
+void render(const Renderer* renderer, const GameState* state, const Board* board)
 {
     renderGame(&renderer->gameRenderer, board);
-    renderHud(&renderer->hudRenderer);
+    renderHud(&renderer->hudRenderer, state);
 }
 
 static void getPaddleVertices(PaddleVertex vertices[4], const Block* paddle)
@@ -283,6 +282,8 @@ static GLuint createQuadTreeVB(const QuadTree* quadTree, size_t* quadTreeNodeCou
 static PaddleShaderUnifs retrievePaddleShaderUnifs(GLuint paddleShader)
 {
     return (PaddleShaderUnifs) {
+        .borderRectTopLeft = retrieveUniformLocation(paddleShader, "borderRect.topLeft"),
+        .borderRectBottomRight = retrieveUniformLocation(paddleShader, "borderRect.bottomRight"),
         .color = retrieveUniformLocation(paddleShader, "color"),
     };
 }
@@ -290,8 +291,8 @@ static PaddleShaderUnifs retrievePaddleShaderUnifs(GLuint paddleShader)
 static BallShaderUnifs retrieveBallShaderUnifs(GLuint ballShader)
 {
     return (BallShaderUnifs) {
-        .normalizedBallCenter = retrieveUniformLocation(ballShader, "normalizedBallCenter"),
-        .normalizedBallRadiusSquared = retrieveUniformLocation(ballShader, "normalizedBallRadiusSquared"),
+        .ballCenter = retrieveUniformLocation(ballShader, "ballCenter"),
+        .ballRadiusSquared = retrieveUniformLocation(ballShader, "ballRadiusSquared"),
         .color = retrieveUniformLocation(ballShader, "color"),
     };
 }
@@ -307,7 +308,7 @@ static GameShaders createGameShaders()
         blockFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
     shaders.ballShader = createShader(ballVertexShaderSrcData,
         ballFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
-        
+
 #ifdef DRAW_QUAD_TREE
     shaders.debugShader = createShader(debugVertexShaderSrcData,
         debugFragmentShaderSrcData, ARKANOID_GL_SHADER_VERSION_DECL),
@@ -477,26 +478,26 @@ void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB)
 #endif
 }
 
-static void updatePaddleVB(const Block* paddle, GLuint paddleVB)
+static void updatePaddleRenderer(const Block* paddle, const QuadRenderer* paddleRenderer)
 {
     PaddleVertex vertices[4];
     getPaddleVertices(vertices, paddle);
-    glBindBuffer(GL_ARRAY_BUFFER, paddleVB);
+    glBindBuffer(GL_ARRAY_BUFFER, paddleRenderer->VB);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(PaddleVertex) * 4, vertices);
 }
 
-static void updateBallVB(const Ball* ball, GLuint ballVB)
+static void updateBallRenderer(const Ball* ball, const QuadRenderer* ballRenderer)
 {
     BallVertex vertices[4];
     getBallVertices(vertices, ball);
-    glBindBuffer(GL_ARRAY_BUFFER, ballVB);
+    glBindBuffer(GL_ARRAY_BUFFER, ballRenderer->VB);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(BallVertex) * 4, vertices);
 }
 
 void updateGameRenderer(GameRenderer* renderer, const Board* board)
 {
-    updatePaddleVB(&board->paddle, renderer->paddleRenderer.VB);
-    updateBallVB(&board->ball, renderer->ballRenderer.VB);
+    updatePaddleRenderer(&board->paddle, &renderer->paddleRenderer);
+    updateBallRenderer(&board->ball, &renderer->ballRenderer);
 }
 
 static void freeGameShaders(const GameShaders* shaders)
@@ -524,9 +525,9 @@ void freeGameRenderer(const GameRenderer* renderer)
 
 static void updateBallShaderUnifs(const BallShaderUnifs* unifs, const Ball* ball)
 {
-    glUniform2f(unifs->normalizedBallCenter, normalizeCoordinate(ball->position.x),
+    glUniform2f(unifs->ballCenter, normalizeCoordinate(ball->position.x),
         normalizeCoordinate(ball->position.y));
-    glUniform1f(unifs->normalizedBallRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
+    glUniform1f(unifs->ballRadiusSquared, powf(normalizeLength(ball->radius), 2.0f));
 }
 
 static void drawBall(const Ball* ball, GLuint shader, const BallShaderUnifs* unifs, GLuint ballRendererVA)
@@ -536,10 +537,18 @@ static void drawBall(const Ball* ball, GLuint shader, const BallShaderUnifs* uni
     drawElements(ballRendererVA, 6, QUAD_IB_DATA_TYPE);
 }
 
-static void drawPaddle(GLuint shader, GLuint paddleRendererVA)
+static void updatePaddleShaderUnifs(const PaddleShaderUnifs* unifs, const Block* paddle)
+{
+    RectBounds borderRect = getBlockBorderRect(paddle);
+    glUniform2f(unifs->borderRectTopLeft, borderRect.topLeft.x, borderRect.topLeft.y);
+    glUniform2f(unifs->borderRectBottomRight, borderRect.bottomRight.x, borderRect.bottomRight.y);
+}
+
+static void drawPaddle(const Block* paddle, GLuint shader, const PaddleShaderUnifs* unifs,  GLuint paddleVA)
 {
     glUseProgram(shader);
-    drawElements(paddleRendererVA, 6, QUAD_IB_DATA_TYPE);
+    updatePaddleShaderUnifs(unifs, paddle);
+    drawElements(paddleVA, 6, QUAD_IB_DATA_TYPE);
 }
 
 static void drawBlocks(size_t blockCount, GLuint shader, GLuint blocksRendererVA)
@@ -558,11 +567,12 @@ static void drawQuadTree(size_t nodeCount, GLuint shader, GLuint quadTreeRendere
 
 void renderGame(const GameRenderer* renderer, const Board* board)
 {
-    drawPaddle(renderer->shaders.paddleShader, renderer->paddleRenderer.VA);
     drawBlocks(board->quadTree->objCount, renderer->shaders.blockShader, renderer->blocksRenderer.VA);
+    drawPaddle(&board->paddle, renderer->shaders.paddleShader, &renderer->shaders.paddleShaderUnifs,
+        renderer->paddleRenderer.VA);
     drawBall(&board->ball, renderer->shaders.ballShader, &renderer->shaders.ballShaderUnifs,
         renderer->ballRenderer.VA);
-    
+
 #ifdef DRAW_QUAD_TREE
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glLineWidth(2.5f);
@@ -608,7 +618,6 @@ static GLuint createHudRendererFontTexture()
 void initHudRenderer(HudRenderer* renderer, GLuint quadIB)
 {
     renderer->shaders = createHudShaders();
-
     GLuint texture = createHudRendererFontTexture();
 
     renderer->font = (BitmapFont) {
@@ -618,26 +627,69 @@ void initHudRenderer(HudRenderer* renderer, GLuint quadIB)
         .textureID = texture,
     };
 
-    Vec2 gameOverPos = {
-        .x = 0.0f - FONT_WIDTH * (float)strlen(GAME_OVER_STR) / 2.0f,
-        .y = 0.0f + FONT_HEIGHT,
+    static const Vec2 launchBallControlsPos = {
+        .x = 0.0f - CONTROLS_SCREEN_FONT_WIDTH * (float)staticStrLen(LAUNCH_BALL_CONTROLS_STR) / 2.0f,
+        .y = 0.0f - CONTROLS_SCREEN_FONT_HEIGHT * 1.5f,
     };
 
-    Vec2 pressRestartGameKeyPos = {
-        .x = 0.0f - FONT_WIDTH * (float)strlen(PRESS_RESTART_GAME_KEY_STR) / 2.0f,
+    static const Vec2 paddleControlsPos = {
+        .x = 0.0f - CONTROLS_SCREEN_FONT_WIDTH * (float)staticStrLen(PADDLE_CONTROLS_STR) / 2.0f,
+        .y = 0.0f - CONTROLS_SCREEN_FONT_HEIGHT * 2.5f,
+    };
+
+    static const Vec2 levelPos = { .x = -1.0f, .y = -1.0f + STATS_FONT_HEIGHT * 2.0f};
+    static const Vec2 pointsPos = { .x = -1.0f, .y = -1.0f + STATS_FONT_HEIGHT};
+
+    static const Vec2 gameOverPos = {
+        .x = 0.0f - GAME_OVER_SCREEN_FONT_WIDTH * (float)staticStrLen(GAME_OVER_STR) / 2.0f,
+        .y = 0.0f + GAME_OVER_SCREEN_FONT_HEIGHT,
+    };
+
+    static const Vec2 pressRestartGameKeyPos = {
+        .x = 0.0f - GAME_OVER_SCREEN_FONT_WIDTH * (float)staticStrLen(PRESS_RESTART_GAME_KEY_STR) / 2.0f,
         .y = 0.0f,
     };
 
-    Vec2 pointsPos = { .x = -1.0f, .y = -1.0f + FONT_HEIGHT};
+    renderer->launchBallControlsRenderer = createTextRenderer(LAUNCH_BALL_CONTROLS_STR,
+        staticStrLen(LAUNCH_BALL_CONTROLS_STR), &renderer->font, launchBallControlsPos,
+        CONTROLS_SCREEN_FONT_WIDTH, CONTROLS_SCREEN_FONT_HEIGHT, quadIB);
 
-    renderer->drawGameOverText = false;
-    renderer->gameOverRenderer = createTextRenderer(GAME_OVER_STR, strlen(GAME_OVER_STR), &renderer->font,
-        gameOverPos, FONT_WIDTH, FONT_HEIGHT, quadIB);
+    renderer->paddleControlsRenderer = createTextRenderer(PADDLE_CONTROLS_STR,
+        staticStrLen(PADDLE_CONTROLS_STR), &renderer->font, paddleControlsPos, CONTROLS_SCREEN_FONT_WIDTH,
+        CONTROLS_SCREEN_FONT_HEIGHT, quadIB);
+
+    renderer->levelRenderer = createTextRenderer(LEVEL_FIRST_STR, staticStrLen(LEVEL_FIRST_STR),
+        &renderer->font, levelPos, STATS_FONT_WIDTH, STATS_FONT_HEIGHT, quadIB);
+
+    renderer->pointsRenderer = createTextRenderer(POINTS_0_STR, staticStrLen(POINTS_0_STR), &renderer->font,
+        pointsPos, STATS_FONT_WIDTH, STATS_FONT_HEIGHT, quadIB);
+
+    renderer->gameOverRenderer = createTextRenderer(GAME_OVER_STR, staticStrLen(GAME_OVER_STR),
+        &renderer->font, gameOverPos, GAME_OVER_SCREEN_FONT_WIDTH, GAME_OVER_SCREEN_FONT_HEIGHT, quadIB);
+
     renderer->pressRestartGameKeyRenderer = createTextRenderer(PRESS_RESTART_GAME_KEY_STR,
-        strlen(PRESS_RESTART_GAME_KEY_STR), &renderer->font, pressRestartGameKeyPos, FONT_WIDTH, FONT_HEIGHT,
-        quadIB);
-    renderer->pointsRenderer = createTextRenderer(POINTS_STR, strlen(POINTS_STR), &renderer->font, pointsPos,
-        FONT_WIDTH, FONT_HEIGHT, quadIB);
+        staticStrLen(PRESS_RESTART_GAME_KEY_STR), &renderer->font, pressRestartGameKeyPos,
+        GAME_OVER_SCREEN_FONT_WIDTH, GAME_OVER_SCREEN_FONT_HEIGHT, quadIB);
+}
+
+void updateHudLevelText(HudRenderer* renderer, unsigned int newLevel)
+{
+    char levelText[staticStrLen(LEVEL_STR) + MAX_DIGITS_IN_LEVEL_NUM + 1] = LEVEL_STR;
+    size_t charsWritten = uiToStr(newLevel, levelText + staticStrLen(LEVEL_STR),
+        MAX_DIGITS_IN_LEVEL_NUM + 1);
+
+    updateTextRenderer(&renderer->levelRenderer, levelText, staticStrLen(LEVEL_STR) + charsWritten,
+        renderer->levelRenderer.position);
+}
+
+void updateHudPointsText(HudRenderer* renderer, unsigned int newPoints)
+{
+    char pointsText[staticStrLen(POINTS_STR) + MAX_DIGITS_IN_POINTS_NUM + 1] = POINTS_STR;
+    size_t charsWritten = uiToStr(newPoints, pointsText + staticStrLen(POINTS_STR),
+        MAX_DIGITS_IN_POINTS_NUM + 1);
+
+    updateTextRenderer(&renderer->pointsRenderer, pointsText, staticStrLen(POINTS_STR) + charsWritten,
+        renderer->pointsRenderer.position);
 }
 
 static void freeHudShaders(const HudShaders* shaders)
@@ -648,22 +700,32 @@ static void freeHudShaders(const HudShaders* shaders)
 void freeHudRenderer(const HudRenderer* renderer)
 {
     freeHudShaders(&renderer->shaders);
-
     freeBitmapFont(&renderer->font);
+
+    freeTextRenderer(&renderer->launchBallControlsRenderer);
+    freeTextRenderer(&renderer->paddleControlsRenderer);
+    freeTextRenderer(&renderer->levelRenderer);
+    freeTextRenderer(&renderer->pointsRenderer);
     freeTextRenderer(&renderer->gameOverRenderer);
     freeTextRenderer(&renderer->pressRestartGameKeyRenderer);
-    freeTextRenderer(&renderer->pointsRenderer);
 }
 
-void renderHud(const HudRenderer* renderer)
+void renderHud(const HudRenderer* renderer, const GameState* state)
 {
     glUseProgram(renderer->shaders.textRendererShader);
 
-    if (renderer->drawGameOverText)
+    if (!state->gameStarted)
+    {
+        renderText(&renderer->paddleControlsRenderer);
+        renderText(&renderer->launchBallControlsRenderer);
+    }
+
+    if (state->gameOver)
     {
         renderText(&renderer->gameOverRenderer);
         renderText(&renderer->pressRestartGameKeyRenderer);
     }
 
+    renderText(&renderer->levelRenderer);
     renderText(&renderer->pointsRenderer);
 }

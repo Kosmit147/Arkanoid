@@ -12,7 +12,7 @@
 
 typedef struct Renderer Renderer;
 typedef struct GameState GameState;
-typedef struct GameRenderer GameRenderer;
+typedef struct Renderer Renderer;
 
 typedef struct Board
 {
@@ -36,7 +36,6 @@ RectBounds normalizeRectBounds(RectBounds rect);
 void initBoard(Board* board, unsigned int level);
 
 static inline bool ballOutOfBounds(const Ball* ball) { return ball->position.y + ball->radius < 0.0f; }
-static inline bool boardCleared(const Board* board) { return board->quadTree->objCount == 0; }
 
 void moveBall(Ball* ball);
 void collideBall(GameState* state, Board* board, Renderer* renderer);

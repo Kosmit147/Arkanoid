@@ -18,6 +18,7 @@ void advanceLevel(Game* game)
     gameStateAdvanceLevel(&game->state);
     initBoard(&game->board, game->state.level);
     initGameRenderer(&game->renderer.gameRenderer, &game->board, game->renderer.quadIB);
+    updateHudLevelText(&game->renderer.hudRenderer, game->state.level);
 }
 
 void freeGame(const Game* game)
