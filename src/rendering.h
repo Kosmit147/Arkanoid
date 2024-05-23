@@ -26,7 +26,7 @@ typedef struct GameShaders
     GLuint blockShader;
     GLuint ballShader;
     BallShaderUnifs ballShaderUnifs;
-    
+
 #ifdef DRAW_QUAD_TREE
     GLuint debugShader;
 #endif
@@ -72,9 +72,6 @@ typedef struct Renderer
     GLuint quadIB;
 } Renderer;
 
-// TODO: this shouldn't be public
-InstancedQuadRenderer createBlocksRenderer(const QuadTreeNode* quadTree, unsigned int quadIB);
-
 void initRenderer(Renderer* renderer, const Board* board);
 void updateRenderer(Renderer* renderer, const Board* board);
 void freeRenderer(const Renderer* renderer);
@@ -82,6 +79,7 @@ void render(const Renderer* renderer, const GameState* state, const Board* board
 
 void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB);
 void updateGameRenderer(GameRenderer* renderer, const Board* board);
+void deleteBlockFromGameRenderer(GameRenderer* renderer, size_t index);
 void freeGameRenderer(const GameRenderer* renderer);
 void renderGame(const GameRenderer* renderer, const Board* board);
 

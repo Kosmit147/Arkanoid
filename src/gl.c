@@ -216,6 +216,13 @@ void eraseObjectFromGLBuffer(GLenum bufferType, GLuint buffer, size_t index, siz
     moveObjectsWithinGLBuffer(bufferType, buffer, index, index + 1, objectsToMove, objSize);
 }
 
+void replaceObjectInGLBuffer(GLenum bufferType, GLuint buffer, size_t index, const void* newObject,
+    size_t objectSize)
+{
+    glBindBuffer(bufferType, buffer);
+    glBufferSubData(bufferType, (GLintptr)(objectSize * index), (GLsizeiptr)objectSize, newObject);
+}
+
 GLuint createQuadIB(size_t count, GLenum usage)
 {
     static_assert(QUAD_IB_DATA_TYPE == GL_UNSIGNED_SHORT, "Expected QUAD_IB_DATA_TYPE == GL_UNSIGNED_SHORT");

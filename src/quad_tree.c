@@ -5,253 +5,302 @@
 #include "log.h"
 #include "memory.h"
 
-QuadTreeNode* createQuadTree(int level, Rect bounds)
+#define TOP_LEFT_QUADRANT_INDEX 0
+#define TOP_RIGHT_QUADRANT_INDEX 1
+#define BOTTOM_RIGHT_QUADRANT_INDEX 2
+#define BOTTOM_LEFT_QUADRANT_INDEX 3
+
+#define TOP_LEFT_QUADRANT_BIT       0x8
+#define TOP_RIGHT_QUADRANT_BIT      0x4
+#define BOTTOM_RIGHT_QUADRANT_BIT   0x2
+#define BOTTOM_LEFT_QUADRANT_BIT    0x1
+
+#define NO_QUADRANTS                0x0
+#define ALL_QUADRANTS               0xF
+
+static QuadTreeNode* createQuadTreeNode(unsigned int level, RectBounds bounds)
 {
-    QuadTreeNode* quadTree = checkedMalloc(sizeof(QuadTreeNode));
-    quadTree->level = level;
-    quadTree->bounds = bounds;
-    quadTree->objCount = 0;
+    QuadTreeNode* node = checkedMalloc(sizeof(QuadTreeNode));
 
-    for (int i = 0; i < 4; i++)
-        quadTree->nodes[i] = NULL;
+    *node = (QuadTreeNode) {
+        .level = level,
+        .bounds = bounds,
+    };
 
-    for (int i = 0; i < MAX_OBJECTS; i++)
-        quadTree->objects[i] = NULL;
+    for (size_t i = 0; i < 4; i++)
+        node->nodes[i] = NULL;
 
-    return quadTree;
+    for (size_t i = 0; i < MAX_QUAD_TREE_NODE_BLOCKS; i++)
+        node->blocks[i] = NULL;
+
+    return node;
 }
 
-void split(QuadTreeNode* quadTree)
+static void splitQuadTreeNode(QuadTreeNode* node)
 {
-    float subWidth = quadTree->bounds.width / 2.0f;
-    float subHeight = quadTree->bounds.height / 2.0f;
-    float x = quadTree->bounds.position.x;
-    float y = quadTree->bounds.position.y;
+    Vec2 topLeft = node->bounds.topLeft;
+    Vec2 bottomRight = node->bounds.bottomRight;
+    Vec2 middlePoint = (Vec2) {
+        .x = (topLeft.x + bottomRight.x) / 2.0f,
+        .y = (topLeft.y + bottomRight.y) / 2.0f,
+    };
 
-    quadTree->nodes[TOP_LEFT_QUADRANT_INDEX] = createQuadTree(quadTree->level + 1, (Rect) { 
-        { .x = x, .y = y },
-        .width = subWidth,
-        .height = subHeight 
+    node->nodes[TOP_LEFT_QUADRANT_INDEX] = createQuadTreeNode(node->level + 1, (RectBounds) {
+        .topLeft = topLeft,
+        .bottomRight = middlePoint,
     });
 
-    quadTree->nodes[TOP_RIGHT_QUADRANT_INDEX] = createQuadTree(quadTree->level + 1, (Rect) {
-        { .x = x + subWidth, .y = y },
-        .width = subWidth,
-        .height = subHeight 
+    node->nodes[TOP_RIGHT_QUADRANT_INDEX] = createQuadTreeNode(node->level + 1, (RectBounds) {
+        .topLeft = (Vec2) { .x = middlePoint.x, .y = topLeft.y, },
+        .bottomRight = (Vec2) { .x = bottomRight.x, .y = middlePoint.y, },
     });
 
-    quadTree->nodes[BOTTOM_RIGHT_QUADRANT_INDEX] = createQuadTree(quadTree->level + 1, (Rect) {
-        { .x = x + subWidth, .y = y - subHeight },
-        .width = subWidth,
-        .height = subHeight
+    node->nodes[BOTTOM_RIGHT_QUADRANT_INDEX] = createQuadTreeNode(node->level + 1, (RectBounds) {
+        .topLeft = middlePoint,
+        .bottomRight = bottomRight,
     });
 
-    quadTree->nodes[BOTTOM_LEFT_QUADRANT_INDEX] = createQuadTree(quadTree->level + 1, (Rect) {
-        { .x = x, .y = y - subHeight },
-        .width = subWidth,
-        .height = subHeight
+    node->nodes[BOTTOM_LEFT_QUADRANT_INDEX] = createQuadTreeNode(node->level + 1, (RectBounds) {
+        .topLeft = (Vec2) { .x = topLeft.x, .y = middlePoint.y, },
+        .bottomRight = (Vec2) { .x = middlePoint.x, .y = bottomRight.y, },
     });
 }
 
-size_t getIndex(Rect bounds, const Block* object)
+static uint8_t getNodeQuadrantsByBounds(const QuadTreeNode* node, const RectBounds* bounds)
 {
-    size_t index = INVALID_QUADRANT_INDEX;
+    uint8_t quadrants = NO_QUADRANTS;
 
-    float verticalMidpoint = bounds.position.x + (bounds.width / 2.0f);
-    float horizontalMidpoint = bounds.position.y - (bounds.height / 2.0f);
+    Vec2 midpoint = {
+        .x = (node->bounds.topLeft.x + node->bounds.bottomRight.x) / 2.0f,
+        .y = (node->bounds.topLeft.y + node->bounds.bottomRight.y) / 2.0f,
+    };
 
-    // Object can completely fit within the top quadrants
-    bool topQuadrant = object->position.y - object->height > horizontalMidpoint;
-    // Object can completely fit within the bottom quadrants
-    bool bottomQuadrant = object->position.y < horizontalMidpoint;
+    bool topQuadrant = bounds->topLeft.y > midpoint.y;
+    bool bottomQuadrant = bounds->bottomRight.y < midpoint.y;
 
-    // Object can completely fit within the left quadrants
-    if (object->position.x + object->width < verticalMidpoint)
+    // blockBounds overlays left quadrant
+    if (bounds->topLeft.x < midpoint.x)
     {
         if (topQuadrant)
-            index = TOP_LEFT_QUADRANT_INDEX;
-        else if (bottomQuadrant)
-            index = BOTTOM_LEFT_QUADRANT_INDEX;
+            quadrants |= TOP_LEFT_QUADRANT_BIT;
+
+        if (bottomQuadrant)
+            quadrants |= BOTTOM_LEFT_QUADRANT_BIT;
     }
-    // Object can completely fit within the right quadrants
-    else if (object->position.x > verticalMidpoint)
+
+    // blockBounds overlays right quadrant
+    if (bounds->bottomRight.x > midpoint.x)
     {
         if (topQuadrant)
-            index = TOP_RIGHT_QUADRANT_INDEX;
-        else if (bottomQuadrant)
-            index = BOTTOM_RIGHT_QUADRANT_INDEX;
+            quadrants |= TOP_RIGHT_QUADRANT_BIT;
+
+        if (bottomQuadrant)
+            quadrants |= BOTTOM_RIGHT_QUADRANT_BIT;
     }
 
-    return index;
+    return quadrants;
+}
+static uint8_t getNodeQuadrantsForBlock(const QuadTreeNode* node, const Block* block)
+{
+    RectBounds blockBounds = getBlockRectBounds(block);
+    return getNodeQuadrantsByBounds(node, &blockBounds);
 }
 
-void insert(QuadTreeNode* quadTree, const Block* object)
+static inline bool nodeHasSubnodes(const QuadTreeNode* node)
 {
-    if (quadTree->nodes[0] != NULL)
+    return node->nodes[0] != NULL;
+}
+
+static inline bool nodeFull(const QuadTreeNode* node)
+{
+    return node->blocks[MAX_QUAD_TREE_NODE_BLOCKS - 1] != NULL;
+}
+
+QuadTree quadTreeCreate(RectBounds bounds)
+{
+    QuadTreeNode* root = createQuadTreeNode(0, bounds);
+
+    return (QuadTree) {
+        .root = root,
+        .elemCount = 0,
+    };
+}
+
+static void quadTreeInsertImpl(QuadTreeNode* node, const Block* block);
+
+static inline void insertIntoQuadrants(QuadTreeNode* node, const Block* block, uint8_t quadrants)
+{
+    if (quadrants & TOP_LEFT_QUADRANT_BIT)
+        quadTreeInsertImpl(node->nodes[TOP_LEFT_QUADRANT_INDEX], block);
+
+    if (quadrants & TOP_RIGHT_QUADRANT_BIT)
+        quadTreeInsertImpl(node->nodes[TOP_RIGHT_QUADRANT_INDEX], block);
+
+    if (quadrants & BOTTOM_RIGHT_QUADRANT_BIT)
+        quadTreeInsertImpl(node->nodes[BOTTOM_RIGHT_QUADRANT_INDEX], block);
+
+    if (quadrants & BOTTOM_LEFT_QUADRANT_BIT)
+        quadTreeInsertImpl(node->nodes[BOTTOM_LEFT_QUADRANT_INDEX], block);
+}
+
+static void addBlockToNode(QuadTreeNode* node, const Block* block)
+{
+    for (size_t i = 0; i < MAX_QUAD_TREE_NODE_BLOCKS; i++)
     {
-        size_t index = getIndex(quadTree->bounds, object);
-        if (index != INVALID_QUADRANT_INDEX)
+        if (node->blocks[i] == NULL)
         {
-            insert(quadTree->nodes[index], object);
-            quadTree->objCount++;
+            node->blocks[i] = block;
+            return;
         }
+    }
+}
+
+static void quadTreeInsertImpl(QuadTreeNode* node, const Block* block)
+{
+    if (nodeHasSubnodes(node))
+    {
+        uint8_t quadrants = getNodeQuadrantsForBlock(node, block);
+        insertIntoQuadrants(node, block, quadrants);
         return;
     }
 
-    // Jeśli lista obiektów jest pełna, dzielimy obszar na podobszary
-    if (quadTree->objects[MAX_OBJECTS - 1] != NULL)
+    if (nodeFull(node))
     {
-        // Dzielimy obszar na podobszary
-        split(quadTree);
+        splitQuadTreeNode(node);
 
-        // Przeszukujemy wszystkie obiekty na liście
-        for (size_t i = 0; i < MAX_OBJECTS; i++)
+        for (size_t i = 0; i < MAX_QUAD_TREE_NODE_BLOCKS; i++)
         {
-            // Rekurencyjnie wstawiamy klon obiektu do odpowiedniego podobszaru
-            size_t index = getIndex(quadTree->bounds, quadTree->objects[i]);
-            if (index != INVALID_QUADRANT_INDEX)
-            {
-                // TODO: add blocks to an array instead of mallocing every time :(
-                Block* object_clone = checkedMalloc(sizeof(Block));
-                *object_clone = *(Block*)quadTree->objects[i]; // Klonujemy obiekt
-                insert(quadTree->nodes[index], object_clone);
-            }
-            quadTree->objects[i] = NULL; // Czyścimy referencję do obiektu z listy
+            quadTreeInsertImpl(node, node->blocks[i]);
+            node->blocks[i] = NULL;
         }
 
-        insert(quadTree, object);
+        uint8_t quadrants = getNodeQuadrantsForBlock(node, block);
+        insertIntoQuadrants(node, block, quadrants);
+        return;
     }
-    else
+
+    addBlockToNode(node, block);
+}
+
+void quadTreeInsert(QuadTree* quadTree, const Block* block)
+{
+    printf("Block: %lf, %lf\n", (double)block->position.x, (double)block->position.y);
+    quadTreeInsertImpl(quadTree->root, block);
+    quadTree->elemCount++;
+}
+
+// TODO: remove
+void display(const QuadTreeNode* node)
+{
+    logNotification("quadTree bounds: (%.2lf, %.2lf, %.2lf, %.2lf)\n",
+        (double)node->bounds.topLeft.x, (double)node->bounds.topLeft.y,
+        (double)node->bounds.bottomRight.x, (double)node->bounds.bottomRight.y);
+
+    for (size_t i = 0; i < MAX_QUAD_TREE_NODE_BLOCKS; i++)
     {
-        // Dodajemy klon nowego obiektu do listy w bieżącym węźle
-        for (size_t i = 0; i < MAX_OBJECTS; i++)
+        if (node->blocks[i] != NULL)
         {
-            if (quadTree->objects[i] == NULL)
+            logNotification("Object at (%.2lf, %.2lf, %.2lf, %.2lf)\n",
+                (double)node->blocks[i]->position.x,
+                (double)node->blocks[i]->position.y,
+                (double)node->blocks[i]->width,
+                (double)node->blocks[i]->height);
+        }
+    }
+
+    if (nodeHasSubnodes(node))
+    {
+        for (size_t i = 0; i < 4; i++)
+            display(node->nodes[i]);
+    }
+}
+
+void quadTreeRemoveBlockImpl(QuadTreeNode* node, const Block* block)
+{
+    if (nodeHasSubnodes(node))
+    {
+        uint8_t quadrants = getNodeQuadrantsForBlock(node, block);
+
+        if (quadrants & TOP_LEFT_QUADRANT_BIT)
+            quadTreeRemoveBlockImpl(node->nodes[TOP_LEFT_QUADRANT_INDEX], block);
+
+        if (quadrants & TOP_RIGHT_QUADRANT_BIT)
+            quadTreeRemoveBlockImpl(node->nodes[TOP_RIGHT_QUADRANT_INDEX], block);
+
+        if (quadrants & BOTTOM_RIGHT_QUADRANT_BIT)
+            quadTreeRemoveBlockImpl(node->nodes[BOTTOM_RIGHT_QUADRANT_INDEX], block);
+
+        if (quadrants & BOTTOM_LEFT_QUADRANT_BIT)
+            quadTreeRemoveBlockImpl(node->nodes[BOTTOM_LEFT_QUADRANT_INDEX], block);
+
+        return;
+    }
+
+    for (size_t i = 0; i < MAX_QUAD_TREE_NODE_BLOCKS - 1; i++)
+    {
+        if (node->blocks[i] == block)
+        {
+            eraseFromArr(node->blocks, i, MAX_QUAD_TREE_NODE_BLOCKS, sizeof(const Block*));
+            break;
+        }
+    }
+
+    node->blocks[MAX_QUAD_TREE_NODE_BLOCKS - 1] = NULL;
+}
+
+void quadTreeRemoveBlock(QuadTree* quadTree, const Block* block)
+{
+    quadTreeRemoveBlockImpl(quadTree->root, block);
+    quadTree->elemCount--;
+}
+
+static void quadTreeRetrieveAllByBoundsImpl(const QuadTreeNode* node, RectBounds bounds, Vector* result)
+{
+    if (nodeHasSubnodes(node))
+    {
+        uint8_t quadrants = getNodeQuadrantsByBounds(node, &bounds);
+
+        if (quadrants & TOP_LEFT_QUADRANT_BIT)
+            quadTreeRetrieveAllByBoundsImpl(node->nodes[TOP_LEFT_QUADRANT_INDEX], bounds, result);
+
+        if (quadrants & TOP_RIGHT_QUADRANT_BIT)
+            quadTreeRetrieveAllByBoundsImpl(node->nodes[TOP_RIGHT_QUADRANT_INDEX], bounds, result);
+
+        if (quadrants & BOTTOM_RIGHT_QUADRANT_BIT)
+            quadTreeRetrieveAllByBoundsImpl(node->nodes[BOTTOM_RIGHT_QUADRANT_INDEX], bounds, result);
+
+        if (quadrants & BOTTOM_LEFT_QUADRANT_BIT)
+            quadTreeRetrieveAllByBoundsImpl(node->nodes[BOTTOM_LEFT_QUADRANT_INDEX], bounds, result);
+
+        return;
+    }
+
+    for (size_t i = 0; i < MAX_QUAD_TREE_NODE_BLOCKS; i++)
+    {
+        if (node->blocks[i] == NULL)
+            break;
+
+        bool foundDuplicate = false;
+
+        for (size_t j = 0; j < vectorSize(result, sizeof(const Block*)); j++)
+        {
+            const Block* tmp = *(const Block**)vectorGet(result, j, sizeof(const Block*));
+
+            if (tmp == node->blocks[i])
             {
-                // TODO: add blocks to an array instead of mallocing every time :(
-                Block* object_clone = checkedMalloc(sizeof(Block));
-                *object_clone = *object; // Klonujemy obiekt
-                quadTree->objects[i] = object_clone;
-                quadTree->objCount++;
+                foundDuplicate = true;
                 break;
             }
         }
+
+        if (!foundDuplicate)
+            vectorPushBack(result, &node->blocks[i], sizeof(const Block*));
     }
 }
 
-void retrieve(const QuadTreeNode* quadTree, const Block* object)
+Vector quadTreeRetrieveAllByBounds(const QuadTree* quadTree, RectBounds bounds)
 {
-    size_t index = getIndex(quadTree->bounds, object);
-
-    if (index != INVALID_QUADRANT_INDEX && quadTree->nodes[0] != NULL)
-        retrieve(quadTree->nodes[index], object);
-}
-
-void display(const QuadTreeNode* quadTree)
-{
-    logNotification("quadTree bounds: (%.2lf, %.2lf, %.2lf, %.2lf)\n",
-        (double)quadTree->bounds.position.x, (double)quadTree->bounds.position.y,
-        (double)quadTree->bounds.width, (double)quadTree->bounds.height);
-
-    for (size_t i = 0; i < MAX_OBJECTS; i++)
-    {
-        if (quadTree->objects[i] != NULL)
-        {
-            logNotification("Object at (%.2lf, %.2lf, %.2lf, %.2lf)\n",
-                (double)((Block*)(&quadTree->objects[i]))->position.x,
-                (double)((Block*)(&quadTree->objects[i]))->position.y,
-                (double)((Block*)(&quadTree->objects[i]))->width,
-                (double)((Block*)(&quadTree->objects[i]))->height);
-        }
-    }
-
-    for (size_t i = 0; i < 4; i++)
-    {
-        if (quadTree->nodes[i] != NULL)
-            display(quadTree->nodes[i]);
-    }
-}
-
-void removeBlock(QuadTreeNode* quadTree, const Block* block)
-{
-    size_t index = getIndex(quadTree->bounds, block);
-
-    if (index != INVALID_QUADRANT_INDEX && quadTree->nodes[0] != NULL)
-    {
-        removeBlock(quadTree->nodes[index], block);
-    }
-    else
-    {
-        for (size_t i = 0; i < MAX_OBJECTS; i++)
-        {
-            if (quadTree->objects[i] == block)
-            {
-                free(quadTree->objects[i]);
-                quadTree->objects[i] = NULL;
-                quadTree->objCount--;
-                return;
-            }
-        }
-    }
-
-    quadTree->objCount--;
-}
-
-void retrieveBlocks(const QuadTreeNode* quadTree, Vec2 position, Block** blocks, size_t* count)
-{
-    size_t index;
-
-    {
-        Block tmp = { .position = position, .width = 0.0f, .height = 0.0f };
-        index = getIndex(quadTree->bounds, &tmp);
-    }
-
-    if (index != INVALID_QUADRANT_INDEX && quadTree->nodes[0] != NULL)
-    {
-        retrieveBlocks(quadTree->nodes[index], position, blocks, count);
-    }
-    else
-    {
-        for (size_t i = 0; i < MAX_OBJECTS; i++)
-        {
-            if (quadTree->objects[i] != NULL)
-            {
-                blocks[*count] = quadTree->objects[i];
-                (*count)++;
-            }
-        }
-    }
-}
-
-static Block* retrieveNthImpl(const QuadTreeNode* quadTree, size_t index, size_t* current)
-{
-    for (size_t i = 0; i < MAX_OBJECTS; i++)
-    {
-        if (quadTree->objects[i] != NULL)
-        {
-            if (*current == index)
-                return quadTree->objects[i];
-            else
-                (*current)++;
-        }
-    }
-
-    for (size_t i = 0; i < 4; i++)
-    {
-        if (quadTree->nodes[i] != NULL)
-        {
-            Block* result = retrieveNthImpl(quadTree->nodes[i], index, current);
-
-            if (result)
-                return result;
-        }
-    }
-
-    return NULL;
-}
-
-Block* retrieveNth(const QuadTreeNode* quadTree, size_t index)
-{
-    size_t current = 0;
-    return retrieveNthImpl(quadTree, index, &current);
+    Vector result = vectorCreate();
+    quadTreeRetrieveAllByBoundsImpl(quadTree->root, bounds, &result);
+    return result;
 }

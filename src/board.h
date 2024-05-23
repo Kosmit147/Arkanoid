@@ -17,8 +17,12 @@ typedef struct Renderer Renderer;
 typedef struct Board
 {
     Block paddle;
-    QuadTreeNode* quadTree;
+    QuadTree blocksQuadTree;
+    size_t originalBlockCount;
     Ball ball;
+
+// PRIVATE
+    Block* blocksStorage;
 } Board;
 
 typedef enum Axis

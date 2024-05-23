@@ -62,6 +62,8 @@ void moveObjectsWithinGLBuffer(GLenum bufferType, GLuint buffer, size_t dstIndex
     size_t count, size_t objSize);
 void eraseObjectFromGLBuffer(GLenum bufferType, GLuint buffer, size_t index, size_t objectCount,
     size_t objSize);
+void replaceObjectInGLBuffer(GLenum bufferType, GLuint buffer, size_t index, const void* newObject,
+    size_t objectSize);
 
 GLuint createQuadIB(size_t count, GLenum usage);
 

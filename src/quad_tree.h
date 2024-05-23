@@ -1,30 +1,31 @@
 #pragma once
 
 #include "entities.h"
+#include "vector.h"
 
-#define MAX_OBJECTS 10
-#define INVALID_QUADRANT_INDEX SIZE_MAX
+#define MAX_QUAD_TREE_NODE_BLOCKS 5
 
-#define TOP_LEFT_QUADRANT_INDEX 0
-#define TOP_RIGHT_QUADRANT_INDEX 1
-#define BOTTOM_RIGHT_QUADRANT_INDEX 2
-#define BOTTOM_LEFT_QUADRANT_INDEX 3
+typedef struct QuadTreeNode QuadTreeNode;
 
 typedef struct QuadTreeNode
 {
-    int level;
-    Rect bounds;
-    struct QuadTreeNode* nodes[4];
-    void* objects[MAX_OBJECTS];
-    size_t objCount;
+    unsigned int level; // is this used for anything?
+    RectBounds bounds;
+    QuadTreeNode* nodes[4];
+    const Block* blocks[MAX_QUAD_TREE_NODE_BLOCKS];
 } QuadTreeNode;
 
-QuadTreeNode* createQuadTree(int level, Rect bounds);
-void split(QuadTreeNode* quadTree);
-size_t getIndex(Rect bounds, const Block* object);
-void insert(QuadTreeNode* quadTree, const Block* object);
-void retrieve(const QuadTreeNode* quadTree, const Block* object);
-Block* retrieveNth(const QuadTreeNode* quadTree, size_t index);
-void display(const QuadTreeNode* quadTree);
-void removeBlock(QuadTreeNode* quadTree, const Block* block);
-void retrieveBlocks(const QuadTreeNode* quadTree, Vec2 position, Block** blocks, size_t* count);
+// QuadTree just stores the pointers, it doesn't manage the objects on its own
+typedef struct QuadTree
+{
+    QuadTreeNode* root;
+    size_t elemCount;
+} QuadTree;
+
+QuadTree quadTreeCreate(RectBounds bounds);
+void quadTreeInsert(QuadTree* quadTree, const Block* block);
+void display(const QuadTreeNode* quadTree); // TODO: remove
+void quadTreeRemoveBlock(QuadTree* quadTree, const Block* block);
+
+// Returned Vector contains pointers to retrieved blocks. Remember to free it!
+Vector quadTreeRetrieveAllByBounds(const QuadTree* quadTree, RectBounds bounds);

@@ -12,7 +12,6 @@
 
 #include "gl.h"
 #include "str_utils.h"
-#include "memory.h"
 #include "vector.h"
 #include "shader.h"
 #include "texture.h"
@@ -155,58 +154,22 @@ static BlockInstanceVertex getBlockInstanceVertex(const Block* block)
     };
 }
 
-static void createBlocksInstanceBufferImpl(const QuadTreeNode* quadTree, BlockInstanceVertex** vertices)
+static unsigned int createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
 {
-    for (size_t i = 0; i < MAX_OBJECTS; i++)
-    {
-        if (quadTree->objects[i] != NULL)
-        {
-            const Block* block = quadTree->objects[i];
-            **vertices = getBlockInstanceVertex(block);
-            (*vertices)++;
-        }
-    }
+    unsigned int instBuff = genVB();
 
-    for (size_t i = 0; i < 4; i++)
-    {
-        if (quadTree->nodes[i] != NULL)
-            createBlocksInstanceBufferImpl(quadTree->nodes[i], vertices);
-    }
-}
+    BlockInstanceVertex* vertices = checkedMalloc(sizeof(BlockInstanceVertex) * blockCount);
 
-static GLuint createBlocksInstanceBuffer(const QuadTreeNode* quadTree)
-{
-    GLuint instBuff = genVB();
+    for (size_t i = 0; i < blockCount; i++)
+        vertices[i] = getBlockInstanceVertex(&blocks[i]);
 
-    BlockInstanceVertex* vertices = checkedMalloc(sizeof(BlockInstanceVertex) * quadTree->objCount);
-    BlockInstanceVertex* currAddr = vertices;
-
-    createBlocksInstanceBufferImpl(quadTree, &currAddr);
-
-    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(BlockInstanceVertex) * quadTree->objCount), vertices,
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(BlockInstanceVertex) * blockCount), vertices,
         GL_DYNAMIC_DRAW);
 
     free(vertices);
 
     return instBuff;
 }
-
-// static unsigned int createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
-// {
-//     unsigned int instBuff = genVB();
-// 
-//     float* vertices = malloc(BLOCK_INSTANCE_VERTICES_SIZE * blockCount);
-// 
-//     for (size_t i = 0; i < blockCount; i++)
-//         getBlockInstanceVertices(vertices + i * FLOATS_PER_BLOCK_INSTANCE_VERTEX, &blocks[i]);
-// 
-//     glBufferData(GL_ARRAY_BUFFER, (GLsizei)BLOCK_INSTANCE_VERTICES_SIZE * (GLsizei)blockCount, vertices,
-//         GL_DYNAMIC_DRAW);
-// 
-//     free(vertices);
-// 
-//     return instBuff;
-// }
 
 static void getBallVertices(BallVertex vertices[4], const Ball* ball)
 {
@@ -235,10 +198,10 @@ static GLuint createBallVB(const Ball* ball)
 #ifdef DRAW_QUAD_TREE
 static void getQuadTreeNodeVertices(QuadTreeNodeVertex vertices[4], const QuadTreeNode* quadTree) 
 {
-    float x1 = normalizeCoordinate(quadTree->bounds.position.x);
-    float x2 = normalizeCoordinate(quadTree->bounds.position.x + quadTree->bounds.width);
-    float y1 = normalizeCoordinate(quadTree->bounds.position.y);
-    float y2 = normalizeCoordinate(quadTree->bounds.position.y - quadTree->bounds.height);
+    float x1 = normalizeCoordinate(quadTree->bounds.topLeft.x);
+    float x2 = normalizeCoordinate(quadTree->bounds.bottomRight.x);
+    float y1 = normalizeCoordinate(quadTree->bounds.topLeft.y);
+    float y2 = normalizeCoordinate(quadTree->bounds.bottomRight.y);
 
     vertices[0] = (QuadTreeNodeVertex){ .position = { .x = x1, .y = y1 }, };
     vertices[1] = (QuadTreeNodeVertex){ .position = { .x = x2, .y = y1 }, };
@@ -251,10 +214,10 @@ static void createQuadTreeVBImpl(const QuadTreeNode* quadTree, Vector* vertices)
     QuadTreeNodeVertex tmp[4];
     getQuadTreeNodeVertices(tmp, quadTree);
 
-    vectorPushBack(vertices, &tmp[0], QuadTreeNodeVertex);
-    vectorPushBack(vertices, &tmp[1], QuadTreeNodeVertex);
-    vectorPushBack(vertices, &tmp[2], QuadTreeNodeVertex);
-    vectorPushBack(vertices, &tmp[3], QuadTreeNodeVertex);
+    vectorPushBack(vertices, &tmp[0], sizeof(QuadTreeNodeVertex));
+    vectorPushBack(vertices, &tmp[1], sizeof(QuadTreeNodeVertex));
+    vectorPushBack(vertices, &tmp[2], sizeof(QuadTreeNodeVertex));
+    vectorPushBack(vertices, &tmp[3], sizeof(QuadTreeNodeVertex));
 
     for (size_t i = 0; i < 4; i++)
     {
@@ -272,7 +235,7 @@ static GLuint createQuadTreeVB(const QuadTreeNode* quadTree, size_t* quadTreeNod
     createQuadTreeVBImpl(quadTree, &vertices);
     glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)vertices.size, vertices.data, GL_DYNAMIC_DRAW);
 
-    *quadTreeNodeCount = vectorSize(&vertices, QuadTreeNodeVertex) / 4;
+    *quadTreeNodeCount = vectorSize(&vertices, sizeof(QuadTreeNodeVertex)) / 4;
 
     vectorFree(&vertices);
 
@@ -351,9 +314,9 @@ static void setBlockRendererVertexAttributes(GLuint VB, GLuint instanceBuffer)
     instVertexAttribfv(4, BlockInstanceVertex, color);
 }
 
-InstancedQuadRenderer createBlocksRenderer(const QuadTreeNode* quadTree, unsigned int quadIB)
+static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount,
+    unsigned int quadIB)
 {
-    // TODO: fix this hacky solution
     Block baseBlock = {
         // start at (-1.0, -1.0), use a translation vector in the shader
         .position = (Vec2){ .x = -1.0f, .y = -1.0f },
@@ -362,17 +325,16 @@ InstancedQuadRenderer createBlocksRenderer(const QuadTreeNode* quadTree, unsigne
     };
 
     // assumes all blocks have the same width and height
-    if (quadTree->objCount > 0)
+    if (blockCount > 0)
     {
-        const Block* block = retrieveNth(quadTree, 0);
-        baseBlock.width = block->width;
-        baseBlock.height = block->height;
+        baseBlock.width = blocks[0].width;
+        baseBlock.height = blocks[0].height;
     }
 
     InstancedQuadRenderer renderer = {
         .VA = genVA(),
         .VB = createBlockVB(&baseBlock),
-        .instanceBuffer = createBlocksInstanceBuffer(quadTree),
+        .instanceBuffer = createBlocksInstanceBuffer(blocks, blockCount),
     };
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
@@ -380,35 +342,6 @@ InstancedQuadRenderer createBlocksRenderer(const QuadTreeNode* quadTree, unsigne
 
     return renderer;
 }
-
-// static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount,
-//     unsigned int quadIB)
-// {
-//     Block baseBlock = {
-//         // start at (-1.0, -1.0), use a translation vector in the shader
-//         .position = (Vec2){ .x = -1.0f, .y = -1.0f },
-//         .width = 0.0f,
-//         .height = 0.0f,
-//     };
-// 
-//     // assumes all blocks have the same width and height
-//     if (blockCount > 0)
-//     {
-//         baseBlock.width = blocks[0].width;
-//         baseBlock.height = blocks[0].height;
-//     }
-// 
-//     InstancedQuadRenderer renderer = {
-//         .VA = genVA(),
-//         .VB = createBlockVB(&baseBlock),
-//         .instanceBuffer = createBlocksInstanceBuffer(blocks, blockCount),
-//     };
-// 
-//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
-//     setBlockRendererVertexAttributes(renderer.VB, renderer.instanceBuffer);
-// 
-//     return renderer;
-// }
 
 static void setBallRendererVertexAttributes()
 {
@@ -434,11 +367,11 @@ static void setQuadTreeRendererVertexAttributes()
     vertexAttribfv(0, QuadTreeNodeVertex, position);
 }
 
-static QuadRenderer createQuadTreeRenderer(const QuadTreeNode* quadTree, GLuint quadIB, size_t* quadTreeNodeCount)
+static QuadRenderer createQuadTreeRenderer(const QuadTree* quadTree, GLuint quadIB, size_t* quadTreeNodeCount)
 {
     QuadRenderer renderer = {
         .VA = genVA(),
-        .VB = createQuadTreeVB(quadTree, quadTreeNodeCount),
+        .VB = createQuadTreeVB(quadTree->root, quadTreeNodeCount),
     };
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIB);
@@ -471,11 +404,12 @@ void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB)
     initBallShaderUnifs(&renderer->shaders.ballShaderUnifs, &ballColor);
 
     renderer->paddleRenderer = createPaddleRenderer(&board->paddle, quadIB);
-    renderer->blocksRenderer = createBlocksRenderer(board->quadTree, quadIB);
+    renderer->blocksRenderer = createBlocksRenderer(board->blocksStorage, board->originalBlockCount, quadIB);
     renderer->ballRenderer = createBallRenderer(&board->ball, quadIB);
 
 #ifdef DRAW_QUAD_TREE
-    renderer->quadTreeRenderer = createQuadTreeRenderer(board->quadTree, quadIB, &renderer->quadTreeNodeCount);
+    renderer->quadTreeRenderer = createQuadTreeRenderer(&board->blocksQuadTree, quadIB,
+        &renderer->quadTreeNodeCount);
 #endif
 }
 
@@ -501,12 +435,23 @@ void updateGameRenderer(GameRenderer* renderer, const Board* board)
     updateBallRenderer(&board->ball, &renderer->ballRenderer);
 }
 
+void deleteBlockFromGameRenderer(GameRenderer* renderer, size_t index)
+{
+    BlockInstanceVertex invalidVertex;
+
+    *(uint32_t*)(&invalidVertex.translation.x) = MY_NAN;
+    *(uint32_t*)(&invalidVertex.translation.y) = MY_NAN;
+
+    replaceObjectInGLBuffer(GL_ARRAY_BUFFER, renderer->blocksRenderer.instanceBuffer, index, &invalidVertex,
+        sizeof(BlockInstanceVertex));
+}
+
 static void freeGameShaders(const GameShaders* shaders)
 {
     glDeleteProgram(shaders->paddleShader);
     glDeleteProgram(shaders->blockShader);
     glDeleteProgram(shaders->ballShader);
-    
+
 #ifdef DRAW_QUAD_TREE
     glDeleteProgram(shaders->debugShader);
 #endif
@@ -568,7 +513,7 @@ static void drawQuadTree(size_t nodeCount, GLuint shader, GLuint quadTreeRendere
 
 void renderGame(const GameRenderer* renderer, const Board* board)
 {
-    drawBlocks(board->quadTree->objCount, renderer->shaders.blockShader, renderer->blocksRenderer.VA);
+    drawBlocks(board->originalBlockCount, renderer->shaders.blockShader, renderer->blocksRenderer.VA);
     drawPaddle(&board->paddle, renderer->shaders.paddleShader, &renderer->shaders.paddleShaderUnifs,
         renderer->paddleRenderer.VA);
     drawBall(&board->ball, renderer->shaders.ballShader, &renderer->shaders.ballShaderUnifs,
