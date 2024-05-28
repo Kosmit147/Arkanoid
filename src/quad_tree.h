@@ -9,7 +9,6 @@ typedef struct QuadTreeNode QuadTreeNode;
 
 typedef struct QuadTreeNode
 {
-    unsigned int level; // is this used for anything?
     RectBounds bounds;
     QuadTreeNode* nodes[4];
     const Block* blocks[MAX_QUAD_TREE_NODE_BLOCKS];
@@ -24,8 +23,8 @@ typedef struct QuadTree
 
 QuadTree quadTreeCreate(RectBounds bounds);
 void quadTreeInsert(QuadTree* quadTree, const Block* block);
-void display(const QuadTreeNode* quadTree); // TODO: remove
 void quadTreeRemoveBlock(QuadTree* quadTree, const Block* block);
+void quadTreeFree(QuadTree* quadTree);
 
 // Returned Vector contains pointers to retrieved blocks. Remember to free it!
-Vector quadTreeRetrieveAllByBounds(const QuadTree* quadTree, RectBounds bounds);
+void quadTreeRetrieveAllByBounds(const QuadTree* quadTree, RectBounds bounds, Vector* result);

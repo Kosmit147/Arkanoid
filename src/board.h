@@ -23,6 +23,7 @@ typedef struct Board
 
 // PRIVATE
     Block* blocksStorage;
+    Vector tmpRetrievedBlocksStorage;
 } Board;
 
 typedef enum Axis
@@ -44,4 +45,4 @@ static inline bool ballOutOfBounds(const Ball* ball) { return ball->position.y +
 void moveBall(Ball* ball);
 void collideBall(GameState* state, Board* board, Renderer* renderer);
 
-void freeBoard(const Board* board);
+void freeBoard(Board* board);

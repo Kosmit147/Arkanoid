@@ -7,6 +7,7 @@
 #include <incbin.h>
 
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -435,15 +436,15 @@ void updateGameRenderer(GameRenderer* renderer, const Board* board)
     updateBallRenderer(&board->ball, &renderer->ballRenderer);
 }
 
-void deleteBlockFromGameRenderer(GameRenderer* renderer, size_t index)
+void moveBlockOutOfView(GameRenderer* renderer, size_t blockIndex)
 {
     BlockInstanceVertex invalidVertex;
 
-    *(uint32_t*)(&invalidVertex.translation.x) = MY_NAN;
-    *(uint32_t*)(&invalidVertex.translation.y) = MY_NAN;
+    invalidVertex.translation.x = COORDINATE_SPACE * 2.0f;
+    invalidVertex.translation.y = -COORDINATE_SPACE * 2.0f;
 
-    replaceObjectInGLBuffer(GL_ARRAY_BUFFER, renderer->blocksRenderer.instanceBuffer, index, &invalidVertex,
-        sizeof(BlockInstanceVertex));
+    replaceObjectInGLBuffer(GL_ARRAY_BUFFER, renderer->blocksRenderer.instanceBuffer, blockIndex,
+        &invalidVertex, sizeof(BlockInstanceVertex));
 }
 
 static void freeGameShaders(const GameShaders* shaders)

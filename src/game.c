@@ -21,7 +21,7 @@ void advanceLevel(Game* game)
     updateHudLevelText(&game->renderer.hudRenderer, game->state.level);
 }
 
-void freeGame(const Game* game)
+void freeGame(Game* game)
 {
     freeBoard(&game->board);
     freeRenderer(&game->renderer);

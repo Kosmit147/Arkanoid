@@ -206,6 +206,7 @@ void initBoard(Board* board, unsigned int level)
     board->blocksQuadTree = createBlocksQuadTree(board->blocksStorage, board->originalBlockCount);
     board->ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
         (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
+    board->tmpRetrievedBlocksStorage = vectorCreate();
 }
 
 void moveBall(Ball* ball)
@@ -292,35 +293,35 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 
 void collideBall(GameState* state, Board* board, Renderer* renderer)
 {
-    Vector collisionCandidates = quadTreeRetrieveAllByBounds(&board->blocksQuadTree,
-        getBallRectBounds(&board->ball));
-    size_t candidateCount = vectorSize(&collisionCandidates, sizeof(const Block*));
+    vectorClear(&board->tmpRetrievedBlocksStorage);
+    quadTreeRetrieveAllByBounds(&board->blocksQuadTree, getBallRectBounds(&board->ball),
+        &board->tmpRetrievedBlocksStorage);
+    size_t candidateCount = vectorSize(&board->tmpRetrievedBlocksStorage, sizeof(const Block*));
 
     collideBallWithWalls(&board->ball);
     collideBallWithPaddle(&board->ball, &board->paddle);
 
     for (size_t i = 0; i < candidateCount; i++)
     {
-        const Block* block = *(const Block**)vectorGet(&collisionCandidates, i, sizeof(const Block*));
+        const Block* block = *(const Block**)vectorGet(&board->tmpRetrievedBlocksStorage, i,
+            sizeof(const Block*));
 
         if (collideBallWithBlock(&board->ball, block))
         {
             quadTreeRemoveBlock(&board->blocksQuadTree, block);
-            deleteBlockFromGameRenderer(&renderer->gameRenderer, (size_t)(block - board->blocksStorage));
+            moveBlockOutOfView(&renderer->gameRenderer, (size_t)(block - board->blocksStorage));
 
-            state->boardCleared = board->blocksQuadTree.elemCount ==0;
+            state->boardCleared = board->blocksQuadTree.elemCount == 0;
 
             state->points += POINTS_PER_BLOCK_DESTROYED;
             updateHudPointsText(&renderer->hudRenderer, state->points);
         }
     }
-
-    vectorFree(&collisionCandidates);
 }
 
-void freeBoard(const Board* board)
+void freeBoard(Board* board)
 {
+    quadTreeFree(&board->blocksQuadTree);
     free(board->blocksStorage);
-    // TODO:
-    // quadTreeFree(board->blocksQuadTree);
+    vectorFree(&board->tmpRetrievedBlocksStorage);
 }

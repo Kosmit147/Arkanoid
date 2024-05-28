@@ -79,7 +79,7 @@ void render(const Renderer* renderer, const GameState* state, const Board* board
 
 void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB);
 void updateGameRenderer(GameRenderer* renderer, const Board* board);
-void deleteBlockFromGameRenderer(GameRenderer* renderer, size_t index);
+void moveBlockOutOfView(GameRenderer* renderer, size_t blockIndex);
 void freeGameRenderer(const GameRenderer* renderer);
 void renderGame(const GameRenderer* renderer, const Board* board);
 
