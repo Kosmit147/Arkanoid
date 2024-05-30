@@ -13,7 +13,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL On)
 
 file(GLOB_RECURSE ARKANOID_SOURCES src/*.c)
 
-if (CMAKE_BUILD_TYPE MATCHES "Debug")
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
     set(SUBSYSTEM "")
     add_compile_definitions(_DEBUG)
 elseif(CMAKE_BUILD_TYPE MATCHES "Release" OR CMAKE_BUILD_TYPE MATCHES "MinSizeRel" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
@@ -26,7 +26,7 @@ add_executable(
     ${ARKANOID_SOURCES}
 )
 
-if (CMAKE_C_COMPILER_ID MATCHES ".*GNU.*")
+if(CMAKE_C_COMPILER_ID MATCHES ".*GNU.*")
     target_compile_options(
         arkanoid PRIVATE
         -Wall -Wextra -Werror -Wconversion -Wpedantic -Wshadow
@@ -54,6 +54,10 @@ set(GLFW_INSTALL OFF CACHE BOOL "GLFW lib only")
 option(GLFW_BUILD_X11 OFF)
 option(GLFW_BUILD_WAYLAND OFF)
 option(DRAW_QUAD_TREE OFF)
+
+if(NOT WIN32 AND NOT GLFW_BUILD_X11 AND NOT GLFW_BUILD_WAYLAND)
+    message(FATAL_ERROR "You need to specify either GLFW_BUILD_X11 or GLFW_BUILD_WAYLAND on Linux")
+endif()
 
 if(GLFW_BUILD_WAYLAND)
     target_compile_definitions(arkanoid PRIVATE _GLFW_WAYLAND)
