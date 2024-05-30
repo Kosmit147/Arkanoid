@@ -12,6 +12,11 @@
 
 // After modifying vertex structs remember to update the appropriate
 // getVertices and setVertexAttributes functions
+typedef struct LineRendererPointVertex
+{
+    Vec2 position;
+} LineRendererPointVertex;
+
 typedef struct TextRendererCharVertex
 {
     Vec2 position;
@@ -43,6 +48,48 @@ GLuint genIB()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IB);
 
     return IB;
+}
+
+static inline LineRendererPointVertex getLineRendererPointVertex(Vec2 point)
+{
+    return (LineRendererPointVertex) {
+        .position = (Vec2) { .x = point.x, .y = point.y },
+    };
+}
+
+static GLuint createLineRendererVB(Vec2* points, size_t pointsCount, GLenum usage)
+{
+    GLuint VB = genVB();
+
+    LineRendererPointVertex* vertices = checkedMalloc(sizeof(LineRendererPointVertex) * pointsCount);
+
+    for (size_t i = 0; i < pointsCount; i++)
+        vertices[i] = getLineRendererPointVertex(points[i]);
+
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(LineRendererPointVertex) * pointsCount), vertices,
+        usage);
+
+    free(vertices);
+
+    return VB;
+}
+
+static void setLineRendererVertexAttributes()
+{
+    vertexAttribfv(0, LineRendererPointVertex, position);
+}
+
+LineRenderer createLineRenderer(Vec2* points, size_t pointsCount, GLenum usage)
+{
+    LineRenderer renderer = {
+        .VA = genVA(),
+        .VB = createLineRendererVB(points, pointsCount, usage),
+        .pointsCount = pointsCount,
+    };
+
+    setLineRendererVertexAttributes();
+
+    return renderer;
 }
 
 static RectBounds getTextRendererCharTexCoords(char character, const BitmapFont* font)
@@ -112,7 +159,7 @@ static GLuint createTextRendererVB(const char* text, size_t textLength, const Bi
     }
 
     glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(TextRendererCharVertex) * 4 * textLength), vertices,
-        GL_STATIC_DRAW);
+        GL_DYNAMIC_DRAW);
 
     free(vertices);
 
@@ -146,6 +193,7 @@ TextRenderer createTextRenderer(const char* text, size_t textLength, const Bitma
 
 void updateTextRenderer(TextRenderer* renderer, const char* newText, size_t newTextLength, Vec2 newPosition)
 {
+    // TODO: don't always recreate the buffer from scratch
     glBindVertexArray(renderer->VA);
     glDeleteBuffers(1, &renderer->VB);
 
@@ -178,6 +226,18 @@ void drawInstances(GLuint VA, GLsizei vertexCount, GLsizei instanceCount, GLenum
 {
     glBindVertexArray(VA);
     glDrawElementsInstanced(GL_TRIANGLES, vertexCount, IBType, NULL, instanceCount);
+}
+
+void drawLines(GLuint VA, GLsizei pointsCount)
+{
+    glBindVertexArray(VA);
+    glDrawArrays(GL_LINES, 0, pointsCount);
+}
+
+// this function expects the appropriate shader to be bound
+void renderLines(const LineRenderer* renderer)
+{
+    drawLines(renderer->VA, (GLsizei)renderer->pointsCount);
 }
 
 // this function expects the appropriate shader to be bound
@@ -267,6 +327,12 @@ void freeInstancedQuadRenderer(const InstancedQuadRenderer* renderer)
     glDeleteVertexArrays(1, &renderer->VA);
     glDeleteBuffers(1, &renderer->VB);
     glDeleteBuffers(1, &renderer->instanceBuffer);
+}
+
+void freeLineRenderer(const LineRenderer* renderer)
+{
+    glDeleteVertexArrays(1, &renderer->VA);
+    glDeleteBuffers(1, &renderer->VB);
 }
 
 void freeTextRenderer(const TextRenderer* renderer)

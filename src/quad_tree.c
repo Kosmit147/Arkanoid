@@ -104,16 +104,6 @@ static uint8_t getNodeQuadrantsForBlock(const QuadTreeNode* node, const Block* b
     return getNodeQuadrantsByBounds(node, &blockBounds);
 }
 
-static inline bool nodeHasSubnodes(const QuadTreeNode* node)
-{
-    return node->nodes[0] != NULL;
-}
-
-static inline bool nodeFull(const QuadTreeNode* node)
-{
-    return node->blocks[MAX_QUAD_TREE_NODE_BLOCKS - 1] != NULL;
-}
-
 QuadTree quadTreeCreate(RectBounds bounds)
 {
     QuadTreeNode* root = createQuadTreeNode(bounds);
@@ -157,14 +147,14 @@ static bool blockInserted = false;
 
 static void quadTreeInsertImpl(QuadTreeNode* node, const Block* block)
 {
-    if (nodeHasSubnodes(node))
+    if (quadTreeNodeHasSubnodes(node))
     {
         uint8_t quadrants = getNodeQuadrantsForBlock(node, block);
         insertIntoQuadrants(node, block, quadrants);
         return;
     }
 
-    if (nodeFull(node))
+    if (quadTreeNodeFull(node))
     {
         splitQuadTreeNode(node);
 
@@ -196,7 +186,7 @@ static bool blockRemoved = false;
 
 void quadTreeRemoveBlockImpl(QuadTreeNode* node, const Block* block)
 {
-    if (nodeHasSubnodes(node))
+    if (quadTreeNodeHasSubnodes(node))
     {
         uint8_t quadrants = getNodeQuadrantsForBlock(node, block);
 
@@ -245,7 +235,7 @@ void quadTreeRemoveBlock(QuadTree* quadTree, const Block* block)
 
 static void quadTreeRetrieveAllByBoundsImpl(const QuadTreeNode* node, RectBounds bounds, Vector* result)
 {
-    if (nodeHasSubnodes(node))
+    if (quadTreeNodeHasSubnodes(node))
     {
         uint8_t quadrants = getNodeQuadrantsByBounds(node, &bounds);
 
@@ -289,7 +279,7 @@ static void quadTreeRetrieveAllByBoundsImpl(const QuadTreeNode* node, RectBounds
 
 void quadTreeFreeImpl(QuadTreeNode* node)
 {
-    if (nodeHasSubnodes(node))
+    if (quadTreeNodeHasSubnodes(node))
         for (size_t i = 0; i < 4; i++)
             quadTreeFreeImpl(node->nodes[i]);
 

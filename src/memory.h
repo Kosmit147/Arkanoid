@@ -9,6 +9,8 @@
 #define offsetof(s, m) ((size_t)&(((s*)NULL)->m))
 #endif
 
+#define arrLength(array) (sizeof((array)) / sizeof(*(array)))
+
 static inline void* checkedMalloc(size_t size)
 {
     void* tmp = malloc(size);

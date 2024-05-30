@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #include "entities.h"
 #include "vector.h"
 
@@ -20,6 +22,16 @@ typedef struct QuadTree
     QuadTreeNode* root;
     size_t elemCount;
 } QuadTree;
+
+static inline bool quadTreeNodeHasSubnodes(const QuadTreeNode* node)
+{
+    return node->nodes[0] != NULL;
+}
+
+static inline bool quadTreeNodeFull(const QuadTreeNode* node)
+{
+    return node->blocks[MAX_QUAD_TREE_NODE_BLOCKS - 1] != NULL;
+}
 
 QuadTree quadTreeCreate(RectBounds bounds);
 void quadTreeInsert(QuadTree* quadTree, const Block* block);

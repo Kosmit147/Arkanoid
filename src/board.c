@@ -23,6 +23,14 @@ INCTXT(level0, "../levels/level0.txt"); // debug level
 
 INCTXT(level1, "../levels/level1.txt");
 
+Vec2 normalizePoint(Vec2 point)
+{
+    return (Vec2) {
+        .x = normalizeCoordinate(point.x),
+        .y = normalizeCoordinate(point.y),
+    };
+}
+
 Rect normalizeRect(Rect rect)
 {
     return (Rect) {

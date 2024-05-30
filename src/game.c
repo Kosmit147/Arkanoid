@@ -19,6 +19,11 @@ void advanceLevel(Game* game)
     initBoard(&game->board, game->state.level);
     initGameRenderer(&game->renderer.gameRenderer, &game->board, game->renderer.quadIB);
     updateHudLevelText(&game->renderer.hudRenderer, game->state.level);
+
+// TODO: Factor out into hudAdvanceLevel function
+#ifdef DRAW_QUAD_TREE
+    redrawQuadTree(&game->renderer.hudRenderer, &game->board.blocksQuadTree);
+#endif
 }
 
 void freeGame(Game* game)

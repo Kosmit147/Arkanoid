@@ -26,10 +26,6 @@ typedef struct GameShaders
     GLuint blockShader;
     GLuint ballShader;
     BallShaderUnifs ballShaderUnifs;
-
-#ifdef DRAW_QUAD_TREE
-    GLuint debugShader;
-#endif
 } GameShaders;
 
 typedef struct GameRenderer
@@ -39,17 +35,16 @@ typedef struct GameRenderer
     QuadRenderer paddleRenderer;
     InstancedQuadRenderer blocksRenderer;
     QuadRenderer ballRenderer;
-
-#ifdef DRAW_QUAD_TREE
-    size_t quadTreeNodeCount;
-    QuadRenderer quadTreeRenderer;
-#endif
 } GameRenderer;
 
 typedef struct HudShaders
 {
     // after adding new data update freeHudShaders()
     GLuint textRendererShader;
+
+#ifdef DRAW_QUAD_TREE
+    GLuint debugShader;
+#endif
 } HudShaders;
 
 typedef struct HudRenderer
@@ -63,6 +58,10 @@ typedef struct HudRenderer
     TextRenderer gameOverRenderer;
     TextRenderer pressRestartGameKeyRenderer;
     BitmapFont font;
+
+#ifdef DRAW_QUAD_TREE
+    LineRenderer quadTreeRenderer;
+#endif
 } HudRenderer;
 
 typedef struct Renderer
@@ -72,6 +71,7 @@ typedef struct Renderer
     GLuint quadIB;
 } Renderer;
 
+// TODO: clean up (make static)
 void initRenderer(Renderer* renderer, const Board* board);
 void updateRenderer(Renderer* renderer, const Board* board);
 void freeRenderer(const Renderer* renderer);
@@ -83,8 +83,11 @@ void moveBlockOutOfView(GameRenderer* renderer, size_t blockIndex);
 void freeGameRenderer(const GameRenderer* renderer);
 void renderGame(const GameRenderer* renderer, const Board* board);
 
-void initHudRenderer(HudRenderer* renderer, GLuint quadIB);
+void initHudRenderer(HudRenderer* renderer, const Board* board, GLuint quadIB);
 void updateHudLevelText(HudRenderer* renderer, unsigned int newLevel);
 void updateHudPointsText(HudRenderer* renderer, unsigned int newPoints);
+#ifdef DRAW_QUAD_TREE
+void redrawQuadTree(HudRenderer* renderer, const QuadTree* quadTree);
+#endif
 void freeHudRenderer(const HudRenderer* renderer);
 void renderHud(const HudRenderer* renderer, const GameState* state);
