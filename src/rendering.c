@@ -149,9 +149,9 @@ static BlockInstanceVertex getBlockInstanceVertex(const Block* block)
     };
 }
 
-static unsigned int createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
+static GLuint createBlocksInstanceBuffer(const Block* blocks, size_t blockCount)
 {
-    unsigned int instBuff = genVB();
+    GLuint instBuff = genVB();
 
     BlockInstanceVertex* vertices = checkedMalloc(sizeof(BlockInstanceVertex) * blockCount);
 
@@ -256,8 +256,7 @@ static void setBlockRendererVertexAttributes(GLuint VB, GLuint instanceBuffer)
     instVertexAttribfv(4, BlockInstanceVertex, color);
 }
 
-static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount,
-    unsigned int quadIB)
+static InstancedQuadRenderer createBlocksRenderer(const Block* blocks, size_t blockCount, unsigned int quadIB)
 {
     Block baseBlock = {
         // start at (-1.0, -1.0), use a translation vector in the shader
@@ -471,6 +470,8 @@ static void getQuadTreeRendererPoints(const QuadTreeNode* node, Vector* result)
     {
         for (size_t i = 0; i < 4; i++)
             getQuadTreeRendererPoints(node->nodes[i], result);
+
+        return;
     }
 
     Vec2 topRight = { .x = node->bounds.bottomRight.x, .y = node->bounds.topLeft.y };
@@ -563,7 +564,7 @@ void initHudRenderer(HudRenderer* renderer, const Board* board, GLuint quadIB)
 #ifdef DRAW_QUAD_TREE
     renderer->quadTreeRenderer = createQuadTreeRenderer(&board->blocksQuadTree);
 #else
-    (void)(board); // board is unused when compiling without DRAW_QUAD_TREE
+    (void)board; // board is unused when compiling without DRAW_QUAD_TREE
 #endif
 }
 
