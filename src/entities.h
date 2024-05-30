@@ -23,7 +23,7 @@ typedef struct Ball
 
 typedef struct Rect
 {
-    Vec2 position;
+    Vec2 position; // top-left corner
     float width;
     float height;
 } Rect;
@@ -33,6 +33,34 @@ typedef struct RectBounds
     Vec2 topLeft;
     Vec2 bottomRight;
 } RectBounds;
+
+static inline RectBounds getBlockRectBounds(const Block* block)
+{
+    return (RectBounds) {
+        .topLeft = {
+            .x = block->position.x,
+            .y = block->position.y,
+        },
+        .bottomRight = {
+            .x = block->position.x + block->width,
+            .y = block->position.y - block->height,
+        },
+    };
+}
+
+static inline RectBounds getBallRectBounds(const Ball* ball)
+{
+    return (RectBounds) {
+        .topLeft = {
+            .x = ball->position.x - ball->radius,
+            .y = ball->position.y + ball->radius,
+        },
+        .bottomRight = {
+            .x = ball->position.x + ball->radius,
+            .y = ball->position.y - ball->radius,
+        },
+    };
+}
 
 static inline RectBounds getBlockBorderRect(const Block* block)
 {

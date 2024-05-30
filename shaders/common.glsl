@@ -16,7 +16,7 @@ vec2 normalizeVertexPosition(vec2 vec)
 
 vec4 normalizeVertexPosition(vec4 coords)
 {
-    return vec4(normalizePosition(coords.x), normalizePosition(coords.y), 0.0, 1.0);
+    return vec4(normalizeVertexPosition(coords.xy), 0.0, 1.0);
 }
 
 bool pointInsideRectBounds(vec2 point, RectBounds bounds)

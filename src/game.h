@@ -15,7 +15,7 @@ static inline bool gameOver(const Game* game) { return ballOutOfBounds(&game->bo
 
 void initGame(Game* game, unsigned int level);
 void advanceLevel(Game* game);
-void freeGame(const Game* game);
+void freeGame(Game* game);
 
 void processGameInput(Game* game, GLFWwindow* window);
 void moveGameObjects(Game* game);

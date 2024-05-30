@@ -19,9 +19,13 @@ void advanceLevel(Game* game)
     initBoard(&game->board, game->state.level);
     initGameRenderer(&game->renderer.gameRenderer, &game->board, game->renderer.quadIB);
     updateHudLevelText(&game->renderer.hudRenderer, game->state.level);
+
+#ifdef DRAW_QUAD_TREE
+    redrawQuadTree(&game->renderer.hudRenderer, &game->board.blocksQuadTree);
+#endif
 }
 
-void freeGame(const Game* game)
+void freeGame(Game* game)
 {
     freeBoard(&game->board);
     freeRenderer(&game->renderer);

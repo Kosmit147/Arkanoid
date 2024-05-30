@@ -9,6 +9,8 @@
 #define offsetof(s, m) ((size_t)&(((s*)NULL)->m))
 #endif
 
+#define arrLength(array) (sizeof((array)) / sizeof(*(array)))
+
 static inline void* checkedMalloc(size_t size)
 {
     void* tmp = malloc(size);
@@ -29,6 +31,8 @@ static inline void* checkedRealloc(void* ptr, size_t newSize)
     return tmp;
 }
 
+// This function just moves data within the array. This means that if you call it with the last index in the
+// array, nothing will happen.
 static inline void eraseFromArr(void* arr, size_t index, size_t arrElemCount, size_t elemSize)
 {
     char* bytePtr = (char*)arr;

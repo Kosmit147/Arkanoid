@@ -1,5 +1,6 @@
-// This file is used both in c code and in glsl shaders. 
-// Don't include this file in anything other than "defines.h"
+// This file is used both in C code and in GLSL shaders. 
+// Don't include this file in anything other than "defines.h".
+// Make sure that the contents of this file are both valid C and GLSL preprocessor definitions.
 
 // (0, 0) is in the bottom-left corner
 #define COORDINATE_SPACE 1024

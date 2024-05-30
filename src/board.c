@@ -10,7 +10,7 @@
 
 #include "game_time.h"
 #include "helpers.h"
-#include "vector.h"
+#include "memory.h"
 #include "rendering.h"
 #include "game_state.h"
 #include "entities.h"
@@ -22,6 +22,14 @@ INCTXT(level0, "../levels/level0.txt"); // debug level
 #endif
 
 INCTXT(level1, "../levels/level1.txt");
+
+Vec2 normalizePoint(Vec2 point)
+{
+    return (Vec2) {
+        .x = normalizeCoordinate(point.x),
+        .y = normalizeCoordinate(point.y),
+    };
+}
 
 Rect normalizeRect(Rect rect)
 {
@@ -68,37 +76,54 @@ static Ball createBall(Vec2 position, float radius, Vec2 direction, float speed)
     };
 }
 
-static void getLineCountAndMaxLineLength(const char* str, size_t* lineCount, size_t* maxLineLength)
+typedef struct LevelData
 {
-    *lineCount = 0;
-    *maxLineLength = 0;
+    size_t gridColCount;
+    size_t gridRowCount;
+    size_t blockCount;
+} LevelData;
+
+static LevelData getLevelData(const char* levelStr)
+{
+    LevelData levelData = {
+        .gridColCount = 0,
+        .gridRowCount = 0,
+        .blockCount = 0,
+    };
 
     size_t currLineLength = 0;
 
     const char* ch;
 
-    for (ch = str; *ch; ch++)
+    for (ch = levelStr; *ch; ch++)
     {
-        if (*ch != '\n' && *ch != '\r')
+        if (*ch == BLOCK_CHAR)
+        {
+            levelData.blockCount++;
+            currLineLength++;
+        }
+        else if (*ch != '\n' && *ch != '\r')
         {
             currLineLength++;
         }
         else if (*ch == '\n')
         {
-            if (currLineLength > *maxLineLength)
-                *maxLineLength = currLineLength;
+            if (currLineLength > levelData.gridColCount)
+                levelData.gridColCount = currLineLength;
 
             currLineLength = 0;
-            (*lineCount)++;
+            levelData.gridRowCount++;
         }
     }
 
     // in case there was no new line at the end of the file
-    if (ch != str && *(ch - 1) != '\n')
-        (*lineCount)++;
+    if (ch != levelStr && *(ch - 1) != '\n')
+        levelData.gridRowCount++;
+
+    return levelData;
 }
 
-static const char* getLevelData(unsigned int level)
+static const char* getLevelStr(unsigned int level)
 {
     static_assert(STARTING_LEVEL == 0 || STARTING_LEVEL == 1,
         "Expected STARTING_LEVEL == 0 || STARTING_LEVEL == 1");
@@ -116,48 +141,38 @@ static const char* getLevelData(unsigned int level)
         return level1Data;
     default:
         // TODO: generate a level randomly
-        return getLevelData(STARTING_LEVEL);
+        return getLevelStr(STARTING_LEVEL);
     }
 }
 
 static Block* createBlocks(unsigned int level, size_t* blockCount)
 {
+    const char* levelStr = getLevelStr(level);
+    LevelData levelData = getLevelData(levelStr);
+
     *blockCount = 0;
+    Block* blocks = checkedMalloc(sizeof(Block) * levelData.blockCount);
 
-    const char* levelData = getLevelData(level);
-
-    Vector blocksVector = vectorCreate();
-    vectorReserve(&blocksVector, 30, Block);
-
-    size_t maxLineLength;
-    size_t lineCount;
-    getLineCountAndMaxLineLength(levelData, &lineCount, &maxLineLength);
-
-    float gridCellHeight = (float)COORDINATE_SPACE / (float)lineCount;
-    float gridCellWidth = (float)COORDINATE_SPACE / (float)maxLineLength;
+    float gridCellHeight = (float)COORDINATE_SPACE / (float)levelData.gridRowCount;
+    float gridCellWidth = (float)COORDINATE_SPACE / (float)levelData.gridColCount;
     float blockWidth = gridCellWidth - BLOCK_HORIZONTAL_PADDING * 2.0f;
     float blockHeight = gridCellHeight - BLOCK_VERTICAL_PADDING * 2.0f;
 
     size_t row = 0;
     size_t col = 0;
 
-    for (const char* currChar = levelData; *currChar; currChar++)
+    for (const char* currChar = levelStr; *currChar; currChar++)
     {
         if (*currChar == BLOCK_CHAR)
         {
-            Vec2 position = {
-                .x = (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
-                .y = (float)(lineCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
-            };
-
-            Block newBlock = {
-                .position = position,
+            blocks[(*blockCount)++] = (Block) {
+                .position = {
+                    .x = (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
+                    .y = (float)(levelData.gridRowCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
+                },
                 .width = blockWidth,
                 .height = blockHeight,
             };
-
-            vectorPushBack(&blocksVector, &newBlock, Block);
-            (*blockCount)++;
         }
 
         if (*currChar == '\n')
@@ -171,16 +186,31 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
         }
     }
 
-    return blocksVector.data;
+    return blocks;
+}
+
+static QuadTree createBlocksQuadTree(const Block* blocks, size_t blockCount)
+{
+    QuadTree tree = quadTreeCreate((RectBounds) {
+        .topLeft = { .x = 0.0f, .y = (float)COORDINATE_SPACE },
+        .bottomRight = { .x = (float)COORDINATE_SPACE, .y = 0.0f, }
+    });
+
+    for (size_t i = 0; i < blockCount; i++)
+        quadTreeInsert(&tree, &blocks[i]);
+
+    return tree;
 }
 
 void initBoard(Board* board, unsigned int level)
 {
     board->paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y }, PADDLE_WIDTH,
         PADDLE_HEIGHT);
-    board->blocks = createBlocks(level, &board->blockCount);
+    board->blocksStorage = createBlocks(level, &board->initialBlockCount);
+    board->blocksQuadTree = createBlocksQuadTree(board->blocksStorage, board->initialBlockCount);
     board->ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
         (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
+    board->tmpRetrievedBlocksStorage = vectorCreate();
 }
 
 void moveBall(Ball* ball)
@@ -210,6 +240,8 @@ static void collideBallWithWalls(Ball* ball)
         flipBallDirectionOnAxis(AXIS_HORIZONTAL, ball);
     else if (ball->position.x + ball->radius > COORDINATE_SPACE)
         flipBallDirectionOnAxis(AXIS_HORIZONTAL, ball);
+
+    // TODO: position correction
 }
 
 // returns true if there was a collision
@@ -221,14 +253,9 @@ static bool collideBallWithBlock(Ball* ball, const Block* block)
 
     if (distSquared < powf(ball->radius, 2.0f))
     {
-        // fail-safe in case both x and y are 0.0 (in that case we can't normalize)
-        // TODO: remove once collisions work properly
-        if (difference.x != 0.0f || difference.y != 0.0f)
-        {
-            Vec2 normal = normalize(difference);
-            reflectBall(ball, normal);
-            return true;
-        }
+        Vec2 normal = normalize(difference);
+        reflectBall(ball, normal);
+        return true;
     }
 
     return false;
@@ -255,40 +282,43 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 
     if (distSquared < powf(ball->radius, 2.0f))
     {
-        // fail-safe in case both x and y are 0.0 (in that case we can't normalize)
-        // TODO: remove once collisions work properly
-        if (difference.x != 0.0f || difference.y != 0.0f)
-        {
-            float angle = getPaddleBounceAngle(paddle, collisionPoint);
-            ball->direction = vecFromAngle(angle);
-        }
+        float angle = getPaddleBounceAngle(paddle, collisionPoint);
+        ball->direction = vecFromAngle(angle);
     }
 }
 
 void collideBall(GameState* state, Board* board, Renderer* renderer)
 {
+    vectorClear(&board->tmpRetrievedBlocksStorage);
+    quadTreeRetrieveAllByBounds(&board->blocksQuadTree, getBallRectBounds(&board->ball),
+        &board->tmpRetrievedBlocksStorage);
+    size_t retrievedCount = vectorSize(&board->tmpRetrievedBlocksStorage, sizeof(const Block*));
+
     collideBallWithWalls(&board->ball);
     collideBallWithPaddle(&board->ball, &board->paddle);
 
-    for (size_t i = 0; i < board->blockCount; i++)
+    for (size_t i = 0; i < retrievedCount; i++)
     {
-        if (collideBallWithBlock(&board->ball, &board->blocks[i]))
+        const Block* blockPtr = *(const Block**)vectorGet(&board->tmpRetrievedBlocksStorage, i,
+            sizeof(const Block*));
+
+        if (collideBallWithBlock(&board->ball, blockPtr))
         {
-            eraseFromArr(board->blocks, i, board->blockCount, sizeof(board->blocks[i]));
-            deleteBlockFromGameRenderer(&renderer->gameRenderer, i, board->blockCount);
+            size_t blockIndex = (size_t)(blockPtr - board->blocksStorage);
+            quadTreeRemoveBlock(&board->blocksQuadTree, blockPtr);
+            moveBlockOutOfView(&renderer->gameRenderer, blockIndex);
 
-            i--; // we have to go back since we moved blocks within the array
-            board->blockCount--;
+            state->boardCleared = board->blocksQuadTree.elemCount == 0;
 
-            state->boardCleared = board->blockCount == 0;
             state->points += POINTS_PER_BLOCK_DESTROYED;
-
             updateHudPointsText(&renderer->hudRenderer, state->points);
         }
     }
 }
 
-void freeBoard(const Board* board)
+void freeBoard(Board* board)
 {
-    free(board->blocks);
+    quadTreeFree(&board->blocksQuadTree);
+    free(board->blocksStorage);
+    vectorFree(&board->tmpRetrievedBlocksStorage);
 }

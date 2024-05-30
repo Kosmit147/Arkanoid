@@ -84,6 +84,9 @@
 #define MAX_QUADS 1000
 #define QUAD_IB_DATA_TYPE GL_UNSIGNED_SHORT
 
+#define SHADERS_PATH "../shaders/"
+#define RES_PATH "../res/"
+
 // Error codes
 #define EXIT_BAD_ALLOC 2
 #define EXIT_FAILED_TO_INIT_GLFW 3

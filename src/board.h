@@ -6,18 +6,24 @@
 #include <stdbool.h>
 
 #include "entities.h"
+#include "quad_tree.h"
 
 #include "defines.h"
 
+typedef struct Renderer Renderer;
 typedef struct GameState GameState;
 typedef struct Renderer Renderer;
 
 typedef struct Board
 {
     Block paddle;
-    size_t blockCount;
-    Block* blocks;
+    QuadTree blocksQuadTree;
+    size_t initialBlockCount;
     Ball ball;
+
+// PRIVATE
+    Block* blocksStorage;
+    Vector tmpRetrievedBlocksStorage;
 } Board;
 
 typedef enum Axis
@@ -29,6 +35,7 @@ typedef enum Axis
 static inline float normalizeCoordinate(float coord) { return coord / (float)COORDINATE_SPACE * 2.0f - 1.0f; }
 static inline float normalizeLength(float length) { return length / (float)COORDINATE_SPACE * 2.0f; }
 
+Vec2 normalizePoint(Vec2 point);
 Rect normalizeRect(Rect rect);
 RectBounds normalizeRectBounds(RectBounds rect);
 
@@ -39,4 +46,4 @@ static inline bool ballOutOfBounds(const Ball* ball) { return ball->position.y +
 void moveBall(Ball* ball);
 void collideBall(GameState* state, Board* board, Renderer* renderer);
 
-void freeBoard(const Board* board);
+void freeBoard(Board* board);
