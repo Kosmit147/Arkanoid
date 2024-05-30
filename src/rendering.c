@@ -326,7 +326,7 @@ void initGameRenderer(GameRenderer* renderer, const Board* board, GLuint quadIB)
     initBallShaderUnifs(&renderer->shaders.ballShaderUnifs, &ballColor);
 
     renderer->paddleRenderer = createPaddleRenderer(&board->paddle, quadIB);
-    renderer->blocksRenderer = createBlocksRenderer(board->blocksStorage, board->originalBlockCount, quadIB);
+    renderer->blocksRenderer = createBlocksRenderer(board->blocksStorage, board->initialBlockCount, quadIB);
     renderer->ballRenderer = createBallRenderer(&board->ball, quadIB);
 }
 
@@ -415,7 +415,7 @@ static void drawBlocks(size_t blockCount, GLuint shader, GLuint blocksRendererVA
 
 void renderGame(const GameRenderer* renderer, const Board* board)
 {
-    drawBlocks(board->originalBlockCount, renderer->shaders.blockShader, renderer->blocksRenderer.VA);
+    drawBlocks(board->initialBlockCount, renderer->shaders.blockShader, renderer->blocksRenderer.VA);
     drawPaddle(&board->paddle, renderer->shaders.paddleShader, &renderer->shaders.paddleShaderUnifs,
         renderer->paddleRenderer.VA);
     drawBall(&board->ball, renderer->shaders.ballShader, &renderer->shaders.ballShaderUnifs,

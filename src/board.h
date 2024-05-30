@@ -18,7 +18,7 @@ typedef struct Board
 {
     Block paddle;
     QuadTree blocksQuadTree;
-    size_t originalBlockCount;
+    size_t initialBlockCount;
     Ball ball;
 
 // PRIVATE

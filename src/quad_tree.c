@@ -49,8 +49,8 @@ static void splitQuadTreeNode(QuadTreeNode* node)
     });
 
     node->nodes[TOP_RIGHT_QUADRANT_INDEX] = createQuadTreeNode((RectBounds) {
-        .topLeft = (Vec2) { .x = middlePoint.x, .y = topLeft.y, },
-        .bottomRight = (Vec2) { .x = bottomRight.x, .y = middlePoint.y, },
+        .topLeft = (Vec2){ .x = middlePoint.x, .y = topLeft.y },
+        .bottomRight = (Vec2){ .x = bottomRight.x, .y = middlePoint.y },
     });
 
     node->nodes[BOTTOM_RIGHT_QUADRANT_INDEX] = createQuadTreeNode((RectBounds) {
@@ -59,8 +59,8 @@ static void splitQuadTreeNode(QuadTreeNode* node)
     });
 
     node->nodes[BOTTOM_LEFT_QUADRANT_INDEX] = createQuadTreeNode((RectBounds) {
-        .topLeft = (Vec2) { .x = topLeft.x, .y = middlePoint.y, },
-        .bottomRight = (Vec2) { .x = middlePoint.x, .y = bottomRight.y, },
+        .topLeft = (Vec2){ .x = topLeft.x, .y = middlePoint.y },
+        .bottomRight = (Vec2){ .x = middlePoint.x, .y = bottomRight.y },
     });
 }
 
@@ -76,7 +76,7 @@ static uint8_t getNodeQuadrantsByBounds(const QuadTreeNode* node, const RectBoun
     bool topQuadrant = bounds->topLeft.y > midpoint.y;
     bool bottomQuadrant = bounds->bottomRight.y < midpoint.y;
 
-    // blockBounds overlays left quadrant
+    // bounds overlays left quadrant
     if (bounds->topLeft.x < midpoint.x)
     {
         if (topQuadrant)
@@ -86,7 +86,7 @@ static uint8_t getNodeQuadrantsByBounds(const QuadTreeNode* node, const RectBoun
             quadrants |= BOTTOM_LEFT_QUADRANT_BIT;
     }
 
-    // blockBounds overlays right quadrant
+    // bounds overlays right quadrant
     if (bounds->bottomRight.x > midpoint.x)
     {
         if (topQuadrant)
@@ -98,6 +98,7 @@ static uint8_t getNodeQuadrantsByBounds(const QuadTreeNode* node, const RectBoun
 
     return quadrants;
 }
+
 static uint8_t getNodeQuadrantsForBlock(const QuadTreeNode* node, const Block* block)
 {
     RectBounds blockBounds = getBlockRectBounds(block);
@@ -205,7 +206,7 @@ void quadTreeRemoveBlockImpl(QuadTreeNode* node, const Block* block)
         return;
     }
 
-    for (size_t i = 0; i < MAX_QUAD_TREE_NODE_BLOCKS - 1; i++)
+    for (size_t i = 0; i < MAX_QUAD_TREE_NODE_BLOCKS; i++)
     {
         if (node->blocks[i] == block)
         {
@@ -214,13 +215,6 @@ void quadTreeRemoveBlockImpl(QuadTreeNode* node, const Block* block)
             blockRemoved = true;
             return;
         }
-    }
-
-    if (node->blocks[MAX_QUAD_TREE_NODE_BLOCKS - 1] == block)
-    {
-        node->blocks[MAX_QUAD_TREE_NODE_BLOCKS - 1] = NULL;
-        blockRemoved = true;
-        return;
     }
 }
 
@@ -277,6 +271,11 @@ static void quadTreeRetrieveAllByBoundsImpl(const QuadTreeNode* node, RectBounds
     }
 }
 
+void quadTreeRetrieveAllByBounds(const QuadTree* quadTree, RectBounds bounds, Vector* result)
+{
+    quadTreeRetrieveAllByBoundsImpl(quadTree->root, bounds, result);
+}
+
 void quadTreeFreeImpl(QuadTreeNode* node)
 {
     if (quadTreeNodeHasSubnodes(node))
@@ -291,9 +290,4 @@ void quadTreeFree(QuadTree* quadTree)
     quadTreeFreeImpl(quadTree->root);
     quadTree->root = NULL;
     quadTree->elemCount = 0;
-}
-
-void quadTreeRetrieveAllByBounds(const QuadTree* quadTree, RectBounds bounds, Vector* result)
-{
-    quadTreeRetrieveAllByBoundsImpl(quadTree->root, bounds, result);
 }

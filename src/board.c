@@ -59,22 +59,20 @@ RectBounds normalizeRectBounds(RectBounds rect)
 
 static Block createPaddle(Vec2 position, float width, float height)
 {
-    return (Block)
-    {
+    return (Block) {
         .position = position,
-            .width = width,
-            .height = height,
+        .width = width,
+        .height = height,
     };
 }
 
 static Ball createBall(Vec2 position, float radius, Vec2 direction, float speed)
 {
-    return (Ball)
-    {
+    return (Ball) {
         .position = position,
-            .radius = radius,
-            .direction = direction,
-            .speed = speed,
+        .radius = radius,
+        .direction = direction,
+        .speed = speed,
     };
 }
 
@@ -83,7 +81,6 @@ typedef struct LevelData
     size_t gridColCount;
     size_t gridRowCount;
     size_t blockCount;
-
 } LevelData;
 
 static LevelData getLevelData(const char* levelStr)
@@ -153,7 +150,7 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
     const char* levelStr = getLevelStr(level);
     LevelData levelData = getLevelData(levelStr);
 
-    size_t addedBlocks = 0;
+    *blockCount = 0;
     Block* blocks = checkedMalloc(sizeof(Block) * levelData.blockCount);
 
     float gridCellHeight = (float)COORDINATE_SPACE / (float)levelData.gridRowCount;
@@ -168,7 +165,7 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
     {
         if (*currChar == BLOCK_CHAR)
         {
-            blocks[addedBlocks++] = (Block) {
+            blocks[(*blockCount)++] = (Block) {
                 .position = {
                     .x = (float)col * gridCellWidth + BLOCK_HORIZONTAL_PADDING,
                     .y = (float)(levelData.gridRowCount - row) * gridCellHeight - BLOCK_VERTICAL_PADDING,
@@ -189,13 +186,12 @@ static Block* createBlocks(unsigned int level, size_t* blockCount)
         }
     }
 
-    *blockCount = addedBlocks;
     return blocks;
 }
 
 static QuadTree createBlocksQuadTree(const Block* blocks, size_t blockCount)
 {
-    QuadTree tree = quadTreeCreate((RectBounds) { 
+    QuadTree tree = quadTreeCreate((RectBounds) {
         .topLeft = { .x = 0.0f, .y = (float)COORDINATE_SPACE },
         .bottomRight = { .x = (float)COORDINATE_SPACE, .y = 0.0f, }
     });
@@ -210,8 +206,8 @@ void initBoard(Board* board, unsigned int level)
 {
     board->paddle = createPaddle((Vec2){ .x = PADDLE_START_POS_X, .y = PADDLE_START_POS_Y }, PADDLE_WIDTH,
         PADDLE_HEIGHT);
-    board->blocksStorage = createBlocks(level, &board->originalBlockCount);
-    board->blocksQuadTree = createBlocksQuadTree(board->blocksStorage, board->originalBlockCount);
+    board->blocksStorage = createBlocks(level, &board->initialBlockCount);
+    board->blocksQuadTree = createBlocksQuadTree(board->blocksStorage, board->initialBlockCount);
     board->ball = createBall((Vec2){ .x = BALL_START_POS_X, .y = BALL_START_POS_Y }, BALL_RADIUS,
         (Vec2){ .x = BALL_LAUNCH_DIRECTION_X, .y = BALL_LAUNCH_DIRECTION_Y }, 0.0f);
     board->tmpRetrievedBlocksStorage = vectorCreate();
@@ -244,6 +240,8 @@ static void collideBallWithWalls(Ball* ball)
         flipBallDirectionOnAxis(AXIS_HORIZONTAL, ball);
     else if (ball->position.x + ball->radius > COORDINATE_SPACE)
         flipBallDirectionOnAxis(AXIS_HORIZONTAL, ball);
+
+    // TODO: position correction
 }
 
 // returns true if there was a collision
@@ -255,14 +253,9 @@ static bool collideBallWithBlock(Ball* ball, const Block* block)
 
     if (distSquared < powf(ball->radius, 2.0f))
     {
-        // fail-safe in case both x and y are 0.0 (in that case we can't normalize)
-        // TODO: remove once collisions work properly
-        if (difference.x != 0.0f || difference.y != 0.0f)
-        {
-            Vec2 normal = normalize(difference);
-            reflectBall(ball, normal);
-            return true;
-        }
+        Vec2 normal = normalize(difference);
+        reflectBall(ball, normal);
+        return true;
     }
 
     return false;
@@ -289,13 +282,8 @@ static void collideBallWithPaddle(Ball* ball, const Block* paddle)
 
     if (distSquared < powf(ball->radius, 2.0f))
     {
-        // fail-safe in case both x and y are 0.0 (in that case we can't normalize)
-        // TODO: remove once collisions work properly
-        if (difference.x != 0.0f || difference.y != 0.0f)
-        {
-            float angle = getPaddleBounceAngle(paddle, collisionPoint);
-            ball->direction = vecFromAngle(angle);
-        }
+        float angle = getPaddleBounceAngle(paddle, collisionPoint);
+        ball->direction = vecFromAngle(angle);
     }
 }
 
@@ -304,20 +292,21 @@ void collideBall(GameState* state, Board* board, Renderer* renderer)
     vectorClear(&board->tmpRetrievedBlocksStorage);
     quadTreeRetrieveAllByBounds(&board->blocksQuadTree, getBallRectBounds(&board->ball),
         &board->tmpRetrievedBlocksStorage);
-    size_t candidateCount = vectorSize(&board->tmpRetrievedBlocksStorage, sizeof(const Block*));
+    size_t retrievedCount = vectorSize(&board->tmpRetrievedBlocksStorage, sizeof(const Block*));
 
     collideBallWithWalls(&board->ball);
     collideBallWithPaddle(&board->ball, &board->paddle);
 
-    for (size_t i = 0; i < candidateCount; i++)
+    for (size_t i = 0; i < retrievedCount; i++)
     {
-        const Block* block = *(const Block**)vectorGet(&board->tmpRetrievedBlocksStorage, i,
+        const Block* blockPtr = *(const Block**)vectorGet(&board->tmpRetrievedBlocksStorage, i,
             sizeof(const Block*));
 
-        if (collideBallWithBlock(&board->ball, block))
+        if (collideBallWithBlock(&board->ball, blockPtr))
         {
-            quadTreeRemoveBlock(&board->blocksQuadTree, block);
-            moveBlockOutOfView(&renderer->gameRenderer, (size_t)(block - board->blocksStorage));
+            size_t blockIndex = (size_t)(blockPtr - board->blocksStorage);
+            quadTreeRemoveBlock(&board->blocksQuadTree, blockPtr);
+            moveBlockOutOfView(&renderer->gameRenderer, blockIndex);
 
             state->boardCleared = board->blocksQuadTree.elemCount == 0;
 

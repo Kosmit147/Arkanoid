@@ -36,7 +36,5 @@ static inline bool quadTreeNodeFull(const QuadTreeNode* node)
 QuadTree quadTreeCreate(RectBounds bounds);
 void quadTreeInsert(QuadTree* quadTree, const Block* block);
 void quadTreeRemoveBlock(QuadTree* quadTree, const Block* block);
-void quadTreeFree(QuadTree* quadTree);
-
-// Returned Vector contains pointers to retrieved blocks. Remember to free it!
 void quadTreeRetrieveAllByBounds(const QuadTree* quadTree, RectBounds bounds, Vector* result);
+void quadTreeFree(QuadTree* quadTree);

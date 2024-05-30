@@ -31,8 +31,8 @@ static inline void* checkedRealloc(void* ptr, size_t newSize)
     return tmp;
 }
 
-// This function just moves data within the array. This means that if you call it with the last index in the array,
-// nothing will happen.
+// This function just moves data within the array. This means that if you call it with the last index in the
+// array, nothing will happen.
 static inline void eraseFromArr(void* arr, size_t index, size_t arrElemCount, size_t elemSize)
 {
     char* bytePtr = (char*)arr;

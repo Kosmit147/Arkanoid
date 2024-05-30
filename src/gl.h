@@ -53,7 +53,7 @@ GLuint genVA();
 GLuint genVB();
 GLuint genIB();
 
-LineRenderer createLineRenderer(Vec2* points, size_t pointsCount, GLenum usage);
+LineRenderer createLineRenderer(const Vec2* points, size_t pointsCount, GLenum usage);
 
 TextRenderer createTextRenderer(const char* text, size_t textLength, const BitmapFont* font, Vec2 position,
     float charWidth, float charHeight, GLuint quadIB);

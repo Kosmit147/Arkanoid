@@ -57,7 +57,7 @@ static inline LineRendererPointVertex getLineRendererPointVertex(Vec2 point)
     };
 }
 
-static GLuint createLineRendererVB(Vec2* points, size_t pointsCount, GLenum usage)
+static GLuint createLineRendererVB(const Vec2* points, size_t pointsCount, GLenum usage)
 {
     GLuint VB = genVB();
 
@@ -79,7 +79,7 @@ static void setLineRendererVertexAttributes()
     vertexAttribfv(0, LineRendererPointVertex, position);
 }
 
-LineRenderer createLineRenderer(Vec2* points, size_t pointsCount, GLenum usage)
+LineRenderer createLineRenderer(const Vec2* points, size_t pointsCount, GLenum usage)
 {
     LineRenderer renderer = {
         .VA = genVA(),
