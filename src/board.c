@@ -22,6 +22,10 @@ INCTXT(level0, "../levels/level0.txt"); // debug level
 #endif
 
 INCTXT(level1, "../levels/level1.txt");
+INCTXT(level2, "../levels/level2.txt");
+INCTXT(level3, "../levels/level3.txt");
+INCTXT(level4, "../levels/level4.txt");
+INCTXT(level5, "../levels/level5.txt");
 
 Vec2 normalizePoint(Vec2 point)
 {
@@ -139,6 +143,14 @@ static const char* getLevelStr(unsigned int level)
 #endif
     case 1:
         return level1Data;
+    case 2:
+        return level2Data;
+    case 3:
+        return level3Data;
+    case 4:
+        return level4Data;
+    case 5:
+        return level5Data;
     default:
         // TODO: generate a level randomly
         return getLevelStr(STARTING_LEVEL);
